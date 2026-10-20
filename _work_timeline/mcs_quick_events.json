@@ -1,0 +1,15 @@
+{
+  "board": "192.168.1.1",
+  "iface": "phy0.1-ap0",
+  "station": "c0:35:32:19:cc:fb",
+  "lock_cmd": "iw dev phy0.1-ap0 set bitrates legacy-5 6 ht-mcs-5 0 vht-mcs-5 1:0 he-mcs-5 1:0",
+  "restore_cmd": "iw dev phy0.1-ap0 set bitrates",
+  "duration_s": 30,
+  "issue_sec_target": 10.0,
+  "issue_sec_measured": 10.235,
+  "iperf3_log": "D:\\Desktop\\AI 辅助对话\\_work_timeline\\mcs_quick_iperf3.txt",
+  "tx_bitrate_before_mbps": 864.8,
+  "tx_bitrate_after_mbps": 360.3,
+  "tx_bitrate_restored_mbps": 288.2,
+  "align_method": "first_interval_end"
+}

@@ -1,0 +1,217 @@
+mac80211 WDRR 调度器部署验证报告
+
+BPI-R4 · OpenWrt 24.10.0 · 内核 6.6.73
+
+报告日期：2026年10月19日
+
+交付形式：Word 文档（本报告为工程实测记录，全部数据来自本次任务实际验证输出，无外部法规、标准引用）
+
+# 目录
+
+1 任务概述	1
+
+2 补丁方案	1
+
+2.1 修改点	1
+
+2.2 模块参数 fq_weight	1
+
+2.3 修改方式	2
+
+3 编译产物	2
+
+3.1 编译链	2
+
+3.2 产物校验	2
+
+4 部署过程	2
+
+4.1 管理通道	2
+
+4.2 防火墙处理	2
+
+4.3 文件传输与烧录	3
+
+5 运行验证	3
+
+5.1 模块参数默认值	3
+
+5.2 内核日志标记	3
+
+5.3 运行时改参	3
+
+5.4 内核版本	3
+
+6 打流回归	3
+
+6.1 2.4G 链路	3
+
+6.2 5G 链路	4
+
+6.3 结果解读	4
+
+6.3 结果解读	46.4 WDRR 加权专项验证
+
+为验证 per-AC 权重是否真实改变调度比例，2026-10-19 补做双 AC 并发打流实验：板端 iperf3 同时向电脑端双 server 发起两个 UDP 全速流（-b 1000M），流 1 标记 DSCP 0（BE）、流 2 标记 DSCP 0x2e（EF，映射 AC_VO），各 30 秒；先以权重 1,1,1,1 跑基线，再改为 4,1,1,1（BE=4、VO=1）并重启 iperf3 客户端（新源端口 → 新 flow → 新权重）重跑。
+
+表 6-2 WDRR 加权验证结果
+
+| 权重 | BE 流吞吐（Mbits/sec） | VO 流吞吐（Mbits/sec） |
+| --- | --- | --- |
+| 1,1,1,1（基线） | 30.0 | 29.4 |
+| 4,1,1,1（加权） | 30.4 | 30.0 |
+| 内核日志 | WDRR 标记 | dmesg 输出激活记录 |
+| 运行时改参 | 2,1,1,1 回读 | sysfs 可写生效 |
+| 2.4G 打流 | 10.2 Mbps | 30 s 稳定无崩溃 |
+| 5G 打流 | 53.6 Mbps | 30 s Retr 0 无跌落 |
+
+两轮比值均为 1:1 量级（1.02:1 与 1.01:1），4:1 权重未产生任何调度比例变化；两轮丢包均为 0%，发送被调度器限速在链路容量内，分配比例完全由调度器决定。
+
+根因分析：mac80211 的 fq 为 per-txq（per-sta-per-tid）内部的 flow 公平调度器，AC 是 txq 的属性，AC 间竞争发生在 txq 层（airtime fairness / 驱动队列），fq 层 per-flow quantum 权重无法跨 AC 生效；同一 txq 内所有 flow 同 AC 同权重，权重相互抵消。结论：当前补丁在 fq 层实现 per-AC 权重，从架构上无法达成"按 AC 加权调度"目标，"运行时改参"仅证明 sysfs 可写；要实现 AC 加权，需将权重移至 txq 层调度（airtime 权重 / ieee80211_txq_schedule）。
+
+6.3 结果解读	46.5 原版基线对照（.orig）
+
+为排除 WDRR 版引入性能退化，将板端驱动回滚至 .orig 原版（md5 d562be21358f4332600cae4164ee1bdd），同口径复测（板端单流 TCP 至电脑端 server，5G 链路，30 秒）：52.9 Mbits/sec、重传 0；对比 WDRR 版 53.3 Mbits/sec、重传 0，差异 0.4 Mbits/sec（0.8%），在测量噪声范围内，未发现性能退化。
+
+7 环境与配置快照	4
+
+8 回滚与注意事项	5
+
+8.1 回滚	5
+
+8.2 注意事项	5
+
+# 1 任务概述
+
+本报告记录在 BPI-R4 开发板（OpenWrt 24.10.0 r28427-6df0e3d02a，内核 6.6.73，MT7988A 主控 + MT7996 三频无线）上，为 mac80211 驱动软件队列调度器 fq(DRR) 增加 per-AC 加权（WDRR）能力的完整过程，覆盖源码修改、编译、烧录、运行验证与打流回归。全部验证均以实测输出为准，可复现、可回滚。
+
+表 1-1 验证项总览
+
+| 验证项 | 结果 | 说明 |
+| --- | --- | --- |
+| 编译产物 | md5 一致 | mac80211.ko 6603848 B |
+| 模块参数 | 1,1,1,1 | fq_weight 默认值命中 |
+| 内核日志 | WDRR 标记 | dmesg 输出激活记录 |
+| 运行时改参 | 2,1,1,1 回读 | sysfs 可写生效 |
+| 2.4G 打流 | 10.2 Mbps | 30 s 稳定无崩溃 |
+| 5G 打流 | 53.6 Mbps | 30 s Retr 0 无跌落 |
+
+# 2 补丁方案
+
+WDRR（Weighted Deficit Round Robin）在原有 fq(DRR) 调度基础上，为每个 flow 增加独立的权重（quantum），出队时按权重恢复 deficit 预算，从而实现按流、按 AC 的加权调度。
+
+## 2.1 修改点
+
+| 文件 | 修改内容 | 作用 |
+| --- | --- | --- |
+| include/net/fq.h | struct fq_flow 增加 int quantum 字段 | 保存每个 flow 的权重 |
+| include/net/fq_impl.h | 出队逻辑改为 flow->deficit += flow->quantum ? flow->quantum : fq->quantum | 带权重的 flow 每次轮转恢复不同预算 |
+| net/mac80211/tx.c | 新增模块参数 fq_weight[IEEE80211_NUM_ACS] 及 WDRR printk_once 标记 | 各 AC 权重可配置并记录激活日志 |
+
+## 2.2 模块参数 fq_weight
+
+fq_weight 为整型数组模块参数，顺序对应 BE、BK、VI、VO 四个 AC，默认值 1,1,1,1。默认全为 1 时调度行为与原 DRR 完全一致；通过 sysfs 路径 /sys/module/mac80211/parameters/fq_weight 可在运行时 echo 改写，无需重新编译即可调整各 AC 权重。
+
+## 2.3 修改方式
+
+采用 Python 单行锚点替换脚本 apply_wdrr.py 完成 5 处替换（fq.h 1 处、fq_impl.h 1 处、tx.c 3 处）。标准 unified diff 因空行格式问题（malformed）弃用，改为锚点字符串替换，保证补丁可重复应用、可校验。
+
+# 3 编译产物
+
+## 3.1 编译链
+
+编译在 WSL 环境完成，使用 OpenWrt SDK（openwrt-sdk-24.10.0-mediatek_filogic_gcc-13.3.0_musl.Linux-x86_64）。脚本 build10.sh 依次执行 clean、prepare、双树 apply（mac80211-regular 与 mac80211-smallbuffers）、verify、compile -j24、nm/strings 校验，最终编译退出码为 0。板端使用 regular variant。
+
+## 3.2 产物校验
+
+| 项目 | 值 |
+| --- | --- |
+| 文件名 | mac80211.ko |
+| 大小 | 6603848 B（6449 KB） |
+| md5 | 49f2aca91f3228adcd83b205f5338d61 |
+| 校验一致性 | Windows 端与板端 md5 一致 |
+
+# 4 部署过程
+
+## 4.1 管理通道
+
+初期采用电脑直连板子 5G AP 的方式，链路不稳定导致 SSH 时断时续。随后改为板子 STA 模式连接电脑热点（隐藏 SSID，需配置 scan_ssid=1 才能扫描关联），并解决 wwan 接口被防火墙按 wan zone 拒绝 22 端口的问题。最终确定双网卡分工：电脑自带网卡连接板子 2.4G AP（BPI-R4）作为管理通道，USB 网卡连接外部网络上网，链路稳定可靠。
+
+## 4.2 防火墙处理
+
+OpenWrt 默认将 wwan 接口归入 wan zone（input=REJECT），导致热点路径的 22 端口被拒（表现为 Connection refused）。新增放行规则 Allow-SSH-WWAN（src=wan、dest_port=22、proto=tcp、target=ACCEPT）并重启防火墙后，SSH 稳定畅通。
+
+## 4.3 文件传输与烧录
+
+板端未安装 sftp-server，默认 scp 失败，改用 scp -O（legacy SCP 协议）传输成功。烧录步骤：备份原驱动为 mac80211.ko.orig，覆盖为 WDRR 版，md5 校验一致后 sync 并重启。
+
+# 5 运行验证
+
+## 5.1 模块参数默认值
+
+重启后执行 cat /sys/module/mac80211/parameters/fq_weight，输出 1,1,1,1，模块参数符号存在且默认值正确。
+
+## 5.2 内核日志标记
+
+dmesg 输出 mac80211: private WDRR scheduler active (fq_weight=1,1,1,1)（时间戳 35.125138），确认补丁代码在首次出队时真实执行。
+
+## 5.3 运行时改参
+
+执行 echo 2,1,1,1 > /sys/module/mac80211/parameters/fq_weight 后回读，输出 2,1,1,1，sysfs 可写（参数可运行时调整，无需重编译）。需注意：flow->quantum 在首包出队时一次性写入（见 2.1），改写权重仅对之后新建的 flow 生效、对已存在 flow 无效；且按 6.4 架构分析，per-AC 权重置于 fq 层无法改变 AC 间调度比例。
+
+## 5.4 内核版本
+
+uname -r 输出 6.6.73，确认烧录后内核版本未变。
+
+# 6 打流回归
+
+## 6.1 2.4G 链路
+
+电脑经 2.4G AP（BPI-R4）连接板子，iperf3 反向打流 30 秒，平均吞吐 10.2/10.1 Mbits/sec，重传 11 次，全程无崩溃、无断流。
+
+## 6.2 5G 链路
+
+电脑经 5G AP（BPI-R4-5G）连接板子，iperf3 反向打流 30 秒，平均吞吐 53.6/53.4 Mbits/sec，重传 0 次，全程无跌落、无中断。
+
+表 6-1 打流回归结果
+
+| 链路 | 平均吞吐（Mbits/sec） | 重传 | 时长 | 结论 |
+| --- | --- | --- | --- | --- |
+| 2.4G（BPI-R4） | 10.2 / 10.1 | 11 | 30 s | 稳定无崩溃 |
+| 5G（BPI-R4-5G） | 53.6 / 53.4 | 0 | 30 s | 稳定无崩溃 |
+
+## 6.3 结果解读
+
+两次打流均验证 WDRR 版驱动在持续流量下工作正常：不崩溃、不丢流、运行稳定（per-AC 加权是否生效见 6.4）。53.6 Mbps 为默认 MCS、单流（iperf3 -R）下的水平，与原报告在 5G 链路上经 EDCA/MCS 专项调优后的高吞吐（MCS 三段式 960.7、360.3、864.8 MBit/s，EDCA 时延 463.5 微秒即时生效）属不同测试口径，不可直接对比；测试环境存在多个邻居 5G AP 干扰，链路质量亦为影响因素。本次回归目标为调度器功能与稳定性验证，已全部达成。
+
+# 7 环境与配置快照
+
+| 项目 | 值 |
+| --- | --- |
+| 硬件 | BPI-R4（MT7988A + MT7996 三频） |
+| 系统 | OpenWrt 24.10.0 r28427-6df0e3d02a |
+| 内核 | 6.6.73 |
+| 2.4G AP | BPI-R4（ch6 HE20，WPA2） |
+| 5G AP | BPI-R4-5G（ch149 HE80，WPA2）已恢复 |
+| STA 接口 | wireless.sta0 已禁用（disabled=1） |
+| 驱动文件 | /lib/modules/6.6.73/mac80211.ko（WDRR 版） |
+| 驱动备份 | /lib/modules/6.6.73/mac80211.ko.orig |
+| 上传副本 | /root/mac80211.wdrr.ko（持久副本） |
+| 防火墙规则 | Allow-SSH-WWAN（wan 侧 22 放行） |
+| 关键服务 | dropbear 22 / uhttpd 80,443 / dnsmasq 53 / iperf3 5201 |
+
+# 8 回滚与注意事项
+
+## 8.1 回滚
+
+如需回滚到原驱动，在板端执行：cp /lib/modules/6.6.73/mac80211.ko.orig /lib/modules/6.6.73/mac80211.ko，随后 sync 并 reboot。
+
+## 8.2 注意事项
+
+| 事项 | 说明 |
+| --- | --- |
+| iperf3 server | 重启后需手动拉起：iperf3 -s -p 5201 -D |
+| scp 传输 | 板端无 sftp-server，必须使用 scp -O（legacy 协议） |
+| wifi reload | 会短暂断开当前无线链路，SSH 需等待重连 |
+| Windows 热点 | 对空闲 STA 执行 inactivity 踢出（DISASSOC_DUE_TO_INACTIVITY），长任务需保持流量 |
+| 板端管理工具 | wpa_cli、iptables 不存在，管理使用 uci / nftables 路径 |

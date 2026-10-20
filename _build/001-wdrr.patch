@@ -1,0 +1,87 @@
+--- a/include/net/fq.h
++++ b/include/net/fq.h
+@@ -26,11 +26,12 @@
+  * @queue: sk_buff queue to hold packets
+  * @backlog: number of bytes pending in the queue. The number of packets can be
+  *	found in @queue.qlen
+  * @deficit: used for DRR++
++ * @quantum: private WDRR: per-flow DRR budget; 0 means use fq->quantum
+  */
+ struct fq_flow {
+ 	struct fq_tin *tin;
+ 	struct list_head flowchain;
+ 	struct sk_buff_head queue;
+ 	u32 backlog;
+ 	int deficit;
++	int quantum;
+ };
+--- a/include/net/fq_impl.h
++++ b/include/net/fq_impl.h
+@@ -110,6 +110,7 @@
+ 	if (flow->deficit <= 0) {
+-		flow->deficit += fq->quantum;
++		flow->deficit += flow->quantum ? flow->quantum : fq->quantum;
+ 		list_move_tail(&flow->flowchain,
+ 			       &tin->old_flows);
+ 		goto begin;
+ 	}
+@@ -332,6 +333,7 @@
+ static void fq_flow_init(struct fq_flow *flow)
+ {
+ 	INIT_LIST_HEAD(&flow->flowchain);
+ 	__skb_queue_head_init(&flow->queue);
++	flow->quantum = 0;
+ }
+ 
+ static void fq_tin_init(struct fq_tin *tin)
+--- a/net/mac80211/tx.c
++++ b/net/mac80211/tx.c
+@@ -28,6 +28,11 @@
+ #include <net/fq_impl.h>
+ 
++/* Private WDRR scheduler: per-AC weight applied to the fq DRR quantum.
++ * Sysfs: /sys/module/mac80211/parameters/fq_weight
++ * 0 for an AC means use the global quantum (classic DRR).
++ */
++static int fq_weight[IEEE80211_NUM_ACS] = {1, 1, 1, 1};
++module_param_array(fq_weight, int, NULL, 0644);
++MODULE_PARM_DESC(fq_weight, "mac80211 WDRR: per-AC weight (x quantum); 0=global quantum");
++
+ static void ieee80211_txq_remove_vlan(struct sta_info *sta,
+ 				      struct ieee80211_txq *txq);
+@@ -77,6 +82,10 @@
+ static struct lock_class_key ieee80211_txq_mtx_lockdep_key;
+ static struct lock_class_key ieee80211_txq_skb_lockdep_key;
+ 
++static void ieee80211_wdrr_mark_loaded(void)
++{
++	printk_once(KERN_INFO "mac80211: private WDRR scheduler active "
++		    "(fq_weight=%d,%d,%d,%d)\n",
++		    fq_weight[0], fq_weight[1], fq_weight[2], fq_weight[3]);
++}
++
+ static void ieee80211_txq_remove_vlan(struct sta_info *sta,
+ 				      struct ieee80211_txq *txq);
+--- a/net/mac80211/tx.c
++++ b/net/mac80211/tx.c
+@@ -1392,6 +1397,15 @@
+ 	local = container_of(fq, struct ieee80211_local, fq);
+ 	txqi = container_of(tin, struct txq_info, tin);
+ 	cstats = &txqi->cstats;
+ 
++	/* Private WDRR: apply per-AC weight to this flow's DRR budget
++	 * on first dequeue; later sysfs updates affect newly created flows.
++	 */
++	if (flow->quantum == 0) {
++		int ac = txqi->txq.ac;
++		int w = (ac >= 0 && ac < IEEE80211_NUM_ACS) ? fq_weight[ac] : 1;
++
++		if (w <= 0)
++			w = 1;
++		flow->quantum = fq->quantum * w;
++		ieee80211_wdrr_mark_loaded();
++	}
++
+ 	if (txqi->txq.sta) {
+ 		struct sta_info *sta = container_of(txqi->txq.sta,
+ 						    struct sta_info, sta);

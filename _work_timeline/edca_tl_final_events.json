@@ -1,0 +1,13 @@
+{
+  "board": "192.168.1.1",
+  "iface": "phy0.1-ap0",
+  "params": "0 1 3 7 0",
+  "duration_s": 100,
+  "baseline": false,
+  "issue_sec_target": 50.0,
+  "issue_sec_measured": 50.418,
+  "iperf3_log": "D:\\Desktop\\AI 辅助对话\\_work_timeline\\edca_tl_final_iperf3.txt",
+  "edca_before": "mt7996 last-submitted EDCA per AC (firmware ACI: 0=BE 1=BK 2=VI 3=VO; cw_min/cw_max raw + fls)\n  ACI 0 (BE): aifs=3 cwmin=15 cwmax=63 txop=63 (firmware cwmin=fls=4 cwmax=fls=6)\n  ACI 1 (BK): aifs=7 cwmin=15 cwmax=1023 txop=0 (firmware cwmin=fls=4 cwmax=fls=10)\n  ACI 2 (VI): aifs=1 cwmin=7 cwmax=15 txop=94 (firmware cwmin=fls=3 cwmax=fls=4)\n  ACI 3 (VO): aifs=1 cwmin=3 cwmax=7 txop=47 (firmware cwmin=fls=2 cwmax=fls=3)",
+  "edca_after": "mt7996 last-submitted EDCA per AC (firmware ACI: 0=BE 1=BK 2=VI 3=VO; cw_min/cw_max raw + fls)\n  ACI 0 (BE): aifs=1 cwmin=3 cwmax=7 txop=0 (firmware cwmin=fls=2 cwmax=fls=3)\n  ACI 1 (BK): aifs=7 cwmin=15 cwmax=1023 txop=0 (firmware cwmin=fls=4 cwmax=fls=10)\n  ACI 2 (VI): aifs=1 cwmin=7 cwmax=15 txop=94 (firmware cwmin=fls=3 cwmax=fls=4)\n  ACI 3 (VO): aifs=1 cwmin=3 cwmax=7 txop=47 (firmware cwmin=fls=2 cwmax=fls=3)",
+  "align_method": "first_interval_end"
+}

@@ -1,0 +1,27 @@
+# ---- OpenWrt SDK 与编译产物（体积大、可重建）----
+_sdk/
+*.ko
+*.ipk
+_build/m.ko
+_build/mac80211.ko
+
+# ---- 渲染输出（由 make_*.py 等脚本重新生成）----
+render_out/
+render_out2/
+render_out3/
+**/render_out/
+**/render_out2/
+
+# ---- 敏感与个人文件 ----
+openwrt.xml
+查课安排（2026下第7-8周）.xlsx
+_wsl_*.txt
+
+# ---- 终端误创建 / 一次性传输文件 ----
+; done
+quantum
+mt76.b64
+
+# ---- Windows 系统文件 ----
+Thumbs.db
+Desktop.ini
