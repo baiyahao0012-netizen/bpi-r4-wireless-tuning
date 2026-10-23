@@ -19,6 +19,20 @@ openwrt.xml
 _wsl_*.txt
 ~$*
 
+# ---- 实验备份 / 临时产物 ----
+_work_recover/
+_work_final/modules/edca_set
+_work_final/modules/*.ko
+py_ssvep_cython_debug/
+py_ssvep_cython_v1_debug/
+_work_timeline/minstrel_src/
+_work_timeline/*.err
+BPI-R4*.xml
+_work_timeline/bpi5g.xml
+BPI-R4_mt76_MCS补丁项目交接文档.docx
+党员签到表（25人）.docx
+收集表题目（WPS导入用）.xlsx
+
 # ---- 终端误创建 / 一次性传输文件 ----
 ; done
 quantum

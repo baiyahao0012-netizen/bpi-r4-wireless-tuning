@@ -53,3 +53,12 @@ _work_wdrr_edit/        WDRR 报告修订脚本
 - **只维护一份实验报告**：新增实验（如 A-MPDU）完成后并入 `无线参数实时下发时序验证实验报告.docx`，生成脚本在 `_work_edca_timeline_report/make_doc.py`。
 - 报告数据必须可溯源：每次提交数据改动时同步更新对应 `*_events.json` / 数据文件。
 - 驱动模块（`*.ko`）与个人文件（课表、`openwrt.xml` 等）不入库；交付驱动的身份以 md5 记录在 README 与报告第 7 节，源码由 `_build/apply_*.py` + `build_*.sh` 一键重建。
+
+## 2026-10-22 补充：实时性复测与 WDRR 运行验证
+
+- 新增报告：`_work_final/BPI-R4_EDCA_AMPDU_MCS_WDRR_实测报告.docx`；数据摘要 `_work_final/results.md`。
+- EDCA：静态 C 工具 `edca_set`（源码 `_work_final/modules/edca_set.c`）直接发 nl80211，实测下发→ACK p50 220.3 μs（空载）/ 300.7 μs（打流），hostapd 不重启、STA 不掉线。
+- A-MPDU：`agg_win_cap` 写 2 后下行 402→74.3 Mbit/s，写回 0 立即恢复。
+- MCS：`force_mcs` 节点可写，但 AP 下行 tx rate 不随 0/1 改变；mt7996 固件 RC 不消费 `rx_mcs_bitmask`。
+- WDRR：mac80211.ko（md5 `49f2…`）已烧录运行，`fq_weight` 可读写，dmesg 出现 `private WDRR scheduler active`。
+- 产物：`_work_final/modules/` 存放 EDCA/A-MPDU/MCS 三套 ko、WDRR mac80211.ko 与 `edca_set` 二进制。
