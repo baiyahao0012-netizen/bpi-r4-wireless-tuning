@@ -31,7 +31,7 @@ sub(H, "\tstruct list_head poll_list;\n\n\tstruct mt76_wcid *def_wcid;\n",
        "\tu32 tx_weight;\n"
        "\ts32 tx_tokens;\n"
        "\tunsigned long tx_token_jiffies;\n"
-       "\n#define MT76_STA_TOKEN_QUANTUM\t512\n")
+       "\n#define MT76_STA_TOKEN_QUANTUM\t32\n")
 
 # 2) tx.c: helper + token gate
 sub(TX, '#include "mt76.h"\n', '#include "mt76.h"\n#include <linux/jiffies.h>\n')

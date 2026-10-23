@@ -62,3 +62,12 @@ _work_wdrr_edit/        WDRR 报告修订脚本
 - MCS：`force_mcs` 节点可写，但 AP 下行 tx rate 不随 0/1 改变；mt7996 固件 RC 不消费 `rx_mcs_bitmask`。
 - WDRR：mac80211.ko（md5 `49f2…`）已烧录运行，`fq_weight` 可读写，dmesg 出现 `private WDRR scheduler active`。
 - 产物：`_work_final/modules/` 存放 EDCA/A-MPDU/MCS 三套 ko、WDRR mac80211.ko 与 `edca_set` 二进制。
+
+## 2026-10-23 A+ 每 STA 配额：2:1 / 4:1
+
+- A+ token 原型：mt76 per-WCID 帧 token bucket + debugfs `sta_weight`；控制面可读写，但帧 token 与 TCP/聚合互相拖累，吞吐不稳定，未作为交付方案。
+- 交付方案：per-STA nft 软件配额（限普通、保 VIP）；`_work_final/vip_ratio.sh`。
+- 实测：2:1（普通限 12 MB/s）→ **2.13:1**（231.7 vs 108.7 Mbit/s）；4:1（限 9 MB/s）→ **3.69:1**（300.7 vs 81.5 Mbit/s）。
+- 数据：`_work_final/aplus_policer_results.csv`、`_work_final/aplus_policer_4to1_9.csv`；说明：`_work_final/aplus_results.md`。
+- 代码：`_build/apply_aplus.py`、`_build/build_aplus.sh`；A+ mt76.ko md5 `bc05b23788a77d45e3d445b5a470d9e3`。
+- 注意：当前配额只作用于板端本地生成流量；WAN→STA 转发需加 `forward`/`postrouting` 链。

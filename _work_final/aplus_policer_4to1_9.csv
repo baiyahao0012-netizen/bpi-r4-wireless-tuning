@@ -1,0 +1,4 @@
+case,normal_limit_mbytes_s,round,vip_mbps,normal_mbps,ratio,retr_vip,retr_normal,vip_airtime_s,normal_airtime_s
+4to1,9,1,301.0,81.1,3.71,3,3,4.02,2.85
+4to1,9,2,310.0,80.7,3.84,9,3,4.07,2.92
+4to1,9,3,291.0,82.6,3.52,5,0,3.92,2.97
