@@ -133,9 +133,9 @@ mt76_sta_weight_write(struct file *file, const char __user *buf,
 {
 	struct seq_file *s = file->private_data;
 	struct mt76_dev *dev = s->private;
-	u8 mac[ETH_ALEN];
-	unsigned int weight;
+	unsigned int m0, m1, m2, m3, m4, m5, weight;
 	char tmp[64];
+	u8 mac[ETH_ALEN];
 	int i, found = 0;
 
 	if (count >= sizeof(tmp))
@@ -144,10 +144,11 @@ mt76_sta_weight_write(struct file *file, const char __user *buf,
 		return -EFAULT;
 	tmp[count] = '\0';
 
-	if (sscanf(tmp, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx %u",
-		   &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5],
-		   &weight) != 7)
+	if (sscanf(tmp, "%x:%x:%x:%x:%x:%x %u",
+		   &m0, &m1, &m2, &m3, &m4, &m5, &weight) != 7)
 		return -EINVAL;
+	mac[0] = m0; mac[1] = m1; mac[2] = m2;
+	mac[3] = m3; mac[4] = m4; mac[5] = m5;
 	if (weight > 64)
 		return -EINVAL;
 
