@@ -123,6 +123,7 @@ echo "<NORMAL_MAC> 1" > /sys/kernel/debug/ieee80211/phy0/mt76/sta_weight
 - OAF 侧已完成豆包/千问/元宝的服务识别验证（AppID 1900/1901/1902；TCP 443 + 域名，3 正/1 静置/1 对照）。
 - OAF v7.0.1 将 AppID 写入 conntrack mark 低 16 位；加速层用 nft 匹配 `ct mark & 0xffff == 1900`，打 DSCP EF，进入 mac80211 AC_VO。
 - 工具：`_work_final/oaf_accel/oaf_accel.sh`（install/remove/status/verify）、`oaf_ab_capture.sh`（A/B 抓包与 app 表采样）、`README.md`（原理/限制/步骤）。
+- mock 验证：`_work_final/oaf_accel/mock_ctmark_test.md`（无 OAF 时人为置 ct mark=1900；同 STA 双流 181/84.5 = 2.14:1，nft counter 3364 pkts/117 MB）。
 - 注意：当前 OAF 规则只覆盖 `doubao.com` TCP 443；图片/语音/QUIC 可能不在内；OAF 验证环境为 OpenWrt 25.12.5/6.12.94，勿与 24.10/6.6.73 的 A+ 模块混用。
 
 ## 9. 维护约定
