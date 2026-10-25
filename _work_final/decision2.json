@@ -1,0 +1,14 @@
+{
+  "audience": "下午汇报的听众（导师与项目组成员）",
+  "reader_task": "理解私有调度器三种方法（WDRR fq 层加权 / airtime_weight / AC 策略与频段隔离）的实现、实验结果、分析与结论",
+  "genre_contract": "product-and-engineering-document",
+  "adapter": null,
+  "presentation_mode": "rich",
+  "visual_plan": {
+    "reason": "用图片承载三组方法的结果对比，用 HTML block 承载 fq/txq/AC 层级架构说明",
+    "blocks": [
+      {"type": "img", "min_count": 4, "purpose": "三组方法实验结果图"},
+      {"type": "html5-block", "min_count": 1, "purpose": "fq 层 vs txq 层调度架构图（解释权重放错层）"}
+    ]
+  }
+}

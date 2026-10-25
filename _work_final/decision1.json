@@ -1,0 +1,14 @@
+{
+  "audience": "下午汇报的听众（导师与项目组成员）",
+  "reader_task": "理解 EDCA/A-MPDU/MCS 三类参数实时性验证的目的、方法、原始数据、图表分析与结论",
+  "genre_contract": "product-and-engineering-document",
+  "adapter": null,
+  "presentation_mode": "rich",
+  "visual_plan": {
+    "reason": "用图片承载时延统计、分布示意、吞吐对比与时序，用 HTML block 承载三层调度粒度结构",
+    "blocks": [
+      {"type": "img", "min_count": 8, "purpose": "EDCA/A-MPDU/MCS 实验图表（统计、分布示意、吞吐、时序）"},
+      {"type": "html5-block", "min_count": 1, "purpose": "OpenWrt 软件队列/固件/硬件三层最小调度粒度架构图"}
+    ]
+  }
+}

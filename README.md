@@ -4,6 +4,9 @@ OpenWrt 6.6.73 · MT7996（mt7996e）· BPI-R4（MT7988A）
 
 针对 2026-10-16 课题组会议任务（EDCA/MCS/A-MPDU 参数实时修改的系统性实测验证 + 私有调度器编译部署）的实验项目：**所有实验数据、报告、脚本与补丁的单一版本管理仓库。**
 
+- GitHub：<https://github.com/baiyahao0012-netizen/bpi-r4-wireless-tuning>
+- **交付总索引：** [`PROJECT_MANIFEST.md`](PROJECT_MANIFEST.md)（目录、结论、模块 md5、复现入口）
+
 ## 核心结论
 
 | 主题 | 结论 |
