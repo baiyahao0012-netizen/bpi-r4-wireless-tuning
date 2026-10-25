@@ -118,7 +118,14 @@ echo "<NORMAL_MAC> 1" > /sys/kernel/debug/ieee80211/phy0/mt76/sta_weight
 - 两个 USB 网卡同时高负载会互相影响，跨频测试需错开启动/限速；
 - `_work_recover/`、`_sdk/`、个人文件不入库。
 
-## 8. 维护约定
+## 8. OAF AI 应用加速（2026-10-25）
+
+- OAF 侧已完成豆包/千问/元宝的服务识别验证（AppID 1900/1901/1902；TCP 443 + 域名，3 正/1 静置/1 对照）。
+- OAF v7.0.1 将 AppID 写入 conntrack mark 低 16 位；加速层用 nft 匹配 `ct mark & 0xffff == 1900`，打 DSCP EF，进入 mac80211 AC_VO。
+- 工具：`_work_final/oaf_accel/oaf_accel.sh`（install/remove/status/verify）、`oaf_ab_capture.sh`（A/B 抓包与 app 表采样）、`README.md`（原理/限制/步骤）。
+- 注意：当前 OAF 规则只覆盖 `doubao.com` TCP 443；图片/语音/QUIC 可能不在内；OAF 验证环境为 OpenWrt 25.12.5/6.12.94，勿与 24.10/6.6.73 的 A+ 模块混用。
+
+## 9. 维护约定
 
 - 新实验完成后更新本索引 + `_work_final/FINAL_SUMMARY_FOR_REPORT.md`；
 - 驱动模块必须记录 md5；
