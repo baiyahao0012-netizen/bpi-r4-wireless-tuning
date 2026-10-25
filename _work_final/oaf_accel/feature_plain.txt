@@ -1,0 +1,71 @@
+#version 26.01.01
+#format v4.0
+#type 0
+#free 1
+#id name:[proto;sport;dport;host url;request;dict;search str;]
+#class chat 1 Chat
+1101~Facebook:[tcp;;;facebook.com;;]
+1102~Whatsapp:[tcp;;;whatsapp;;]
+1103~X:[tcp;;;twitter.com;;,tcp;;;api.x.com;;,tcp;;;twimg.com;;,^x.com;]
+1106~Line:[tcp;;;line.com;;]
+1107~Snapchat:[tcp;;;snapchat.com;;,tcp;;;sc-cdn.net;;]
+1108~Tinder:[tcp;;;tinder.com;;,tcp;;;gotinder.com;]
+
+#class game 2 Game
+2201~Roblox:[tcp;;;roblox.com;;]
+
+#class video 3 Video
+3101~YouTube:[tcp;;;youtube;;,tcp;;;googlevideo.com;;]
+3103~NetFlix:[tcp;;;netflix;;]
+3104~Vimeo:[tcp;;;vimeo.com;;,tcp;;;vimeocdn.com;;]
+3105~DailyMotion:[tcp;;;dailymotion;;,tcp;;;dmcdn.net;;] 
+3106~Hulu:[tcp;;;hulu;;]
+3108~Twitch:[tcp;;;twitch;;,tcp;;;ttvnw.net;;]
+
+#class shopping 4 Shopping
+4101~Amazon:[tcp;;;amazon.com;;]
+4102~eBay:[tcp;;;ebay.com;;]
+4103~Etsy:[tcp;;;etsy.com;;]
+4104~Wish:[tcp;;;wish.com;;]
+4105~Alibaba:[tcp;;;alibaba;;]
+4106~Aliexpress:[tcp;;;aliexpress.com;;]
+4107~Walmart:[tcp;;;walmart.com;;]
+4108~Sears:[tcp;;;sears.com;;]
+4109~Kohls:[tcp;;;kohls.com;;]
+4110~Costco:[tcp;;;costco.com;;]
+4111~Asos:[tcp;;;asos.com;;]
+
+#class music 5 Music
+5101~Spotify:[tcp;;;spotify.com;;]
+5105~AmazonMusic:[tcp;;;music.amazon;;]
+5106~Pandora:[tcp;;;pandora.com;;]
+5107~SoundCloud:[tcp;;;soundcloud.com;;]
+5108~audiomack:[tcp;;;audiomack.com;;]
+
+#class download 7 Download
+7101~GooglePlay:[tcp;;;play.google.com;;,tcp;;;play-apps-features;;,tcp;;;play-fe.googleapis.com;;,tcp;;;play-lh.googleusercontent.com;;,tcp;;;play.googleapis.com;;,tcp;;;xn--ngstr-lra8j.com;;]
+7102~AppStore:[tcp;;;itunes.apple.com;;,tcp;;;apps.apple.com;;]
+7103~WindowsUpdate:[tcp;;80;update.microsoft.com;;,tcp;;;windowsupdate.com;;]  
+7150~Speedtest:[tcp;;;speedtest.net;;]
+7160~samba:[tcp;;445;;;]
+7161~ftp:[tcp;;21;;;]
+7162~ssh:[tcp;;22;;;]
+
+#class website 8 Website
+8101~Google:[tcp;;;www.google.com;;,tcp;;;m.google.com;;]
+8102~Wiki:[tcp;;;wikipedia.com;;]
+8103~Yahoo:[tcp;;;yahoo;;]
+8104~Apple:[tcp;;;www.apple.com;;]
+8110~Reddit:[tcp;;;reddit.com;;]
+8181~Github:[tcp;;;github.com;;]
+8111~Outlook:[tcp;;;outlook.live.com;;]
+8118~BBC:[tcp;;;www.bbc.com;;]
+8120~Linkedin:[tcp;;;linkedin.com;;]
+8130~Cambridge:[tcp;;;cambridge.org;;]
+8132~Weather:[tcp;;;weather.com;;]
+8135~Microsoft:[tcp;;;www.microsoft.com;;]
+
+
+
+
+1900~DoubaoAI:[tcp;;443;doubao.com;;]

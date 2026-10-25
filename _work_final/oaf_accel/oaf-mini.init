@@ -1,0 +1,5 @@
+#!/bin/sh /etc/rc.common
+START=99
+STOP=10
+start() { /root/oaf_start.sh; }
+stop() { /root/oaf_accel.sh remove 2>/dev/null; rmmod oaf 2>/dev/null; }

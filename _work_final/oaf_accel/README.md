@@ -46,6 +46,37 @@ sh oaf_accel.sh remove
 
 `verify` 会打印 nft 规则、计数器、以及 `/proc/net/nf_conntrack` 中低 16 位为 AppID 的 conntrack。
 
+## 3.1 本板的最小 OAF 部署（无完整 oafd）
+
+当前板没有 oafd 及其依赖（libsqlite3/libcurl/libuci-lua）。本目录提供：
+
+- `oaf.ko`：按 6.6.73 编译的 OAF 内核模块；
+- `oaf_load`：最小用户态 feature loader（raw netlink，无第三方库）；
+- `feature_plain.txt`：解密后的 Lite 26.01.01 + `1900~DoubaoAI:[tcp;;443;doubao.com;;]`；
+- `oaf_start.sh` / `oaf-mini.init`：开机加载模块、灌特征、使能 appfilter、安装加速规则。
+
+```sh
+insmod /root/oaf.ko
+/root/oaf_load /root/oaf_feature_plain.txt
+echo 1 > /proc/sys/fwx/appfilter_enable
+echo 1 > /proc/sys/fwx/feature_init
+/root/oaf_accel.sh install 1900 ef
+```
+
+注意：这是最小验证部署，不包含 LuCI、记录、在线特征更新；`/proc/net/af_active_app` 可能不填充，但 `conntrack mark` 已验证可用。
+
+## 3.2 真实豆包 A/B 结果
+
+在约 410 Mbit/s 同 STA TCP 竞争下，`curl https://www.doubao.com/` 的 TTFB：
+
+| 指标 | 基线 | 加速 | 变化 |
+|---|---|---|---|
+| 均值 | 0.387 s | 0.233 s | −40% |
+| p50 | 0.351 s | 0.228 s | −35% |
+| p95 | 1.030 s | 0.314 s | −70% |
+
+详见 `real_doubao_ab.md`。
+
 ## 4. 验证顺序
 
 1. 手机只开豆包，发一条文字聊天；

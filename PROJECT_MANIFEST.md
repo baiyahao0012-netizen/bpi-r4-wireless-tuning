@@ -124,6 +124,8 @@ echo "<NORMAL_MAC> 1" > /sys/kernel/debug/ieee80211/phy0/mt76/sta_weight
 - OAF v7.0.1 将 AppID 写入 conntrack mark 低 16 位；加速层用 nft 匹配 `ct mark & 0xffff == 1900`，打 DSCP EF，进入 mac80211 AC_VO。
 - 工具：`_work_final/oaf_accel/oaf_accel.sh`（install/remove/status/verify）、`oaf_ab_capture.sh`（A/B 抓包与 app 表采样）、`README.md`（原理/限制/步骤）。
 - mock 验证：`_work_final/oaf_accel/mock_ctmark_test.md`（无 OAF 时人为置 ct mark=1900；同 STA 双流 181/84.5 = 2.14:1，nft counter 3364 pkts/117 MB）。
+- 真实 OAF 部署：`oaf.ko`（6.6.73 编译）、`oaf_load`（raw netlink 最小 feature loader）、`feature_plain.txt`、`oaf_start.sh`/`oaf-mini.init`；真实 Doubao SNI 命中 ct mark=1900 已确认。
+- 真实 A/B：`real_doubao_ab.md`（约 410 Mbit/s 同 STA 竞争；TTFB p50 0.351→0.228 s，p95 1.030→0.314 s；nft counter 241 pkts/75 KB）。
 - 注意：当前 OAF 规则只覆盖 `doubao.com` TCP 443；图片/语音/QUIC 可能不在内；OAF 验证环境为 OpenWrt 25.12.5/6.12.94，勿与 24.10/6.6.73 的 A+ 模块混用。
 
 ## 9. 维护约定
