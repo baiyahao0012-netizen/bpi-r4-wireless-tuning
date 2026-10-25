@@ -19,6 +19,16 @@ openwrt.xml
 _wsl_*.txt
 ~$*
 
+# ---- 非项目缓存 / 草稿（不入库）----
+_*.json
+d1_method.json
+d3_*.json
+v3chk.json
+doc-fetch-resources/
+draft_*_folder/
+ppt_work/
+py_ssvep_cython_*
+
 # ---- 实验备份 / 临时产物 ----
 _work_recover/
 _work_final/modules/edca_set
