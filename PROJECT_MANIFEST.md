@@ -126,6 +126,7 @@ echo "<NORMAL_MAC> 1" > /sys/kernel/debug/ieee80211/phy0/mt76/sta_weight
 - mock 验证：`_work_final/oaf_accel/mock_ctmark_test.md`（无 OAF 时人为置 ct mark=1900；同 STA 双流 181/84.5 = 2.14:1，nft counter 3364 pkts/117 MB）。
 - 真实 OAF 部署：`oaf.ko`（6.6.73 编译）、`oaf_load`（raw netlink 最小 feature loader）、`feature_plain.txt`、`oaf_start.sh`/`oaf-mini.init`；真实 Doubao SNI 命中 ct mark=1900 已确认。
 - 真实 A/B：`real_doubao_ab.md`（约 410 Mbit/s 同 STA 竞争；TTFB p50 0.351→0.228 s，p95 1.030→0.314 s；nft counter 241 pkts/75 KB）。
+- HE40 弱网 A/B：`pc_he40_ab.md`（PC 豆包，双流 274/265 Mbit/s；TTFB p50 0.649→0.257 s，p95 1.032→0.426 s；HE80 下无收益，已恢复 HE80）。
 - 注意：当前 OAF 规则只覆盖 `doubao.com` TCP 443；图片/语音/QUIC 可能不在内；OAF 验证环境为 OpenWrt 25.12.5/6.12.94，勿与 24.10/6.6.73 的 A+ 模块混用。
 
 ## 9. 维护约定
