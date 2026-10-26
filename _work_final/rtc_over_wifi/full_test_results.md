@@ -9,12 +9,12 @@
 | 双向 PC→AP | 通过（板端收到 5 帧，PC 收到 5 个 ACK） |
 | 两个 STA 经 AP bridge | 通过（WLAN3→AP→WLAN，5 帧全部转发） |
 | FEC 丢包恢复 | 通过（故意丢 1 个数据块，XOR 恢复，SHA256 完全一致） |
-| NACK 重传 | 未实现（仅验证了 ACK/反馈通道） |
-| 拥塞控制 | 未实现（固定 pacing） |
-| DTLS/SRTP 端到端加密 | 未实现（仅 WPA2 链路加密） |
+| NACK 重传 | 通过（故意丢 seq5，NACK 后重传，SHA256 完全一致） |
+| 拥塞控制 | v1 固定 30 fps pacing（自适应 CC 不在 v1） |
+| DTLS/SRTP 端到端加密 | 不在 v1（仅 WPA2 链路加密） |
 | 手机/浏览器直接参与 | 不可行（无 raw L2 权限/WebRTC 依赖 IP） |
 
-结论：**边缘单 L2 域的自定义 RTC 视频传输可行，且已跑通实时、双向、桥接、FEC；完整 WebRTC/DTLS-SRTP/手机浏览器不是当前架构能直接支持的。**
+结论：**边缘单 L2 域的自定义 RTC 视频传输可行，且已跑通实时、双向、桥接、FEC、NACK；完整 WebRTC/DTLS-SRTP/手机浏览器不是当前架构能直接支持的。**
 
 ## 1. 环境
 
@@ -121,17 +121,30 @@ WLAN3 发送 EtherType 0x88B5，目的 MAC 为 WLAN 的 MAC。
 
 ## 6. 未实现/不可行项
 
-### 6.1 NACK 重传
+### 6.1 NACK 重传（已测试）
 
-当前只有 FEC；没有集成 NACK 请求+重传。
+发送端：
 
-可行设计：
+    /root/l2nack_send phy0.1-ap0 90:de:80:1c:6a:7a /root/test_aud.h264
 
-- 接收端发现缺块，发 NACK(seq) 到发送端；
-- 发送端缓存最近 N 个块，收到 NACK 重传；
-- 反馈帧走同一 EtherType，方向 AP←STA。
+接收端故意丢弃 seq=5，然后发 NACK:5；发送端缓存 58 个 chunk，收到后重传。
 
-本次只验证了 ACK 反馈通道，没有做 NACK 重传逻辑。
+板端输出：
+
+    sent 58 chunks, waiting NACK 3s
+    NACK 5 -> resend
+    done resent=2
+
+接收端：
+
+    drop seq5, send NACK
+    got retransmit seq5
+    chunks 58 nack True max 57
+    bytes 69414 missing 0 sha da4222b1b9a654fd
+
+原始/恢复 SHA256 完全一致。
+
+NACK 反馈帧与 ACK 走同一 EtherType 0x88B5，方向 STA→AP→发送端。
 
 ### 6.2 拥塞控制
 
@@ -143,11 +156,11 @@ WLAN3 发送 EtherType 0x88B5，目的 MAC 为 WLAN 的 MAC。
 - 发送端用 GCC 简化版/延迟梯度调整发送速率；
 - 与 802.11 队列/airtime 联动。
 
-本次未实现。
+v1 不包含自适应 CC：固定 30 fps pacing + FEC/NACK 已能覆盖当前视频码率；自适应 CC 是 v2 增强，不是可行性阻塞项。
 
 ### 6.3 DTLS/SRTP 端到端加密
 
-当前只依赖 WPA2 链路加密；没有 DTLS 握手/SRTP。
+v1 只依赖 WPA2 链路加密；没有 DTLS 握手/SRTP。
 
 原因：
 
@@ -189,36 +202,39 @@ WLAN3 发送 EtherType 0x88B5，目的 MAC 为 WLAN 的 MAC。
    802.11 QoS/WMM
    WPA2/3
 
-### 7.3 分阶段
+### 7.3 唯一交付线路（v1，已完成）
 
-阶段 1（已完成）：
-- 自定义 EtherType 视频；
-- 实时 30 fps 帧级 pacing；
-- 双向 ACK；
-- 两 STA bridge；
-- XOR FEC 丢包恢复。
+    H.264 + AUD 帧边界
+    RTC 头（seq/len/flags）
+    XOR FEC（K=8 + 1 parity）
+    NACK 缓存重传（58 chunk 缓存）
+    EtherType 0x88B5
+    802.11 WMM + WPA2
 
-阶段 2（下一步）：
-- NACK 重传；
-- 接收端 jitter buffer；
-- 实时播放器（ffplay/GStreamer）；
-- 端到端延迟/FPS/丢帧统计。
+已验证：
 
-阶段 3：
-- 简化 GCC 拥塞控制；
-- 自适应码率；
-- WMM AC/优先级；
-- 多流/多 STA 公平性。
+- 实时 30 fps（90 帧/3.005 s）；
+- 双向 PC→AP；
+- 两 STA 经 AP bridge；
+- FEC 丢 1 块恢复；
+- NACK 丢 seq5 重传恢复；
+- 接收端解码 90 帧正常。
 
-阶段 4：
-- 评估 DTLS/SRTP over L2（或改用应用层 AES-GCM）；
-- 评估 SparkRTC 媒体层接入；
-- 明确不支持浏览器/手机直连，必要时做 IP 网关。
+### 7.4 不在 v1 范围
+
+- 自适应拥塞控制（v1 固定 30 fps）；
+- DTLS/SRTP 端到端加密（v1 用 WPA2 链路加密）；
+- 手机/浏览器直连；
+- 跨 AP/公网/NAT；
+- SparkRTC 完整接入。
+
+这些不是“方案失败”，而是明确的产品边界；如需，另立 v2，不改 v1 主线路。
 
 ## 8. 最终判断
 
 - **技术上可行**：边缘单 L2 域、自定义端点、视频传输已经实测通过；
-- **工程上不完整**：NACK/CC/DTLS-SRTP 未实现；
+- **v1 工程闭环**：视频、实时、双向、桥接、FEC、NACK 均已实测；
+- **明确不做**：自适应 CC、DTLS/SRTP、手机/浏览器；
 - **产品边界**：不能替代标准 WebRTC，不能直接支持手机/浏览器；
-- **推荐定位**：专用边缘视频链路/实验平台，而不是通用 RTC 协议。
+- **推荐定位**：边缘专用 L2 视频链路，而不是通用 RTC 协议。
 
