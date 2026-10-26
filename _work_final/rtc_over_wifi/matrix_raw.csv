@@ -1,0 +1,37 @@
+scenario,run,method,chunks,missing,bytes,span,frames,sha,raw
+5G_IDLE,1,UDP/IP,4993,0,5895282,5.484,164,a19a69237bb98bd2,"chunks 4993 max 4992 span 5.484
+missing 0 bytes 5895282 sha a19a69237bb98bd2"
+5G_IDLE,1,RT-L2,5471,0,6459658,6.032,181,,"chunks 5471 max 5470 span 6.032
+missing 0 bytes 6459658"
+5G_IDLE,2,UDP/IP,4975,0,5874432,5.45,163,d4183ce616a90983,"chunks 4975 max 4974 span 5.45
+missing 0 bytes 5874432 sha d4183ce616a90983"
+5G_IDLE,2,RT-L2,5471,0,6459658,6.031,181,,"chunks 5471 max 5470 span 6.031
+missing 0 bytes 6459658"
+5G_IDLE,3,UDP/IP,4993,0,5895282,5.484,164,a19a69237bb98bd2,"chunks 4993 max 4992 span 5.484
+missing 0 bytes 5895282 sha a19a69237bb98bd2"
+5G_IDLE,3,RT-L2,5471,0,6459658,6.031,181,,"chunks 5471 max 5470 span 6.031
+missing 0 bytes 6459658"
+5G_LOAD,1,UDP/IP,4938,0,5831096,5.434,162,2188e62ca92227ce,"chunks 4938 max 4937 span 5.434
+missing 0 bytes 5831096 sha 2188e62ca92227ce"
+5G_LOAD,1,RT-L2,5471,0,6459658,6.046,181,,"chunks 5471 max 5470 span 6.046
+missing 0 bytes 6459658"
+5G_LOAD,2,UDP/IP,4975,0,5874432,5.463,163,d4183ce616a90983,"chunks 4975 max 4974 span 5.463
+missing 0 bytes 5874432 sha d4183ce616a90983"
+5G_LOAD,2,RT-L2,5471,0,6459658,6.044,181,,"chunks 5471 max 5470 span 6.044
+missing 0 bytes 6459658"
+5G_LOAD,3,UDP/IP,4938,0,5831096,5.431,162,2188e62ca92227ce,"chunks 4938 max 4937 span 5.431
+missing 0 bytes 5831096 sha 2188e62ca92227ce"
+5G_LOAD,3,RT-L2,5471,0,6459658,6.042,181,,"chunks 5471 max 5470 span 6.042
+missing 0 bytes 6459658"
+2G4,1,UDP/IP,4975,0,5874432,5.454,163,d4183ce616a90983,"chunks 4975 max 4974 span 5.454
+missing 0 bytes 5874432 sha d4183ce616a90983"
+2G4,1,RT-L2,5471,0,6459658,6.035,181,,"chunks 5471 max 5470 span 6.035
+missing 0 bytes 6459658"
+2G4,2,UDP/IP,4975,0,5874432,5.453,163,d4183ce616a90983,"chunks 4975 max 4974 span 5.453
+missing 0 bytes 5874432 sha d4183ce616a90983"
+2G4,2,RT-L2,5471,0,6459658,6.081,181,,"chunks 5471 max 5470 span 6.081
+missing 0 bytes 6459658"
+2G4,3,UDP/IP,4920,0,5810091,5.388,161,fe8563ce235825de,"chunks 4920 max 4919 span 5.388
+missing 0 bytes 5810091 sha fe8563ce235825de"
+2G4,3,RT-L2,5467,4,6455787,6.123,181,,"chunks 5467 max 5470 span 6.123
+missing 4 bytes 6455787"
