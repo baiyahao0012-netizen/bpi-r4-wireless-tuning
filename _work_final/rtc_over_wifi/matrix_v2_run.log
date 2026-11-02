@@ -1,0 +1,58 @@
+Exception in thread Thread-3 (_readerthread):
+Traceback (most recent call last):
+  File "D:\Bai_Yahao\Software\Python\lib\threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "D:\Bai_Yahao\Software\Python\lib\threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\Bai_Yahao\Software\Python\lib\subprocess.py", line 1515, in _readerthread
+    buffer.append(fh.read())
+  File "D:\Bai_Yahao\Software\Python\lib\codecs.py", line 322, in decode
+    (result, consumed) = self._buffer_decode(data, self.errors, final)
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd2 in position 49: invalid continuation byte
+5G_IDLE 1 UDP 5471 0 6459658 181
+5G_IDLE 1 L2 5471 0 6459658 181
+5G_IDLE 2 UDP 5471 0 6459658 181
+5G_IDLE 2 L2 5471 0 6459658 181
+5G_IDLE 3 UDP 5471 0 6459658 181
+5G_IDLE 3 L2 5471 0 6459658 181
+Exception in thread Thread-39 (_readerthread):
+Traceback (most recent call last):
+  File "D:\Bai_Yahao\Software\Python\lib\threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "D:\Bai_Yahao\Software\Python\lib\threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\Bai_Yahao\Software\Python\lib\subprocess.py", line 1515, in _readerthread
+    buffer.append(fh.read())
+  File "D:\Bai_Yahao\Software\Python\lib\codecs.py", line 322, in decode
+    (result, consumed) = self._buffer_decode(data, self.errors, final)
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd2 in position 49: invalid continuation byte
+5G_LOAD 1 UDP 5471 0 6459658 181
+5G_LOAD 1 L2 5471 0 6459658 181
+5G_LOAD 2 UDP 5471 0 6459658 181
+5G_LOAD 2 L2 5471 0 6459658 181
+5G_LOAD 3 UDP 5471 0 6459658 181
+5G_LOAD 3 L2 5471 0 6459658 181
+Exception in thread Thread-77 (_readerthread):
+Traceback (most recent call last):
+  File "D:\Bai_Yahao\Software\Python\lib\threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "D:\Bai_Yahao\Software\Python\lib\threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\Bai_Yahao\Software\Python\lib\subprocess.py", line 1515, in _readerthread
+    buffer.append(fh.read())
+  File "D:\Bai_Yahao\Software\Python\lib\codecs.py", line 322, in decode
+    (result, consumed) = self._buffer_decode(data, self.errors, final)
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xd2 in position 49: invalid continuation byte
+2G4 1 UDP 5470 1 6458458 181
+2G4 1 L2 5471 0 6459658 181
+2G4 2 UDP 5471 0 6459658 181
+2G4 2 L2 5471 0 6459658 181
+2G4 3 UDP 5468 3 6456058 181
+2G4 3 L2 5471 0 6459658 181
+SAVED
+5G_IDLE UDP/IP n 3 chunks [5471, 5471, 5471] missing [0, 0, 0] frames [181, 181, 181]
+5G_IDLE RT-L2 n 3 chunks [5471, 5471, 5471] missing [0, 0, 0] frames [181, 181, 181]
+5G_LOAD UDP/IP n 3 chunks [5471, 5471, 5471] missing [0, 0, 0] frames [181, 181, 181]
+5G_LOAD RT-L2 n 3 chunks [5471, 5471, 5471] missing [0, 0, 0] frames [181, 181, 181]
+2G4 UDP/IP n 3 chunks [5470, 5471, 5468] missing [1, 0, 3] frames [181, 181, 181]
+2G4 RT-L2 n 3 chunks [5471, 5471, 5471] missing [0, 0, 0] frames [181, 181, 181]

@@ -1,0 +1,18 @@
+	frequency:			5745 MHz [in use]
+	noise:				-90 dBm
+	channel active time:		4614221 ms
+	channel busy time:		1790787 ms
+	channel receive time:		773958 ms
+	channel BSS receive time:	638042 ms
+	channel transmit time:		999558 ms
+Survey data from phy0.1-ap0
+	frequency:			5765 MHz
+	frequency:			5745 MHz [in use]
+	noise:				-90 dBm
+	channel active time:		4619227 ms
+	channel busy time:		1795495 ms
+	channel receive time:		777724 ms
+	channel BSS receive time:	641717 ms
+	channel transmit time:		1000477 ms
+Survey data from phy0.1-ap0
+	frequency:			5765 MHz

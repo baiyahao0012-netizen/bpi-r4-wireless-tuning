@@ -1,0 +1,13 @@
+{
+  "audience": "项目组评审成员与导师，评估 RTC over WiFi 技术可行性验证是否成立",
+  "reader_task": "确认去掉 UDP/IP 后视频能否在边缘 L2 域传输、验证方法与数据是否可信、边界与结论是否清晰",
+  "genre_contract": "product-and-engineering-document",
+  "adapter": null,
+  "presentation_mode": "rich",
+  "visual_plan": {
+    "reason": "用 HTML block 呈现协议栈分层、测试拓扑与真实摄像头场景对比，正文承载方法与分析",
+    "blocks": [
+      {"type": "html5-block", "min_count": 3, "purpose": "协议栈分层图、测试拓扑图、真实摄像头场景结果对比"}
+    ]
+  }
+}

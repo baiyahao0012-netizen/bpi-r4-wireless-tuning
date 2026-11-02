@@ -1,0 +1,76 @@
+diff -ruN a/include/net/fq.h b/include/net/fq.h
+--- a/include/net/fq.h	2024-12-27 00:16:47.000000000 +0800
++++ b/include/net/fq.h	2026-11-02 18:07:44.710040231 +0800
+@@ -34,6 +34,7 @@
+ 	struct sk_buff_head queue;
+ 	u32 backlog;
+ 	int deficit;
++	int quantum;
+ };
+ 
+ /**
+diff -ruN a/include/net/fq_impl.h b/include/net/fq_impl.h
+--- a/include/net/fq_impl.h	2024-12-27 00:16:47.000000000 +0800
++++ b/include/net/fq_impl.h	2026-11-02 18:07:44.712288361 +0800
+@@ -108,7 +108,7 @@
+ 	flow = list_first_entry(head, struct fq_flow, flowchain);
+ 
+ 	if (flow->deficit <= 0) {
+-		flow->deficit += fq->quantum;
++		flow->deficit += flow->quantum ? flow->quantum : fq->quantum;
+ 		list_move_tail(&flow->flowchain,
+ 			       &tin->old_flows);
+ 		goto begin;
+@@ -336,6 +336,7 @@
+ {
+ 	INIT_LIST_HEAD(&flow->flowchain);
+ 	__skb_queue_head_init(&flow->queue);
++	flow->quantum = 0;
+ }
+ 
+ static void fq_tin_init(struct fq_tin *tin)
+diff -ruN a/net/mac80211/tx.c b/net/mac80211/tx.c
+--- a/net/mac80211/tx.c	2024-12-27 00:16:47.000000000 +0800
++++ b/net/mac80211/tx.c	2026-11-02 18:07:44.714120064 +0800
+@@ -26,6 +26,21 @@
+ #include <net/codel_impl.h>
+ #include <linux/unaligned.h>
+ #include <net/fq_impl.h>
++
++/* Private WDRR scheduler: per-AC weight applied to the fq DRR quantum.
++ * Sysfs: /sys/module/mac80211/parameters/fq_weight
++ * 0 for an AC means use the global quantum (classic DRR).
++ */
++static int fq_weight[IEEE80211_NUM_ACS] = {1, 1, 1, 1};
++module_param_array(fq_weight, int, NULL, 0644);
++MODULE_PARM_DESC(fq_weight, "mac80211 WDRR: per-AC weight (x quantum); 0=global quantum");
++
++static void ieee80211_wdrr_mark_loaded(void)
++{
++	printk_once(KERN_INFO "mac80211: private WDRR scheduler active "
++		    "(fq_weight=%d,%d,%d,%d)\n",
++		    fq_weight[0], fq_weight[1], fq_weight[2], fq_weight[3]);
++}
+ #include <net/gso.h>
+ 
+ #include "ieee80211_i.h"
+@@ -1403,6 +1418,19 @@
+ 	txqi = container_of(tin, struct txq_info, tin);
+ 	cstats = &txqi->cstats;
+ 
++	/* Private WDRR: apply per-AC weight to this flow's DRR budget
++	 * on first dequeue; later sysfs updates affect newly created flows.
++	 */
++	if (flow->quantum == 0) {
++		int ac = txqi->txq.ac;
++		int w = (ac >= 0 && ac < IEEE80211_NUM_ACS) ? fq_weight[ac] : 1;
++
++		if (w <= 0)
++			w = 1;
++		flow->quantum = fq->quantum * w;
++		ieee80211_wdrr_mark_loaded();
++	}
++
+ 	if (txqi->txq.sta) {
+ 		struct sta_info *sta = container_of(txqi->txq.sta,
+ 						    struct sta_info, sta);

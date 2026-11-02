@@ -1,0 +1,59 @@
+[0,0][1440,3200]       clk=false LinearLayout   action_bar_root          txt= | desc=
+[0,0][1440,3200]       clk=false FrameLayout    content                  txt= | desc=
+[0,0][1440,3200]       clk=false FrameLayout    fragment_container       txt= | desc=
+[0,0][1440,3200]       clk=false DrawerLayout   side_bar_layout          txt= | desc=
+[0,0][1440,3200]       clk=false FrameLayout    draggable_container      txt= | desc=
+[0,0][1440,3200]       clk=false FrameLayout    page_container           txt= | desc=
+[0,0][1440,3200]       clk=false ViewGroup      chat_root                txt= | desc=
+[0,138][1440,3200]     clk=false FrameLayout    luckdog_stub_view        txt= | desc=
+[0,138][1440,3200]     clk=false FrameLayout    chat_bubble_banner_overlay_container txt= | desc=
+[0,138][1440,2795]     clk=false ViewGroup      latest_photo_shortcut_container txt= | desc=
+[0,138][1440,360]      clk=false FrameLayout    title_container          txt= | desc=
+[0,138][1440,360]      clk=false ViewGroup      chat_title_align_left_style_view txt= | desc=
+[30,168][192,330]      clk=true  ImageView      back_icon                txt= | desc=返回
+[1086,168][1248,330]   clk=true  FrameLayout    real_time_call_ic_container txt= | desc=
+[1086,168][1248,330]   clk=false ImageView      real_time_call           txt= | desc=打电话
+[1248,168][1410,330]   clk=false FrameLayout    tts_container            txt= | desc=
+[1248,168][1410,330]   clk=true  FrameLayout    tts                      txt= | desc=朗读已关闭
+[0,360][1440,2717]     clk=false View           cancel_modify_area       txt= | desc=
+[0,360][1440,2717]     clk=false FrameLayout    message_list_parent      txt= | desc=
+[0,360][1440,2717]     clk=false FrameLayout    message_list_sub_parent  txt= | desc=
+[0,360][1440,2717]     clk=false LinearLayout   aweme_container          txt= | desc=
+[0,360][1440,2717]     clk=false RecyclerView   message_list             txt= | desc=
+[0,1084][1440,1476]    clk=false LinearLayout   larus_mode_switch_content txt= | desc=
+[0,1084][1440,1217]    clk=false TextView       larus_mode_switch_welcome_title txt=有什么我能帮你的吗？ | desc=
+[266,1291][1174,1476]  clk=false FrameLayout    larus_mode_switch_container txt= | desc=
+[266,1291][731,1475]   clk=false View           larus_mode_switch_indicator txt= | desc=
+[277,1302][1163,1464]  clk=false LinearLayout   larus_mode_switch_labels txt= | desc=
+[431,1335][565,1431]   clk=false TextView                                txt=对话 | desc=
+[874,1335][1008,1431]  clk=false TextView                                txt=工作 | desc=
+[0,2717][1440,2721]    clk=false View           splitter                 txt= | desc=
+[0,2721][1440,3200]    clk=false FrameLayout    input                    txt= | desc=
+[0,2721][1440,3200]    clk=true  ViewGroup      input_delegate           txt= | desc=
+[0,2765][1440,2905]    clk=false ViewGroup      action_bar_container     txt= | desc=
+[0,2765][1440,2905]    clk=false FrameLayout    mask_container           txt= | desc=
+[0,2765][1440,2905]    clk=false RecyclerView   action_bar               txt= | desc=
+[44,2765][340,2905]    clk=true  ViewGroup                               txt= | desc=深度思考，已关闭
+[88,2806][147,2865]    clk=false ImageView      ic_item_img              txt= | desc=
+[162,2811][266,2859]   clk=false TextView       tv_item_name             txt=对话 | desc=
+[281,2815][296,2856]   clk=false ImageView      iv_left_bold             txt= | desc=
+[370,2765][688,2905]   clk=true  ViewGroup                               txt= | desc=打电话
+[414,2806][473,2865]   clk=false ImageView      ic_item_img              txt= | desc=
+[488,2811][644,2859]   clk=false TextView       tv_item_name             txt=打电话 | desc=
+[718,2765][1136,2905]  clk=true  ViewGroup                               txt= | desc=双11问豆包
+[762,2806][821,2865]   clk=false ImageView      ic_item_img              txt= | desc=
+[836,2811][1092,2859]  clk=false TextView       tv_item_name             txt=双11问豆包 | desc=
+[1166,2765][1440,2905] clk=true  ViewGroup                               txt= | desc=帮我写作
+[1210,2806][1269,2865] clk=false ImageView      ic_item_img              txt= | desc=
+[1284,2811][1440,2859] clk=false TextView       tv_item_name             txt=帮我写作 | desc=
+[0,2905][1440,3200]    clk=false ViewGroup      input_area_container     txt= | desc=
+[44,2949][1396,3156]   clk=false ViewGroup      input_area               txt= | desc=
+[44,2949][206,3156]    clk=true  FrameLayout    action_entrance          txt= | desc=相机
+[88,2993][206,3111]    clk=false ImageView      action_entrance_iv       txt= | desc=
+[206,2967][1072,3139]  clk=true  EditText       input_text               txt=发消息或按住说话... | desc=
+[1072,2949][1396,3156] clk=false LinearLayout   action_area              txt= | desc=
+[1072,2949][1234,3156] clk=false FrameLayout    action_speak_group       txt= | desc=语音输入
+[1072,2949][1234,3156] clk=false ImageView      action_speak             txt= | desc=
+[1234,2949][1396,3156] clk=true  FrameLayout    action_menu_entrance     txt= | desc=
+[1234,2949][1352,3156] clk=false ImageView      iv_action_menu_entrance  txt= | desc=更多面板
+[0,0][1440,138]        clk=false View           statusBarBackground      txt= | desc=

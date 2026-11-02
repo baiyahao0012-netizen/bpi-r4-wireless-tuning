@@ -51,3 +51,9 @@ mt76.b64
 # ---- Windows 系统文件 ----
 Thumbs.db
 Desktop.ini
+
+# ---- 2026-11-02 merge work: extracted reference tree (rebuildable from other_src_pack/backports-src.rar) ----
+_work_merge/other_src/
+_work_merge/_build/
+_work_merge/other_overlay/
+_work_merge/our_side/

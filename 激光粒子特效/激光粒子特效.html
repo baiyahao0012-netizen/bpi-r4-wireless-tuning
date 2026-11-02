@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>双束激光 · 描圆与烟花</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3l3.2 9.8L29 16l-9.8 3.2L16 29l-3.2-9.8L3 16l9.8-3.2z' fill='%23ffd873'/%3E%3C/svg%3E">
+<style>
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #07040e; }
+  #stage { position: fixed; inset: 0; display: block; }
+  .hint {
+    position: fixed; right: 16px; bottom: 14px;
+    font: 12px/1.6 -apple-system, "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    color: rgba(255, 216, 115, 0.5); letter-spacing: 0.08em;
+    pointer-events: none; user-select: none;
+  }
+  @media (prefers-reduced-motion: reduce) { .hint { display: none; } }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div class="hint">点击屏幕 · 重新演出</div>
+
+<script>
+"use strict";
+/* ============ 画布与全局 ============ */
+const canvas = document.getElementById("stage");
+const ctx = canvas.getContext("2d");
+let W = 0, H = 0, DPR = 1, cx = 0, cy = 0, R0 = 300;
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  canvas.style.width = W + "px"; canvas.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  cx = W / 2; cy = H / 2;
+  R0 = Math.max(60, Math.min(W, H) * 0.36);
+}
+window.addEventListener("resize", resize);
+resize();
+
+/* ============ 时间与状态机 ============ */
+const T_ROTATE = 4.0;     // 旋转描圆
+const T_SHRINK = 3.2;     // 圆缩小成点
+const T_BURST  = 2.8;     // 烟花
+const T_GLOW   = 2.2;     // 余烬收尾
+let phase = "rotate";
+let t = 0;                // 当前阶段已过秒数
+let theta = 0;            // 光束角
+const OMEGA = (2.6 * Math.PI) / T_ROTATE; // 顺时针
+
+const easeInOut = p => p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+function currentR() {
+  if (phase === "rotate") return R0;
+  if (phase === "shrink") return R0 * (1 - easeInOut(Math.min(t / T_SHRINK, 1)));
+  return 0;
+}
+
+/* ============ 粒子系统 ============ */
+const particles = [];
+const MAX_PARTICLES = 1400;
+function push(p) { if (particles.length < MAX_PARTICLES) particles.push(p); }
+
+let flashA = 0;      // 爆炸全屏闪白
+let burstPulse = 0;  // 中心光核膨胀
+let subBursts = [];  // 次级爆炸 {delay}
+
+/* 金光粒子：从光束上冒出的金色碎光 */
+function spawnSpark(ang, R) {
+  const u = Math.random() * 0.7 + 0.3;          // 光束上随机位置
+  const bx = cx + Math.cos(ang) * R * u;
+  const by = cy + Math.sin(ang) * R * u;
+  const dir = ang + (Math.random() - 0.5) * 0.9; // 沿光束外偏
+  const sp = 0.4 + Math.random() * 1.1;
+  push({
+    type: "spark",
+    x: bx, y: by,
+    vx: Math.cos(dir) * sp, vy: Math.sin(dir) * sp - 0.25,
+    life: 0, max: 0.6 + Math.random() * 0.9,
+    size: 0.7 + Math.random() * 1.6,
+    rot: Math.random() * Math.PI * 2, rotV: (Math.random() - 0.5) * 0.05,
+  });
+}
+
+/* 光环：从尖端散开的一圈金光 */
+function spawnRing(ang, R) {
+  const tx = cx + Math.cos(ang) * R;
+  const ty = cy + Math.sin(ang) * R;
+  push({
+    type: "ring",
+    x: tx, y: ty,
+    r: 0, maxR: R0 * (0.38 + Math.random() * 0.22),
+    life: 0, max: 0.9 + Math.random() * 0.5,
+    lineW: 1 + Math.random() * 1.4,
+  });
+}
+
+/* 金星：烟花碎片（十字闪光） */
+function spawnStar(x, y, speed, sizeMul) {
+  const a = Math.random() * Math.PI * 2;
+  const sp = speed * (0.35 + Math.random() * 0.9);
+  push({
+    type: "star",
+    x: x, y: y,
+    vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.15,
+    life: 0, max: 1.4 + Math.random() * 1.6,
+    size: (1.1 + Math.random() * 2.6) * sizeMul,
+    rot: Math.random() * Math.PI, rotV: (Math.random() - 0.5) * 0.06,
+    drag: 0.985,
+  });
+}
+
+function bigBurst(x, y, count, speedMul) {
+  for (let i = 0; i < count; i++) spawnStar(x, y, 2.2 + Math.random() * 7.5, speedMul);
+}
+function smallBurst(x, y) {
+  for (let i = 0; i < 90; i++) spawnStar(x, y, 1.5 + Math.random() * 4.5, 0.7);
+}
+
+/* ============ 绘制：静态背景星野 ============ */
+const stars = [];
+(function initStars() {
+  for (let i = 0; i < 130; i++) {
+    stars.push({
+      x: Math.random(), y: Math.random(),
+      r: 0.4 + Math.random() * 1.1,
+      a: 0.15 + Math.random() * 0.45,
+      tw: 0.5 + Math.random() * 1.6,
+    });
+  }
+})();
+function drawStarfield(now) {
+  ctx.fillStyle = "#0a0613";
+  ctx.fillRect(0, 0, W, H);
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.7);
+  g.addColorStop(0, "rgba(64,42,110,0.20)");
+  g.addColorStop(0.55, "rgba(28,16,52,0.10)");
+  g.addColorStop(1, "rgba(7,4,14,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  for (const s of stars) {
+    const a = s.a * (0.55 + 0.45 * Math.sin(now / 1000 * s.tw + s.x * 40));
+    ctx.fillStyle = "rgba(230,216,255," + a.toFixed(3) + ")";
+    ctx.beginPath();
+    ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+/* 十字金星 */
+function drawSparkle(x, y, r, rot, alpha) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.strokeStyle = "rgba(255,236,180," + alpha.toFixed(3) + ")";
+  ctx.lineWidth = Math.max(0.6, r * 0.16);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(0, -r); ctx.lineTo(0, r);
+  ctx.moveTo(-r, 0); ctx.lineTo(r, 0);
+  ctx.stroke();
+  ctx.strokeStyle = "rgba(255,205,110," + (alpha * 0.85).toFixed(3) + ")";
+  ctx.lineWidth = Math.max(0.5, r * 0.1);
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.42, -r * 0.42); ctx.lineTo(r * 0.42, r * 0.42);
+  ctx.moveTo(-r * 0.42, r * 0.42); ctx.lineTo(r * 0.42, -r * 0.42);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/* ============ 绘制：激光与描圆 ============ */
+const trail = []; // 尖端轨迹（描圆）
+function drawBeam(ang, R, now) {
+  const tipX = cx + Math.cos(ang) * R;
+  const tipY = cy + Math.sin(ang) * R;
+  const grad = ctx.createLinearGradient(cx, cy, tipX, tipY);
+  grad.addColorStop(0, "rgba(255,246,222,0.92)");
+  grad.addColorStop(0.28, "rgba(255,216,115,0.80)");
+  grad.addColorStop(0.72, "rgba(255,178,46,0.42)");
+  grad.addColorStop(1, "rgba(255,178,46,0.03)");
+  // 外发光层
+  ctx.save();
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 13;
+  ctx.globalAlpha = 0.16;
+  ctx.shadowColor = "rgba(255,190,70,0.9)";
+  ctx.shadowBlur = 18;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(tipX, tipY); ctx.stroke();
+  ctx.restore();
+  // 主光柱
+  ctx.save();
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 3.4;
+  ctx.shadowColor = "rgba(255,210,110,0.85)";
+  ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(tipX, tipY); ctx.stroke();
+  ctx.restore();
+  // 尖端热核
+  ctx.save();
+  ctx.fillStyle = "#fff7e0";
+  ctx.shadowColor = "rgba(255,220,120,1)";
+  ctx.shadowBlur = 16;
+  ctx.beginPath(); ctx.arc(tipX, tipY, 3.2, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  // 描圆轨迹
+  trail.push({ x: tipX, y: tipY, a: 1 });
+  if (trail.length > 130) trail.shift();
+  for (let i = 0; i < trail.length; i++) {
+    const p = trail[i];
+    p.a *= 0.965;
+    if (p.a < 0.02) continue;
+    ctx.fillStyle = "rgba(255,205,102," + (p.a * 0.5).toFixed(3) + ")";
+    ctx.beginPath(); ctx.arc(p.x, p.y, 1.2, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+function drawCircleRing(R, now) {
+  if (R <= 1) return;
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,205,100,0.34)";
+  ctx.lineWidth = 1.6;
+  ctx.shadowColor = "rgba(255,190,70,0.7)";
+  ctx.shadowBlur = 12;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+}
+
+/* ============ 绘制粒子 ============ */
+function drawParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.life += dt;
+    if (p.life >= p.max) { particles.splice(i, 1); continue; }
+    const prog = p.life / p.max;
+    const alpha = 1 - prog;
+    if (p.type === "spark") {
+      p.x += p.vx * dt * 60; p.y += p.vy * dt * 60;
+      p.vx *= 0.985; p.vy *= 0.985;
+      p.rot += p.rotV;
+      ctx.save();
+      ctx.fillStyle = "rgba(255,214,120," + alpha.toFixed(3) + ")";
+      ctx.shadowColor = "rgba(255,200,90,0.9)";
+      ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (0.4 + 0.6 * alpha), 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    } else if (p.type === "ring") {
+      p.r += (p.maxR - p.r) * 0.06;
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,205,102," + (alpha * 0.55).toFixed(3) + ")";
+      ctx.lineWidth = p.lineW * alpha;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    } else if (p.type === "star") {
+      p.x += p.vx * dt * 60; p.y += p.vy * dt * 60;
+      p.vx *= p.drag; p.vy *= p.drag;
+      p.vy += 0.012;
+      p.rot += p.rotV;
+      drawSparkle(p.x, p.y, p.size * (0.35 + 0.65 * alpha), p.rot, alpha);
+      // 短拖尾
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,200,90," + (alpha * 0.3).toFixed(3) + ")";
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x - p.vx * 2.2, p.y - p.vy * 2.2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
+/* ============ 阶段编排 ============ */
+let ringTimer = 0, sparkAcc = 0;
+
+function updatePhase(dt, now) {
+  if (phase === "rotate") {
+    theta += OMEGA * dt;
+    ringTimer -= dt;
+    if (ringTimer <= 0) {
+      spawnRing(theta, R0);
+      spawnRing(theta + Math.PI, R0);
+      ringTimer = 0.42;
+    }
+    if (t > T_ROTATE) { phase = "shrink"; t = 0; }
+  } else if (phase === "shrink") {
+    const R = currentR();
+    theta += OMEGA * dt * 0.85;
+    ringTimer -= dt;
+    if (ringTimer <= 0) {
+      spawnRing(theta, R);
+      spawnRing(theta + Math.PI, R);
+      ringTimer = 0.5;
+    }
+    if (R < R0 * 0.02) {
+      phase = "burst"; t = 0;
+      bigBurst(cx, cy, 420, 1);
+      subBursts = [0.26, 0.56, 0.92];
+      flashA = 1;
+      burstPulse = 0;
+    }
+  } else if (phase === "burst") {
+    for (let i = subBursts.length - 1; i >= 0; i--) {
+      if (t >= subBursts[i]) {
+        smallBurst(cx + (Math.random() - 0.5) * 26, cy + (Math.random() - 0.5) * 26);
+        subBursts.splice(i, 1);
+      }
+    }
+    flashA *= 0.86;
+    burstPulse += dt * 3.2;
+    if (t > T_BURST) { phase = "glow"; t = 0; }
+  } else if (phase === "glow") {
+    flashA *= 0.9;
+    if (t > T_GLOW) restart();
+  }
+}
+
+function drawBurstFlash(dt) {
+  if (flashA > 0.01) {
+    ctx.save();
+    ctx.fillStyle = "rgba(255,240,200," + (flashA * 0.5).toFixed(3) + ")";
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+  if (burstPulse > 0) {
+    ctx.save();
+    const r = 6 + burstPulse * 90;
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0, "rgba(255,236,180," + (0.85 * Math.max(0, 1 - burstPulse * 0.45)).toFixed(3) + ")");
+    g.addColorStop(1, "rgba(255,200,90,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* ============ 主循环 ============ */
+let last = 0;
+function restart() {
+  particles.length = 0;
+  trail.length = 0;
+  theta = 0; t = 0; phase = "rotate";
+  ringTimer = 0; flashA = 0; burstPulse = 0; subBursts = [];
+  R0 = Math.max(60, Math.min(W, H) * 0.36);
+}
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, 0.05) || 0.016;
+  last = now;
+  drawStarfield(now);
+  t += dt;
+  updatePhase(dt, now);
+  const R = currentR();
+  if (phase === "rotate" || phase === "shrink") {
+    // 金光冒发
+    sparkAcc += dt;
+    const rate = phase === "rotate" ? 0.03 : 0.045;
+    while (sparkAcc > rate) {
+      sparkAcc -= rate;
+      spawnSpark(theta, R);
+      spawnSpark(theta + Math.PI, R);
+    }
+    drawCircleRing(R, now);
+    drawBeam(theta, R, now);
+    drawBeam(theta + Math.PI, R, now);
+  }
+  drawParticles(dt);
+  drawBurstFlash(dt);
+  requestAnimationFrame(frame);
+}
+
+/* 点击 / 触摸重播 */
+canvas.addEventListener("pointerdown", restart);
+canvas.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") restart(); });
+canvas.setAttribute("tabindex", "0");
+canvas.setAttribute("role", "img");
+canvas.setAttribute("aria-label", "两束金色激光旋转描圆，圆缩小成一点后爆开满天金星的特效动画，点击可重新播放");
+
+/* 低动效偏好：只显示静止一帧画面（持续重绘，不运动） */
+function drawStatic(now) {
+  drawStarfield(now);
+  const R = R0;
+  drawCircleRing(R, now);
+  drawBeam(0, R, now);
+  drawBeam(Math.PI, R, now);
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,210,110,0.7)";
+  ctx.lineWidth = 2.4;
+  ctx.shadowColor = "rgba(255,200,90,0.9)";
+  ctx.shadowBlur = 18;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.restore();
+  requestAnimationFrame(drawStatic);
+}
+if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  requestAnimationFrame(drawStatic);
+} else {
+  requestAnimationFrame(frame);
+}
+</script>
+</body>
+</html>

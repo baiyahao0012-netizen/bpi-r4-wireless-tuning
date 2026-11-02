@@ -1,0 +1,297 @@
+Fri Oct 30 04:32:11 UTC 2026
+Survey data from phy0.1-ap0
+	frequency:			2412 MHz
+	noise:				-76 dBm
+	channel active time:		69 ms
+	channel busy time:		3 ms
+	channel receive time:		2 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			2417 MHz
+	noise:				-75 dBm
+	channel active time:		63 ms
+	channel busy time:		1 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			2422 MHz
+	noise:				-78 dBm
+	channel active time:		64 ms
+	channel busy time:		1 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			2427 MHz
+	noise:				-78 dBm
+	channel active time:		63 ms
+	channel busy time:		6 ms
+	channel receive time:		1 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			2432 MHz
+	noise:				-79 dBm
+	channel active time:		62 ms
+	channel busy time:		6 ms
+	channel receive time:		4 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			2437 MHz
+	noise:				-79 dBm
+	channel active time:		63 ms
+	channel busy time:		16 ms
+	channel receive time:		15 ms
+	channel BSS receive time:	2 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			2442 MHz
+	noise:				-57 dBm
+	channel active time:		63 ms
+	channel busy time:		9 ms
+	channel receive time:		1 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			2447 MHz
+	noise:				-72 dBm
+	channel active time:		63 ms
+	channel busy time:		5 ms
+	channel receive time:		4 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			2452 MHz
+	noise:				-77 dBm
+	channel active time:		64 ms
+	channel busy time:		8 ms
+	channel receive time:		4 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			2457 MHz
+	noise:				-80 dBm
+	channel active time:		63 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			2462 MHz [in use]
+	noise:				-82 dBm
+	channel active time:		4595565 ms
+	channel busy time:		1739531 ms
+	channel receive time:		1646635 ms
+	channel BSS receive time:	151192 ms
+	channel transmit time:		50851 ms
+Survey data from phy0.1-ap0
+	frequency:			2467 MHz
+	noise:				-82 dBm
+	channel active time:		63 ms
+	channel busy time:		1 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			2472 MHz
+	noise:				-81 dBm
+	channel active time:		64 ms
+	channel busy time:		4 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			5180 MHz
+	channel active time:		53 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			5200 MHz
+	channel active time:		0 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			5220 MHz
+	channel active time:		0 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			5240 MHz
+	channel active time:		0 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			5260 MHz
+	channel active time:		0 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			5280 MHz
+	channel active time:		0 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			5300 MHz
+	channel active time:		0 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			5320 MHz
+	channel active time:		0 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			5745 MHz [in use]
+	noise:				-92 dBm
+	channel active time:		4602157 ms
+	channel busy time:		1779440 ms
+	channel receive time:		765187 ms
+	channel BSS receive time:	629563 ms
+	channel transmit time:		997038 ms
+Survey data from phy0.1-ap0
+	frequency:			5765 MHz
+	channel active time:		0 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			5785 MHz
+	channel active time:		0 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			5805 MHz
+	channel active time:		0 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Survey data from phy0.1-ap0
+	frequency:			5825 MHz
+	channel active time:		0 ms
+	channel busy time:		0 ms
+	channel receive time:		0 ms
+	channel BSS receive time:	0 ms
+	channel transmit time:		0 ms
+Station c0:35:32:19:cc:fb (on phy0.1-ap0)
+	inactive time:	50 ms
+	rx bytes:	6195423466
+	rx packets:	4370774
+	tx bytes:	310940801
+	tx packets:	236379
+	tx retries:	1503
+	tx failed:	1518
+	rx drop misc:	5
+	signal:  	-33 [-39, -35, -40] dBm
+	signal avg:	-32 [-38, -34, -39] dBm
+	tx bitrate:	144.4 MBit/s MCS 15 short GI
+	tx duration:	29418668 us
+	rx bitrate:	144.4 MBit/s MCS 15 short GI
+	rx duration:	372028801 us
+	last ack signal:-33 dBm
+	avg ack signal:	-33 dBm
+	airtime weight: 256
+	authorized:	yes
+	authenticated:	yes
+	associated:	yes
+	preamble:	short
+	WMM/WME:	yes
+	MFP:		no
+	TDLS peer:	no
+	DTIM period:	2
+	beacon interval:100
+	short preamble:	yes
+	short slot time:yes
+	connected time:	4483 seconds
+	associated at [boottime]:	152.511s
+	associated at:	1793330248521 ms
+	current time:	1793334731681 ms
+Station 06:65:45:fc:44:3d (on phy0.1-ap0)
+	inactive time:	150 ms
+	rx bytes:	20951085
+	rx packets:	108679
+	tx bytes:	9911416968
+	tx packets:	6912028
+	tx retries:	15584
+	tx failed:	15584
+	rx drop misc:	0
+	signal:  	-58 [-61, -61, -75] dBm
+	signal avg:	-54 [-57, -56, -69] dBm
+	tx bitrate:	144.4 MBit/s MCS 15 short GI
+	tx duration:	276961894 us
+	rx bitrate:	144.4 MBit/s MCS 15 short GI
+	rx duration:	5912603 us
+	last ack signal:-48 dBm
+	avg ack signal:	-47 dBm
+	airtime weight: 256
+	authorized:	yes
+	authenticated:	yes
+	associated:	yes
+	preamble:	short
+	WMM/WME:	yes
+	MFP:		no
+	TDLS peer:	no
+	DTIM period:	2
+	beacon interval:100
+	short preamble:	yes
+	short slot time:yes
+	connected time:	2745 seconds
+	associated at [boottime]:	1890.921s
+	associated at:	1793331986931 ms
+	current time:	1793334731681 ms
+Station 90:de:80:1c:6a:7a (on phy0.1-ap0)
+	inactive time:	10 ms
+	rx bytes:	3775824660
+	rx packets:	2958983
+	tx bytes:	993336793
+	tx packets:	697774
+	tx retries:	6102
+	tx failed:	6104
+	rx drop misc:	5
+	signal:  	-45 [-61, -46, -52] dBm
+	signal avg:	-44 [-61, -45, -51] dBm
+	tx bitrate:	115.6 MBit/s MCS 13 short GI
+	tx duration:	81429386 us
+	rx bitrate:	144.4 MBit/s MCS 15 short GI
+	rx duration:	231071667 us
+	last ack signal:-43 dBm
+	avg ack signal:	-42 dBm
+	airtime weight: 256
+	authorized:	yes
+	authenticated:	yes
+	associated:	yes
+	preamble:	short
+	WMM/WME:	yes
+	MFP:		no
+	TDLS peer:	no
+	DTIM period:	2
+	beacon interval:100
+	short preamble:	yes
+	short slot time:yes
+	connected time:	2062 seconds
+	associated at [boottime]:	2573.615s
+	associated at:	1793332669625 ms
+	current time:	1793334731681 ms
+table inet fw4

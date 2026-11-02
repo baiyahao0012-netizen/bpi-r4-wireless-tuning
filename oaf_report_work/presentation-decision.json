@@ -1,0 +1,13 @@
+{
+  "audience": "项目组评审成员与导师",
+  "reader_task": "判断 AI 业务识别与加速链路是否按需求实现、效果如何、还有哪些缺口",
+  "genre_contract": "strategy-and-analysis",
+  "adapter": null,
+  "presentation_mode": "rich",
+  "visual_plan": {
+    "reason": "用正文说明结论与证据，用 html5-block 展示加速链路机制与 A/B 对比数据，避免重复表达",
+    "blocks": [
+      {"type": "html5-block", "min_count": 2, "purpose": "展示 OAF→ct mark→DSCP EF→AC_VO 加速链路，以及 HE40/HE80 A/B 的 TTFB 对比"}
+    ]
+  }
+}

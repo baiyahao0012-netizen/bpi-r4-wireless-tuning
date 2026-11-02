@@ -3,9 +3,19 @@ import subprocess, time, re, csv, os, statistics
 HOST="root@192.168.240.1"; MAC="90:de:80:1c:6a:7a"; IP="192.168.240.126"
 CURL=r"C:\Windows\System32\curl.exe"
 IPERF=r"C:\Users\15732\Desktop\iperf3\iperf-3.1.3-win64\iperf3.exe"
-FF=subprocess.check_output(["python","-c","import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())"],text=True).strip()
-SSH=["ssh","-o","BatchMode=yes","-o","StrictHostKeyChecking=no","-o","ConnectTimeout=8",HOST]
-def sh(c): return subprocess.run(SSH+[c],capture_output=True,text=True,timeout=30)
+PY=r"D:\Bai_Yahao\Software\Python\python.exe"
+FF=subprocess.check_output([PY,"-c","import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())"],text=True).strip()
+SSH=["C:\\Windows\\System32\\OpenSSH\\ssh.exe","-o","BatchMode=yes","-o","StrictHostKeyChecking=no","-o","ConnectTimeout=8",HOST]
+def sh(c):
+    last=None
+    for attempt in range(3):
+        try:
+            r=subprocess.run(SSH+[c],capture_output=True,text=True,errors="replace",timeout=30)
+            if r.returncode==0: return r
+            last=r; time.sleep(2)
+        except subprocess.TimeoutExpired:
+            last=None; time.sleep(2)
+    return last
 def wifi(ssid):
     subprocess.run(["netsh","wlan","connect",f"name={ssid}","interface=WLAN 3"],capture_output=True,text=True,timeout=20)
     time.sleep(8)
@@ -17,11 +27,11 @@ def frames(path):
     m=re.findall(r"frame=\s*(\d+)",r.stderr)
     return int(m[-1]) if m else 0
 def recv(script,outfile):
-    p=subprocess.Popen(["python",script],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+    p=subprocess.Popen([PY,script],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,errors="replace")
     time.sleep(2.0)
     return p
 def finish(p,outfile):
-    out,_=p.communicate(timeout=25)
+    out,_=p.communicate(timeout=45)
     chunks=re.search(r"chunks\s+(\d+)",out); miss=re.search(r"missing\s+(\d+)",out); byt=re.search(r"bytes\s+(\d+)",out); sha=re.search(r"sha\s+([0-9a-f]+)",out); span=re.search(r"span\s+([0-9.]+)",out)
     return dict(chunks=int(chunks.group(1)) if chunks else 0, missing=int(miss.group(1)) if miss else 0, bytes=int(byt.group(1)) if byt else 0, sha=sha.group(1) if sha else "", span=float(span.group(1)) if span else 0.0, raw=out.strip(), frames=frames(outfile))
 def run_udp():
@@ -53,7 +63,7 @@ def main():
     rows+=scenario("5G_IDLE","BPI-R4-5G","phy0.1-ap0",False)
     rows+=scenario("5G_LOAD","BPI-R4-5G","phy0.1-ap0",True)
     rows+=scenario("2G4","BPI-R4","phy0.0-ap0",False)
-    with open(r"_work_final\rtc_over_wifi\matrix_raw.csv","w",newline="",encoding="utf-8") as f:
+    with open(r"_work_final\rtc_over_wifi\matrix_raw_v2_quiet_window.csv","w",newline="",encoding="utf-8") as f:
         w=csv.DictWriter(f,fieldnames=["scenario","run","method","chunks","missing","bytes","span","frames","sha","raw"]); w.writeheader(); w.writerows(rows)
     print("SAVED")
     for sc in ("5G_IDLE","5G_LOAD","2G4"):
