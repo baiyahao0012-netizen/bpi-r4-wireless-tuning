@@ -10,6 +10,8 @@
 - `/sys/kernel/debug/tracing/events/mac80211/wifi_dscp` **已注册并可用**（ID 1042）
 - Wi-Fi 正常：`phy0.0-ap0`(BPI-R4) / `phy0.1-ap0`(BPI-R4-5G) / `phy0.0-sta0` 已连上游
 - `dscpstats` 离线测试 35/35 通过，实机统计报表正确输出
+- **`oaf.ko` 已用 SDK 内源码在新内核上重建并恢复**，`/proc/sys/fwx/` 全部就位、appfilter 已启用
+- **重启集成测试通过**：开机自动加载 104 个模块、WDRR 调度器激活、DSCP tracepoint 可用、Wi-Fi 与上游连通
 
 ## 2. 合并的补丁
 
@@ -142,9 +144,10 @@ DSCP   business             TXpkts  TXbytes  ACK fail  queue us avg/min/max     
 ```
 （retry 各列为 0 属正常：链路质量好，无重传。要验证 355 补丁需制造重传场景。）
 
-## 7. ⚠️ 已知影响：纯二进制模块失效
+## 7. `oaf.ko`：已重建并恢复（原先失效，现已解决）
 
-`/root/oaf.ko`（用户自研 QoS/应用加速模块，906,832 B，`this_module` = **0x280**）
+### 7.1 问题
+用户自研 QoS/应用加速模块 `/root/oaf.ko`（原 906,832 B，`this_module` = **0x280**）
 在 tracing 内核上无法加载：
 
 ```
@@ -153,14 +156,60 @@ module oaf: .gnu.linkonce.this_module section size must match
 ```
 
 **原因**：开启 tracing 强制 `KALLSYMS`/`MODULES_TREE_LOOKUP`/`STACKTRACE`，
-`struct module` 从 0x280 涨到 0x480，二进制模块的 ABI 不再匹配。
+`struct module` 从 0x280 涨到 0x480，**所有**旧二进制模块的 ABI 都不再匹配。
 
-**解决途径**：拿到 `oaf` 源码，在带 tracing 的内核上重新编译即可（其 `.modinfo` 显示
-它原本就是在同一个 SDK 里编译的）。若无法获得源码，只能二选一：
-保留 tracing（放弃 oaf），或回退内核（放弃 DSCP tracepoint）。
+### 7.2 解决：源码就在 SDK 里，直接重建
+SDK 中带有完整的 OpenAppFilter 包，**`oaf.ko` 的内核模块源码是齐的**：
 
-用户其它脚本（`edca_set`、`vip_ratio.sh`、`txrate.sh` 等）依赖的是 mt7996e 的 debugfs，
+```
+$SDK/package/OpenAppFilter/oaf/Makefile        # KernelPackage，FILES:=$(PKG_BUILD_DIR)/oaf.ko
+$SDK/package/OpenAppFilter/oaf/src/Makefile    # Kbuild: oaf-objs := fwx_main.o fwx_utils.o ... ; obj-m += oaf.o
+$SDK/package/OpenAppFilter/oaf/src/fwx_main.c  # MODULE_LICENSE("GPL") / MODULE_AUTHOR("www.fanchmwrt.com")
+```
+（另有 `open-app-filter/` 为用户态 `oafd`，`luci-app-oaf/` 为 LuCI 界面。）
+
+用**新的 tracing 内核树**重新编译（out-of-tree `M=` 方式）：
+
+```bash
+SDK=/root/sdk/openwrt-sdk-24.10.0-mediatek-filogic_gcc-13.3.0_musl.Linux-x86_64
+KD=$SDK/build_dir/target-aarch64_cortex-a53_musl/linux-mediatek_filogic/linux-6.6.73
+TC=$SDK/staging_dir/toolchain-aarch64_cortex-a53_gcc-13.3.0_musl/bin/aarch64-openwrt-linux-musl-
+cp $SDK/package/OpenAppFilter/oaf/src/* /root/oafbuild/ && cd /root/oafbuild
+make -C $KD M=/root/oafbuild ARCH=arm64 CROSS_COMPILE=$TC \
+  KCFLAGS="-Wno-error=missing-prototypes -Wno-error=missing-declarations \
+           -Wno-error=unused-variable -Wno-error=declaration-after-statement \
+           -Wno-error=implicit-fallthrough -Wno-error=missing-braces \
+           -Wno-error=parentheses -Wno-error=format -Wno-frame-larger-than" modules -j16
+```
+
+结果：
+
+```
+新 oaf.ko   903,992 B   this_module = 0x480 ✅   md5 a8f19b8cb5c387f71a8410705f9dd518
+modinfo     license=GPL  depends=nf_conntrack,nf_reject_ipv4  name=oaf
+            vermagic=6.6.73 SMP mod_unload aarch64
+```
+与原 `oaf.ko` 的 `.modinfo` **逐字段一致**（`depends` 由源码符号自动推导，相同即源码相同）。
+
+### 7.3 恢复验证
+```
+insmod /root/oaf.ko                     -> OK
+/proc/modules:  oaf 118784 0 - Live (O)
+nf_conntrack refcnt=8  含 oaf；nf_reject_ipv4 refcnt=3 含 oaf
+/proc/sys/fwx/  -> 20 个控制文件（appfilter_enable / feature_init / version ...）
+echo 1 > /proc/sys/fwx/appfilter_enable  -> ok
+echo 1 > /proc/sys/fwx/feature_init      -> ok
+/proc/sys/fwx/version = 6.0.1
+重启后自动加载（/etc/init.d/oaf-mini START=99 -> /root/oaf_start.sh），
+dmesg 中 oaf 的 "section size must match" 报错已消失。
+```
+
+### 7.4 其它
+用户其它脚本（`edca_set`、`vip_ratio.sh`、`txrate.sh` 等）依赖 mt7996e 的 debugfs，
 合并后的 mt7996e 已包含 A+ 补丁，**不受影响**。
+boot 时仍有 8 条 `section size must match`，只涉及 `aquantia`/`gpio_button_hotplug`/
+`leds_gpio`/`usb_common` 这 4 个模块 —— 它们在 preinit（overlay 挂载前）先按 `/rom` 旧模块
+尝试一次而失败，随后从 `/overlay` 新模块重试并成功，属无害噪声。
 
 ## 8. 复现步骤
 
