@@ -204,9 +204,29 @@ echo 1 > /proc/sys/fwx/feature_init      -> ok
 dmesg 中 oaf 的 "section size must match" 报错已消失。
 ```
 
+## 7A. 功能共存验证（目标要求的「与 WDRR、EDCA 共存」）
+
+合并后的**同一套模块**里，六项功能同时可用：
+
+| 功能 | 来源 | 验证方式 | 结果 |
+|---|---|---|---|
+| WDRR 私有调度器 | 我方 360 补丁 | `dmesg | grep WDRR` | `mac80211: private WDRR scheduler active (fq_weight=1,1,1,1)` ✅ |
+| EDCA 参数调节 | 我方（mac80211 nl80211 TXQ） | `/root/edca_set phy0.0-ap0 <0-3> ...` | AC0/AC1/AC2/AC3 全部 `OK ... latency_us=174~671` ✅ |
+| A+ 权重 | 我方 A+ 补丁 | `cat .../mt76/sta_weight` | `82:e9:34:73:d1:8e 0 0`（有真实 STA 条目）✅ |
+| 354 DSCP 埋点 | 对方 354 | tracefs + 实机 ping | 8 个 DSCP 埋点，4 阶段事件完整 ✅ |
+| 355 重传上报 | 对方 355 | 源码核验 | `mt7996/mac.c:1250-1252` 已编入 ✅ |
+| OAF 应用加速 | 用户自研 | `/proc/sys/fwx/*` | 18~20 个控制文件，`appfilter_enable=1` ✅ |
+
+**关于 `edca_set` 返回 `-EINVAL`**：对 `phy0.0-sta0`（STA 口）会报 `kernel error -22: Invalid argument`，
+这是 mac80211 的标准行为（`set_txq_params` 仅允许 AP / P2P-GO 类型的 vif），
+**不是合并引入的问题**；对 `phy0.0-ap0`（AP 口）四个 AC 全部可正常设置。
+
+**交叉干扰测试**：执行 EDCA 参数调整后再实测 DSCP tracepoint，6 次 ping 产生 28 条事件、
+四阶段（ENQ/DEQ/ACK/RX）齐全，两套机制互不干扰 ✅。
+
 ### 7.4 其它
-用户其它脚本（`edca_set`、`vip_ratio.sh`、`txrate.sh` 等）依赖 mt7996e 的 debugfs，
-合并后的 mt7996e 已包含 A+ 补丁，**不受影响**。
+用户其它脚本（`vip_ratio.sh`、`txrate.sh` 等）依赖 mt7996e 的 debugfs，
+合并后的 mt7996e 已包含 A+ 补丁与 `sta_weight` 接口，**不受影响**。
 boot 时仍有 8 条 `section size must match`，只涉及 `aquantia`/`gpio_button_hotplug`/
 `leds_gpio`/`usb_common` 这 4 个模块 —— 它们在 preinit（overlay 挂载前）先按 `/rom` 旧模块
 尝试一次而失败，随后从 `/overlay` 新模块重试并成功，属无害噪声。
