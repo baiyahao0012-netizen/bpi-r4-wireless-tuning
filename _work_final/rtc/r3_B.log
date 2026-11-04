@@ -1,0 +1,22 @@
+﻿udp receiver on :9911 (rcvbuf=4194304)
+  t= 1.0s v=0/0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0
+  t= 2.1s v=0/0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0
+  t= 3.1s v=0/0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0
+  t= 4.2s v=0/0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+  t= 5.2s v=18/1 chunks=172 rx=0.30Mbps dec=0 lat p50=2/p95=8
+  t= 6.2s v=47/2 chunks=427 rx=0.62Mbps dec=0 lat p50=2/p95=9
+  t= 7.2s v=76/4 chunks=714 rx=0.89Mbps dec=18 lat p50=2/p95=10
+  t= 8.3s v=105/5 chunks=988 rx=1.09Mbps dec=47 lat p50=2/p95=8
+  t= 9.3s v=133/7 chunks=1273 rx=1.25Mbps dec=75 lat p50=3/p95=9
+  t=10.3s v=162/8 chunks=1550 rx=1.38Mbps dec=104 lat p50=3/p95=8
+  t=11.3s v=190/9 chunks=1835 rx=1.48Mbps dec=132 lat p50=3/p95=9
+  t=12.3s v=219/11 chunks=2104 rx=1.56Mbps dec=161 lat p50=3/p95=8
+  t=13.3s v=247/12 chunks=2389 rx=1.63Mbps dec=189 lat p50=3/p95=9
+
+RESULT udp ok=248 lost=13 frame_loss=4.98% chunks=2397 dup=0 decoded=190 bad=0 padded=0 dropped=13 dec_err=57
+one-way latency ms: p50=2.5 p95=8.5 p99=15.0 max=23.1 (n=2397)
+frame assemble ms: p50=2.6 p95=5.3 | arrival gap ms: p50=33.5 p95=49.9
+wrote r3_B.h264 (2595644 bytes)

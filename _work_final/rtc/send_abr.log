@@ -1,0 +1,73 @@
+﻿sender: 40-C2-BA-52-70-95 -> C0-35-32-19-CC-FB via Realtek PCIe GbE Family Controller | 640x480@30 3000000 bps | mtu-chunk=1200
+  ABR 3000 -> 3360 kbps (clean loss=0.0% delay=+0ms)  reopen 4.4 ms + IDR
+  ABR 3360 -> 2856 kbps (loss 100.0%)  reopen 3.0 ms + IDR
+  t= 1.0s frames=24 chunks=319 kf=3  tx=2.99 Mbps  fps=23.4
+    fb #85 n=19 dup=32 per=56ms rx=2.82Mbps loss=1000/1000 jit=64.8ms q=101ms maxfid=21 ok=13 lost=8
+    abr 2856 kbps  last=loss 100.0%  jit=53.9 base=0.0  switches=2
+  ABR 2856 -> 2570 kbps (delay +60ms)  reopen 4.0 ms + IDR
+  ABR 2570 -> 2313 kbps (delay +64ms)  reopen 4.3 ms + IDR
+  t= 2.1s frames=45 chunks=543 kf=5  tx=2.48 Mbps  fps=21.5
+    fb #103 n=37 dup=68 per=0ms rx=0.00Mbps loss=0/1000 jit=65.5ms q=200ms maxfid=44 ok=36 lost=8
+    abr 2313 kbps  last=delay +64ms  jit=64.8 base=0.0  switches=4
+  ABR 2313 -> 1966 kbps (loss 33.3%)  reopen 3.4 ms + IDR
+  ABR 1966 -> 2202 kbps (clean loss=0.0% delay=+0ms)  reopen 4.7 ms + IDR
+  t= 3.1s frames=64 chunks=701 kf=7  tx=2.15 Mbps  fps=20.7
+    fb #121 n=55 dup=104 per=55ms rx=2.67Mbps loss=0/1000 jit=64.8ms q=101ms maxfid=61 ok=52 lost=12
+    abr 2202 kbps  last=clean loss=0.0% delay=+0ms  jit=64.8 base=64.8  switches=6
+  ABR 2202 -> 2467 kbps (clean loss=0.0% delay=+11ms)  reopen 3.4 ms + IDR
+  t= 4.1s frames=95 chunks=971 kf=8  tx=2.23 Mbps  fps=23.0
+    fb #138 n=72 dup=138 per=31ms rx=2.49Mbps loss=0/1000 jit=32.2ms q=60ms maxfid=92 ok=83 lost=12
+    abr 2467 kbps  last=clean loss=0.0% delay=+11ms  jit=38.4 base=32.2  switches=7
+  ABR 2467 -> 2763 kbps (clean loss=0.0% delay=+5ms)  reopen 3.6 ms + IDR
+  ABR 2763 -> 3094 kbps (clean loss=0.0% delay=+1ms)  reopen 2.8 ms + IDR
+  t= 5.1s frames=125 chunks=1307 kf=10  tx=2.42 Mbps  fps=24.4
+    fb #155 n=89 dup=172 per=33ms rx=3.22Mbps loss=0/1000 jit=32.2ms q=60ms maxfid=123 ok=114 lost=12
+    abr 3094 kbps  last=clean loss=0.0% delay=+1ms  jit=32.5 base=31.7  switches=9
+  ABR 3094 -> 3465 kbps (clean loss=0.0% delay=+1ms)  reopen 3.7 ms + IDR
+  ABR 3465 -> 3881 kbps (clean loss=0.0% delay=+1ms)  reopen 3.4 ms + IDR
+  t= 6.2s frames=156 chunks=1743 kf=12  tx=2.69 Mbps  fps=25.3
+    fb #170 n=104 dup=202 per=69ms rx=4.36Mbps loss=0/1000 jit=31.7ms q=60ms maxfid=153 ok=143 lost=12
+    abr 3881 kbps  last=clean loss=0.0% delay=+1ms  jit=32.1 base=31.7  switches=11
+  ABR 3881 -> 4347 kbps (clean loss=0.0% delay=+0ms)  reopen 12.3 ms + IDR
+  ABR 4347 -> 4869 kbps (clean loss=0.0% delay=+0ms)  reopen 3.7 ms + IDR
+  t= 7.2s frames=186 chunks=2275 kf=14  tx=3.03 Mbps  fps=26.0
+    fb #187 n=121 dup=236 per=48ms rx=5.65Mbps loss=0/1000 jit=32.9ms q=61ms maxfid=184 ok=174 lost=12
+    abr 4869 kbps  last=clean loss=0.0% delay=+0ms  jit=32.4 base=31.7  switches=13
+  ABR 4869 -> 5453 kbps (clean loss=0.0% delay=+1ms)  reopen 4.3 ms + IDR
+  ABR 5453 -> 6000 kbps (clean loss=0.0% delay=+1ms)  reopen 4.0 ms + IDR
+  t= 8.2s frames=217 chunks=2939 kf=16  tx=3.44 Mbps  fps=26.5
+    fb #205 n=139 dup=272 per=47ms rx=9.46Mbps loss=0/1000 jit=33.3ms q=62ms maxfid=215 ok=206 lost=12
+    abr 6000 kbps  last=clean loss=0.0% delay=+1ms  jit=32.6 base=31.7  switches=15
+  t= 9.2s frames=247 chunks=3579 kf=16  tx=3.74 Mbps  fps=26.9
+    fb #222 n=156 dup=306 per=54ms rx=7.26Mbps loss=0/1000 jit=33.3ms q=62ms maxfid=245 ok=236 lost=12
+    abr 6000 kbps  last=clean loss=0.0% delay=+1ms  jit=33.2 base=32.2  switches=15
+  t=10.2s frames=278 chunks=4248 kf=17  tx=4.00 Mbps  fps=27.2
+    fb #239 n=173 dup=340 per=67ms rx=5.04Mbps loss=0/1000 jit=33.3ms q=62ms maxfid=274 ok=264 lost=12
+    abr 6000 kbps  last=clean loss=0.0% delay=+1ms  jit=33.4 base=32.2  switches=15
+  t=11.3s frames=309 chunks=4902 kf=17  tx=4.19 Mbps  fps=27.4
+    fb #257 n=191 dup=376 per=80ms rx=5.55Mbps loss=0/1000 jit=33.5ms q=62ms maxfid=307 ok=297 lost=12
+    abr 6000 kbps  last=clean loss=0.0% delay=+1ms  jit=33.5 base=33.3  switches=15
+  t=12.3s frames=339 chunks=5555 kf=18  tx=4.37 Mbps  fps=27.6
+    fb #275 n=209 dup=412 per=56ms rx=7.86Mbps loss=0/1000 jit=31.6ms q=59ms maxfid=337 ok=328 lost=12
+    abr 6000 kbps  last=clean loss=0.0% delay=+1ms  jit=32.4 base=31.6  switches=15
+  t=13.3s frames=370 chunks=6208 kf=18  tx=4.51 Mbps  fps=27.8
+    fb #292 n=226 dup=446 per=58ms rx=4.77Mbps loss=0/1000 jit=30.1ms q=58ms maxfid=366 ok=357 lost=12
+    abr 6000 kbps  last=clean loss=0.0% delay=+1ms  jit=31.2 base=30.0  switches=15
+done: 392 frames, 6701 chunks, 19 keyframes, 4.62 Mbps avg, 27.9 fps
+feedback: 234 reports, 462 duplicates dropped, 0 malformed, last rx=5.59 Mbps loss=0/1000 jitter=30.1 ms queue=58 ms peer_maxfid=381
+abr: 15 switches (11 up, 4 down), final 6000 kbps
+   t= 0.22s ->   3360 kbps  clean loss=0.0% delay=+0ms
+   t= 0.78s ->   2856 kbps  loss 100.0%
+   t= 1.33s ->   2570 kbps  delay +60ms
+   t= 1.86s ->   2313 kbps  delay +64ms
+   t= 2.36s ->   1966 kbps  loss 33.3%
+   t= 2.88s ->   2202 kbps  clean loss=0.0% delay=+0ms
+   t= 3.68s ->   2467 kbps  clean loss=0.0% delay=+11ms
+   t= 4.24s ->   2763 kbps  clean loss=0.0% delay=+5ms
+   t= 4.74s ->   3094 kbps  clean loss=0.0% delay=+1ms
+   t= 5.24s ->   3465 kbps  clean loss=0.0% delay=+1ms
+   t= 5.81s ->   3881 kbps  clean loss=0.0% delay=+1ms
+   t= 6.31s ->   4347 kbps  clean loss=0.0% delay=+0ms
+   t= 6.88s ->   4869 kbps  clean loss=0.0% delay=+0ms
+   t= 7.44s ->   5453 kbps  clean loss=0.0% delay=+1ms
+   t= 8.01s ->   6000 kbps  clean loss=0.0% delay=+1ms

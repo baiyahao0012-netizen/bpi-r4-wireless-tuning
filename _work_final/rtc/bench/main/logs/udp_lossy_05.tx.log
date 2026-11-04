@@ -1,0 +1,29 @@
+sender: transport=udp | udp 192.168.240.2:58984 -> 192.168.240.147:9922 | 640x480@30 2500000 bps | mtu-chunk=1200
+audio: tone 48000 Hz mono opus 64000 bps (dev=default  src=)
+  t= 1.0s frames=29 chunks=253 kf=1  tx=2.37 Mbps  fps=28.4
+    fb #71 n=19 dup=32 per=57ms rx=2.75Mbps loss=0/1000 jit=14.3ms q=40ms maxfid=28 ok=28 lost=1
+    audio 51 frames 9300B rms=2862.1
+  t= 2.0s frames=60 chunks=532 kf=1  tx=2.51 Mbps  fps=29.3
+    fb #88 n=36 dup=66 per=55ms rx=3.01Mbps loss=0/1000 jit=14.3ms q=40ms maxfid=58 ok=56 lost=2
+    audio 102 frames 18454B rms=2860.6
+  t= 3.1s frames=91 chunks=832 kf=2  tx=2.61 Mbps  fps=29.6
+    fb #106 n=54 dup=102 per=58ms rx=2.69Mbps loss=0/1000 jit=14.3ms q=40ms maxfid=89 ok=86 lost=4
+    audio 154 frames 28124B rms=2863.3
+  t= 4.1s frames=122 chunks=1132 kf=3  tx=2.66 Mbps  fps=29.6
+    fb #123 n=71 dup=136 per=71ms rx=2.49Mbps loss=0/1000 jit=14.2ms q=40ms maxfid=120 ok=114 lost=6
+    audio 206 frames 38460B rms=2866.9
+  t= 5.2s frames=153 chunks=1424 kf=3  tx=2.67 Mbps  fps=29.7
+    fb #140 n=88 dup=170 per=62ms rx=2.50Mbps loss=333/1000 jit=14.0ms q=40ms maxfid=151 ok=144 lost=8
+    audio 257 frames 48853B rms=2869.4
+  t= 6.2s frames=184 chunks=1744 kf=4  tx=2.72 Mbps  fps=29.8
+    fb #157 n=105 dup=204 per=50ms rx=1.83Mbps loss=0/1000 jit=14.0ms q=40ms maxfid=183 ok=173 lost=9
+    audio 309 frames 59538B rms=2871.3
+  t= 7.2s frames=214 chunks=2006 kf=4  tx=2.69 Mbps  fps=29.8
+    fb #173 n=121 dup=236 per=68ms rx=2.24Mbps loss=0/1000 jit=14.2ms q=40ms maxfid=212 ok=202 lost=11
+    audio 359 frames 69841B rms=2871.4
+  t= 8.2s frames=245 chunks=2300 kf=5  tx=2.70 Mbps  fps=29.8
+    fb #190 n=138 dup=270 per=54ms rx=1.35Mbps loss=500/1000 jit=13.8ms q=40ms maxfid=243 ok=230 lost=13
+    audio 410 frames 80370B rms=2874.7
+done: 269 frames, 2528 chunks, 5 keyframes, 2.70 Mbps avg, 29.9 fps
+audio: 450 frames, 88546 bytes payload, rms=2872.2, starved=0
+feedback: 144 reports, 282 duplicates dropped, 0 malformed, last rx=2.20 Mbps loss=0/1000 jitter=13.3 ms queue=40 ms peer_maxfid=254

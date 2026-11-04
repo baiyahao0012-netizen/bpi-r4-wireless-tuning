@@ -1,0 +1,28 @@
+receiver transport=udp on udp :9922 (rcvbuf 8 MB) (open 1 ms)  jitter_buffer=on [40..200 ms]
+feedback -> 192.168.240.2:9923 every 50 ms x3
+audio out: dev=16 48000 Hz  ÑïÉùÆ÷ (Realtek(R) Audio)
+  t= 1.1s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 2.1s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 3.2s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+  t= 4.2s v=17/1 a=28 chunks=184 rx=0.34Mbps dec=0 lat p50=2/p95=7 | jb D=40ms av=+18ms
+  t= 5.2s v=46/2 a=79 chunks=527 rx=0.79Mbps dec=0 lat p50=2/p95=8 | jb D=40ms av=+15ms
+  t= 6.2s v=75/2 a=128 chunks=849 rx=1.07Mbps dec=15 lat p50=2/p95=8 | jb D=40ms av=+14ms
+  t= 7.2s v=105/3 a=178 chunks=1176 rx=1.27Mbps dec=45 lat p50=2/p95=7 | jb D=40ms av=+14ms
+  t= 8.2s v=133/5 a=229 chunks=1525 rx=1.45Mbps dec=73 lat p50=2/p95=8 | jb D=40ms av=+14ms
+  t= 9.2s v=162/6 a=279 chunks=1848 rx=1.55Mbps dec=101 lat p50=2/p95=6 | jb D=40ms av=+14ms
+  t=10.2s v=190/8 a=330 chunks=2196 rx=1.66Mbps dec=120 lat p50=2/p95=7 | jb D=40ms av=+14ms
+  t=11.2s v=219/10 a=380 chunks=2525 rx=1.74Mbps dec=148 lat p50=2/p95=6 | jb D=40ms av=+14ms
+
+RESULT video ok=241 lost=12 frame_loss=4.74% chunks=2795 dup=0 decoded=172 other=0 bad=0 padded=0 dropped=12 dec_err=58 q_left=0
+       audio ok=420 lost=0 bytes=19444 decoded_samples=400320 (8.34 s) decoded_rms=0.1
+one-way latency ms: p50=2.5 p95=7.3 p99=11.8 max=14.2 (n=2375)
+frame assemble ms: p50=2.7 p95=5.0 | arrival gap ms: p50=33.2 p95=43.0
+jitter buffer: D=40ms  video late=0 under=10  audio late=0 under=0
+release interval video ms: p50=33.2 p95=42.6 | audio ms: p50=20.0 p95=21.6
+capture clock: audio-video transit drift -8 ms over 12 s (-0.06% -- a capture device running slow shows up here)
+A/V sync skew ms: p50=14.0 p95=23.4 |max|=27.9 (n=240, + = audio leads)
+feedback sent: 200 reports (597 frames on the wire)
+wrote D:\Desktop\AI ¸¨Öú¶Ô»°\_work_final\rtc\bench\pilot\logs\udp_lossy_01.h264 (2521543 bytes)

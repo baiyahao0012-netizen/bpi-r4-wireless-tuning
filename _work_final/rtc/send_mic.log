@@ -1,0 +1,29 @@
+﻿sender: 40-C2-BA-52-70-95 -> C0-35-32-19-CC-FB via Realtek PCIe GbE Family Controller | 640x480@30 2500000 bps | mtu-chunk=1200
+audio: mic 48000 Hz mono opus 64000 bps (dev=23)
+  t= 1.0s frames=22 chunks=200 kf=1  tx=1.84 Mbps  fps=21.6
+    fb #71 n=18 dup=30 per=27ms rx=2.64Mbps loss=0/1000 jit=19.0ms q=44ms maxfid=20 ok=21 lost=0
+    audio 22 frames 1467B rms=0.6
+  t= 2.0s frames=52 chunks=474 kf=1  tx=2.22 Mbps  fps=25.7
+    fb #87 n=34 dup=62 per=66ms rx=2.68Mbps loss=0/1000 jit=19.6ms q=44ms maxfid=49 ok=50 lost=0
+    audio 72 frames 4863B rms=0.6
+  t= 3.1s frames=83 chunks=774 kf=2  tx=2.39 Mbps  fps=27.2
+    fb #104 n=51 dup=96 per=64ms rx=1.34Mbps loss=0/1000 jit=19.3ms q=44ms maxfid=80 ok=81 lost=0
+    audio 124 frames 6784B rms=0.6
+  t= 4.1s frames=113 chunks=1049 kf=2  tx=2.44 Mbps  fps=27.9
+    fb #120 n=67 dup=128 per=31ms rx=2.43Mbps loss=0/1000 jit=21.6ms q=47ms maxfid=109 ok=110 lost=0
+    audio 174 frames 8588B rms=0.5
+  t= 5.1s frames=144 chunks=1341 kf=3  tx=2.48 Mbps  fps=28.3
+    fb #136 n=83 dup=160 per=96ms rx=3.77Mbps loss=0/1000 jit=21.6ms q=47ms maxfid=140 ok=141 lost=0
+    audio 225 frames 10441B rms=0.5
+  t= 6.1s frames=174 chunks=1611 kf=3  tx=2.49 Mbps  fps=28.6
+    fb #153 n=100 dup=194 per=36ms rx=1.47Mbps loss=0/1000 jit=24.0ms q=50ms maxfid=172 ok=172 lost=0
+    audio 275 frames 12250B rms=0.5
+  t= 7.1s frames=205 chunks=1909 kf=4  tx=2.52 Mbps  fps=28.8
+    fb #169 n=116 dup=226 per=34ms rx=2.12Mbps loss=0/1000 jit=24.2ms q=50ms maxfid=202 ok=203 lost=0
+    audio 327 frames 14253B rms=0.5
+  t= 8.2s frames=236 chunks=2193 kf=4  tx=2.53 Mbps  fps=28.9
+    fb #185 n=132 dup=258 per=36ms rx=3.88Mbps loss=0/1000 jit=28.6ms q=56ms maxfid=233 ok=234 lost=0
+    audio 379 frames 16533B rms=0.5
+done: 262 frames, 2441 chunks, 5 keyframes, 2.54 Mbps avg, 29.0 fps
+audio: 421 frames, 18234 bytes payload, rms=0.5, starved=0
+feedback: 149 reports, 292 duplicates dropped, 0 malformed, last rx=0.00 Mbps loss=0/1000 jitter=28.6 ms queue=56 ms peer_maxfid=261

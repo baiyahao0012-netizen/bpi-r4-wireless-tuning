@@ -1,0 +1,10 @@
+﻿udp sender 192.168.240.2:0 -> 192.168.240.147:9911 | 640x480@30 2500000 bps | chunk=1200
+  t= 1.0s frames=25 chunks=209 kf=1 tx=1.92 Mbps fps=24.8
+  t= 2.0s frames=55 chunks=468 kf=1 tx=2.17 Mbps fps=27.3
+  t= 3.0s frames=85 chunks=754 kf=2 tx=2.33 Mbps fps=28.0
+  t= 4.0s frames=115 chunks=1041 kf=2 tx=2.41 Mbps fps=28.4
+  t= 5.1s frames=145 chunks=1329 kf=3 tx=2.45 Mbps fps=28.7
+  t= 6.1s frames=175 chunks=1613 kf=3 tx=2.47 Mbps fps=28.8
+  t= 7.1s frames=205 chunks=1906 kf=4 tx=2.50 Mbps fps=28.9
+  t= 8.1s frames=235 chunks=2180 kf=4 tx=2.50 Mbps fps=29.0
+done: 261 frames, 2432 chunks, 5 keyframes, 2.50 Mbps avg, 28.9 fps, send_err=0

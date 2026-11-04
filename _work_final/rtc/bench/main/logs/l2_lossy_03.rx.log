@@ -1,0 +1,25 @@
+receiver transport=l2 on l2 capture on Realtek 8852CE WiFi 6E PCI-E NIC (open 27 ms)  jitter_buffer=on [40..200 ms]
+feedback -> C0-35-32-19-CC-FB every 50 ms x3
+audio out: dev=16 48000 Hz  ÑïÉùÆ÷ (Realtek(R) Audio)
+  t= 1.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 2.1s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 3.1s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 4.1s v=15/0 a=27 chunks=160 rx=0.31Mbps dec=11 lat p50=13/p95=51 | jb D=81ms av=+21ms
+  t= 5.1s v=43/2 a=77 chunks=477 rx=0.74Mbps dec=40 lat p50=11/p95=32 | jb D=56ms av=+16ms
+  t= 6.1s v=71/3 a=127 chunks=811 rx=1.06Mbps dec=69 lat p50=11/p95=32 | jb D=57ms av=+18ms
+  t= 7.1s v=100/5 a=178 chunks=1138 rx=1.27Mbps dec=88 lat p50=11/p95=32 | jb D=56ms av=+20ms
+  t= 8.1s v=130/6 a=229 chunks=1480 rx=1.45Mbps dec=114 lat p50=11/p95=32 | jb D=57ms av=+20ms
+  t= 9.1s v=158/7 a=279 chunks=1798 rx=1.56Mbps dec=143 lat p50=11/p95=32 | jb D=57ms av=+18ms
+  t=10.1s v=187/9 a=329 chunks=2159 rx=1.69Mbps dec=171 lat p50=11/p95=32 | jb D=57ms av=+21ms
+  t=11.2s v=216/11 a=381 chunks=2502 rx=1.78Mbps dec=200 lat p50=11/p95=31 | jb D=56ms av=+20ms
+
+RESULT video ok=240 lost=12 frame_loss=4.76% chunks=2792 dup=0 decoded=225 other=797 bad=0 padded=3 dropped=12 dec_err=0 q_left=0
+       audio ok=422 lost=0 bytes=82950 decoded_samples=403200 (8.40 s) decoded_rms=2892.2
+one-way latency ms: p50=10.4 p95=30.8 p99=34.3 max=66.6 (n=2370)
+frame assemble ms: p50=0.4 p95=31.0 | arrival gap ms: p50=31.4 p95=62.1
+jitter buffer: D=56ms  video late=0 under=12  audio late=0 under=1
+release interval video ms: p50=33.1 p95=63.4 | audio ms: p50=20.0 p95=21.2
+capture clock: audio-video transit drift -7 ms over 12 s (-0.06% -- a capture device running slow shows up here)
+A/V sync skew ms: p50=19.6 p95=30.5 |max|=43.3 (n=240, + = audio leads)
+feedback sent: 190 reports (567 frames on the wire)
+wrote D:\Desktop\AI ¸¨Öú¶Ô»°\_work_final\rtc\bench\main\logs\l2_lossy_03.h264 (2589553 bytes)

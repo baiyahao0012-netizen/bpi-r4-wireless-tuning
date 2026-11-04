@@ -1,0 +1,25 @@
+receiver transport=l2 on l2 capture on Realtek 8852CE WiFi 6E PCI-E NIC (open 30 ms)  jitter_buffer=on [40..200 ms]
+feedback -> C0-35-32-19-CC-FB every 50 ms x3
+audio out: dev=16 48000 Hz  ÑïÉùÆ÷ (Realtek(R) Audio)
+  t= 1.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 2.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 3.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 4.1s v=3/0 a=8 chunks=44 rx=0.09Mbps dec=0 lat p50=57/p95=90 | jb D=122ms av=+78ms
+  t= 5.1s v=34/1 a=60 chunks=373 rx=0.58Mbps dec=27 lat p50=26/p95=292 | jb D=200ms av=+15ms
+  t= 6.1s v=62/3 a=111 chunks=724 rx=0.95Mbps dec=55 lat p50=10/p95=230 | jb D=200ms av=+16ms
+  t= 7.1s v=90/4 a=162 chunks=1044 rx=1.16Mbps dec=85 lat p50=10/p95=171 | jb D=200ms av=+17ms
+  t= 8.1s v=120/6 a=213 chunks=1391 rx=1.36Mbps dec=113 lat p50=10/p95=142 | jb D=193ms av=+19ms
+  t= 9.1s v=149/8 a=264 chunks=1723 rx=1.50Mbps dec=142 lat p50=10/p95=113 | jb D=188ms av=+18ms
+  t=10.1s v=177/10 a=315 chunks=2079 rx=1.63Mbps dec=171 lat p50=10/p95=95 | jb D=59ms av=+16ms
+  t=11.2s v=206/11 a=366 chunks=2417 rx=1.72Mbps dec=179 lat p50=9/p95=82 | jb D=61ms av=+16ms
+
+RESULT video ok=230 lost=13 frame_loss=5.35% chunks=2700 dup=0 decoded=205 other=887 bad=0 padded=1 dropped=13 dec_err=0 q_left=0
+       audio ok=408 lost=0 bytes=79948 decoded_samples=388800 (8.10 s) decoded_rms=2858.3
+one-way latency ms: p50=9.2 p95=66.7 p99=261.0 max=323.3 (n=2292)
+frame assemble ms: p50=0.2 p95=30.5 | arrival gap ms: p50=31.2 p95=63.6
+jitter buffer: D=59ms  video late=4 under=15  audio late=7 under=14
+release interval video ms: p50=31.7 p95=62.7 | audio ms: p50=16.0 p95=31.7
+capture clock: audio-video transit drift -1 ms over 12 s (-0.01% -- a capture device running slow shows up here)
+A/V sync skew ms: p50=16.0 p95=36.0 |max|=119.8 (n=229, + = audio leads)
+feedback sent: 186 reports (555 frames on the wire)
+wrote D:\Desktop\AI ¸¨Öú¶Ô»°\_work_final\rtc\bench\main\logs\l2_lossy_05.h264 (2462241 bytes)

@@ -1,0 +1,25 @@
+receiver transport=l2 on l2 capture on Realtek 8852CE WiFi 6E PCI-E NIC (open 29 ms)  jitter_buffer=on [40..200 ms]
+feedback -> C0-35-32-19-CC-FB every 50 ms x3
+audio out: dev=16 48000 Hz  ÑïÉùÆ÷ (Realtek(R) Audio)
+  t= 1.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 2.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 3.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 4.1s v=15/0 a=28 chunks=164 rx=0.31Mbps dec=10 lat p50=7/p95=53 | jb D=141ms av=+17ms
+  t= 5.1s v=46/0 a=79 chunks=493 rx=0.77Mbps dec=41 lat p50=8/p95=26 | jb D=49ms av=+16ms
+  t= 6.1s v=76/0 a=129 chunks=833 rx=1.08Mbps dec=72 lat p50=8/p95=25 | jb D=50ms av=+16ms
+  t= 7.1s v=106/0 a=180 chunks=1157 rx=1.29Mbps dec=102 lat p50=8/p95=25 | jb D=49ms av=+16ms
+  t= 8.1s v=137/0 a=230 chunks=1508 rx=1.47Mbps dec=132 lat p50=8/p95=25 | jb D=49ms av=+16ms
+  t= 9.1s v=167/0 a=280 chunks=1828 rx=1.59Mbps dec=162 lat p50=8/p95=25 | jb D=49ms av=+16ms
+  t=10.1s v=197/0 a=331 chunks=2167 rx=1.69Mbps dec=193 lat p50=8/p95=26 | jb D=54ms av=+15ms
+  t=11.1s v=227/0 a=382 chunks=2492 rx=1.77Mbps dec=223 lat p50=8/p95=25 | jb D=54ms av=+17ms
+
+RESULT video ok=254 lost=0 frame_loss=0.00% chunks=2796 dup=0 decoded=251 other=9805 bad=0 padded=1 dropped=0 dec_err=0 q_left=0
+       audio ok=426 lost=0 bytes=83798 decoded_samples=406080 (8.46 s) decoded_rms=2896.8
+one-way latency ms: p50=7.9 p95=25.5 p99=37.0 max=97.9 (n=2370)
+frame assemble ms: p50=0.2 p95=16.7 | arrival gap ms: p50=31.3 p95=47.8
+jitter buffer: D=56ms  video late=1 under=2  audio late=0 under=15
+release interval video ms: p50=31.5 p95=46.6 | audio ms: p50=16.2 p95=31.7
+capture clock: audio-video transit drift -1 ms over 12 s (-0.01% -- a capture device running slow shows up here)
+A/V sync skew ms: p50=15.8 p95=31.4 |max|=113.1 (n=252, + = audio leads)
+feedback sent: 194 reports (579 frames on the wire)
+wrote D:\Desktop\AI ¸¨Öú¶Ô»°\_work_final\rtc\bench\main\logs\l2_clean_05.h264 (2687651 bytes)

@@ -1,0 +1,25 @@
+receiver transport=udp on udp :9922 (rcvbuf 8 MB) (open 1 ms)  jitter_buffer=on [40..200 ms]
+feedback -> 192.168.240.2:9923 every 50 ms x3
+audio out: dev=16 48000 Hz  ÑïÉùÆ÷ (Realtek(R) Audio)
+  t= 1.1s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 2.1s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 3.2s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 4.2s v=17/0 a=31 chunks=184 rx=0.34Mbps dec=14 lat p50=2/p95=10 | jb D=64ms av=+25ms
+  t= 5.2s v=46/0 a=80 chunks=502 rx=0.77Mbps dec=45 lat p50=2/p95=5 | jb D=40ms av=+17ms
+  t= 6.2s v=76/0 a=130 chunks=834 rx=1.07Mbps dec=73 lat p50=3/p95=40 | jb D=67ms av=+21ms
+  t= 7.2s v=105/0 a=178 chunks=1147 rx=1.26Mbps dec=103 lat p50=3/p95=53 | jb D=94ms av=+22ms
+  t= 8.2s v=137/0 a=232 chunks=1504 rx=1.45Mbps dec=132 lat p50=4/p95=98 | jb D=133ms av=+30ms
+  t= 9.2s v=167/0 a=282 chunks=1830 rx=1.57Mbps dec=163 lat p50=4/p95=85 | jb D=128ms av=+16ms
+  t=10.3s v=197/0 a=331 chunks=2162 rx=1.67Mbps dec=194 lat p50=4/p95=87 | jb D=139ms av=+29ms
+  t=11.3s v=226/0 a=380 chunks=2472 rx=1.73Mbps dec=224 lat p50=6/p95=114 | jb D=174ms av=+21ms
+
+RESULT video ok=251 lost=1 frame_loss=0.40% chunks=2762 dup=0 decoded=250 other=0 bad=0 padded=0 dropped=0 dec_err=0 q_left=0
+       audio ok=421 lost=0 bytes=82736 decoded_samples=395520 (8.24 s) decoded_rms=2872.5
+one-way latency ms: p50=5.9 p95=117.5 p99=134.1 max=137.2 (n=2341)
+frame assemble ms: p50=2.8 p95=5.9 | arrival gap ms: p50=32.2 p95=69.3
+jitter buffer: D=179ms  video late=5 under=1  audio late=4 under=23
+release interval video ms: p50=32.1 p95=46.4 | audio ms: p50=16.6 p95=32.2
+capture clock: audio-video transit drift -12 ms over 12 s (-0.10% -- a capture device running slow shows up here)
+A/V sync skew ms: p50=18.4 p95=47.2 |max|=72.4 (n=246, + = audio leads)
+feedback sent: 191 reports (570 frames on the wire)
+wrote D:\Desktop\AI ¸¨Öú¶Ô»°\_work_final\rtc\bench\main\logs\udp_clean_05.h264 (2639227 bytes)

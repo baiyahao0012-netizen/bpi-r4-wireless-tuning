@@ -1,0 +1,200 @@
+﻿camera open 1922 ms -> requested 640x480@30, actual 640x480@30.0
+camera warm-up done (5 frames discarded)
+encoder open 2 ms  libx264 640x480@30 2000 kbps
+socket open 34 ms  Realtek PCIe GbE Family Controller
+sender: 40-C2-BA-52-70-95 -> C0-35-32-19-CC-FB via Realtek PCIe GbE Family Controller | 640x480@30 2000000 bps | mtu-chunk=1200
+  f=0    kf=1 enc=  1.5ms in=921600 B out=21087 B chunks=18 seq=0..17 gap=  0.0ms lat_tx= 66.1ms
+  f=1    kf=0 enc=  1.8ms in=921600 B out=4227 B chunks= 4 seq=18..21 gap= 66.1ms lat_tx= 14.0ms
+  f=2    kf=0 enc=  1.9ms in=921600 B out=7425 B chunks= 7 seq=22..28 gap= 34.8ms lat_tx=  7.0ms
+  f=3    kf=0 enc=  1.3ms in=921600 B out=7055 B chunks= 6 seq=29..34 gap= 32.0ms lat_tx=  5.6ms
+  f=4    kf=0 enc=  1.7ms in=921600 B out=8343 B chunks= 7 seq=35..41 gap= 34.5ms lat_tx=  6.5ms
+  f=5    kf=0 enc=  1.2ms in=921600 B out=6102 B chunks= 5 seq=42..46 gap= 33.0ms lat_tx=  6.3ms
+  f=6    kf=0 enc=  1.3ms in=921600 B out=7081 B chunks= 6 seq=47..52 gap= 33.5ms lat_tx=  5.9ms
+  f=7    kf=0 enc=  1.4ms in=921600 B out=7117 B chunks= 6 seq=53..58 gap= 33.0ms lat_tx=  6.3ms
+  f=8    kf=0 enc=  1.3ms in=921600 B out=7696 B chunks= 7 seq=59..65 gap= 34.0ms lat_tx=  5.8ms
+  f=9    kf=0 enc=  1.2ms in=921600 B out=6687 B chunks= 6 seq=66..71 gap= 32.1ms lat_tx=  5.4ms
+  f=10   kf=0 enc=  1.0ms in=921600 B out=6820 B chunks= 6 seq=72..77 gap= 34.0ms lat_tx=  5.6ms
+  f=11   kf=0 enc=  1.3ms in=921600 B out=7562 B chunks= 7 seq=78..84 gap= 32.0ms lat_tx=  5.6ms
+  f=12   kf=0 enc=  0.8ms in=921600 B out=7296 B chunks= 6 seq=85..90 gap= 34.9ms lat_tx= 15.7ms
+  f=13   kf=0 enc=  1.3ms in=921600 B out=7645 B chunks= 7 seq=91..97 gap= 32.1ms lat_tx= 28.4ms
+  f=14   kf=0 enc=  1.1ms in=921600 B out=7538 B chunks= 7 seq=98..104 gap= 33.9ms lat_tx= 16.2ms
+  f=15   kf=0 enc=  1.4ms in=921600 B out=7556 B chunks= 7 seq=105..111 gap= 33.0ms lat_tx= 15.6ms
+  f=16   kf=0 enc=  1.2ms in=921600 B out=7567 B chunks= 7 seq=112..118 gap= 33.5ms lat_tx= 11.5ms
+  f=17   kf=0 enc=  1.2ms in=921600 B out=7746 B chunks= 7 seq=119..125 gap= 33.0ms lat_tx= 11.2ms
+  f=18   kf=0 enc=  1.3ms in=921600 B out=7773 B chunks= 7 seq=126..132 gap= 34.6ms lat_tx=  8.1ms
+  f=19   kf=0 enc=  1.1ms in=921600 B out=7867 B chunks= 7 seq=133..139 gap= 32.0ms lat_tx=  7.6ms
+  f=20   kf=0 enc=  1.2ms in=921600 B out=7934 B chunks= 7 seq=140..146 gap= 34.1ms lat_tx=  6.4ms
+  f=21   kf=0 enc=  1.0ms in=921600 B out=8081 B chunks= 7 seq=147..153 gap= 33.0ms lat_tx=  5.8ms
+  f=22   kf=0 enc=  1.0ms in=921600 B out=8097 B chunks= 7 seq=154..160 gap= 33.9ms lat_tx=  5.3ms
+  f=23   kf=0 enc=  1.2ms in=921600 B out=8148 B chunks= 7 seq=161..167 gap= 33.0ms lat_tx=  5.4ms
+  f=24   kf=0 enc=  1.2ms in=921600 B out=8186 B chunks= 7 seq=168..174 gap= 33.1ms lat_tx=  6.8ms
+  f=25   kf=0 enc=  1.3ms in=921600 B out=8208 B chunks= 7 seq=175..181 gap= 34.5ms lat_tx= 14.3ms
+  f=26   kf=0 enc=  1.1ms in=921600 B out=8259 B chunks= 7 seq=182..188 gap= 32.3ms lat_tx= 14.3ms
+  f=27   kf=0 enc=  1.2ms in=921600 B out=8255 B chunks= 7 seq=189..195 gap= 34.2ms lat_tx= 11.7ms
+  f=28   kf=0 enc=  1.0ms in=921600 B out=8556 B chunks= 7 seq=196..202 gap= 32.0ms lat_tx= 11.6ms
+  f=29   kf=0 enc=  1.0ms in=921600 B out=8307 B chunks= 7 seq=203..209 gap= 32.8ms lat_tx= 10.3ms
+  t= 1.0s frames=30 chunks=210 kf=1  tx=1.88 Mbps  fps=29.0
+    stages: read=3.42ms(10%) conv=4.22ms(12%) enc=1.24ms(4%) chunk=0.04ms(0%) send=0.49ms(1%) pace=1.81ms(5%) tail=22.84ms(67%) | loop=34.05ms -> 29.4 fps ceiling
+    errors: read=0 conv=0 enc=0 send=0  pacer_slept=1.4ms/frame
+  f=30   kf=0 enc=  1.1ms in=921600 B out=9664 B chunks= 8 seq=210..217 gap= 34.1ms lat_tx=  8.3ms
+  f=31   kf=0 enc=  0.9ms in=921600 B out=9337 B chunks= 8 seq=218..225 gap= 32.9ms lat_tx=  7.3ms
+  f=32   kf=0 enc=  0.8ms in=921600 B out=9107 B chunks= 8 seq=226..233 gap= 34.5ms lat_tx=  5.2ms
+  f=33   kf=0 enc=  1.2ms in=921600 B out=8591 B chunks= 7 seq=234..240 gap= 33.6ms lat_tx=  6.3ms
+  f=34   kf=0 enc=  0.9ms in=921600 B out=8833 B chunks= 8 seq=241..248 gap= 32.1ms lat_tx=  5.8ms
+  f=35   kf=0 enc=  1.1ms in=921600 B out=8270 B chunks= 7 seq=249..255 gap= 33.1ms lat_tx=  5.6ms
+  f=36   kf=0 enc=  0.9ms in=921600 B out=8277 B chunks= 7 seq=256..262 gap= 34.7ms lat_tx=  5.9ms
+  f=37   kf=0 enc=  1.1ms in=921600 B out=8271 B chunks= 7 seq=263..269 gap= 32.0ms lat_tx=  5.1ms
+  f=38   kf=0 enc=  1.3ms in=921600 B out=8438 B chunks= 7 seq=270..276 gap= 34.6ms lat_tx= 13.1ms
+  f=39   kf=0 enc=  1.0ms in=921600 B out=8154 B chunks= 7 seq=277..283 gap= 33.8ms lat_tx= 12.0ms
+  f=40   kf=0 enc=  1.1ms in=921600 B out=8378 B chunks= 7 seq=284..290 gap= 32.1ms lat_tx= 12.1ms
+  f=41   kf=0 enc=  1.3ms in=921600 B out=8514 B chunks= 7 seq=291..297 gap= 32.3ms lat_tx= 11.4ms
+  f=42   kf=0 enc=  1.1ms in=921600 B out=8651 B chunks= 8 seq=298..305 gap= 34.3ms lat_tx=  9.2ms
+  f=43   kf=0 enc=  1.0ms in=921600 B out=8372 B chunks= 7 seq=306..312 gap= 32.7ms lat_tx=  7.4ms
+  f=44   kf=0 enc=  1.1ms in=921600 B out=8295 B chunks= 7 seq=313..319 gap= 33.6ms lat_tx=  6.8ms
+  f=45   kf=0 enc=  1.2ms in=921600 B out=8492 B chunks= 7 seq=320..326 gap= 33.9ms lat_tx=  5.8ms
+  f=46   kf=0 enc=  0.8ms in=921600 B out=8486 B chunks= 7 seq=327..333 gap= 34.3ms lat_tx=  5.0ms
+  f=47   kf=0 enc=  1.4ms in=921600 B out=14490 B chunks=12 seq=334..345 gap= 32.8ms lat_tx=  6.2ms
+  f=48   kf=0 enc=  1.6ms in=921600 B out=10602 B chunks= 9 seq=346..354 gap= 33.2ms lat_tx=  6.7ms
+  f=49   kf=0 enc=  1.5ms in=921600 B out=10421 B chunks= 9 seq=355..363 gap= 32.1ms lat_tx=  5.9ms
+  f=50   kf=0 enc=  1.0ms in=921600 B out=9070 B chunks= 8 seq=364..371 gap= 33.6ms lat_tx=  6.0ms
+  f=51   kf=0 enc=  1.0ms in=921600 B out=9014 B chunks= 8 seq=372..379 gap= 34.7ms lat_tx= 11.8ms
+  f=52   kf=0 enc=  1.1ms in=921600 B out=8759 B chunks= 8 seq=380..387 gap= 33.0ms lat_tx= 11.0ms
+  f=53   kf=0 enc=  1.0ms in=921600 B out=8511 B chunks= 7 seq=388..394 gap= 32.1ms lat_tx=  9.8ms
+  f=54   kf=0 enc=  1.3ms in=921600 B out=8454 B chunks= 7 seq=395..401 gap= 33.2ms lat_tx=  9.7ms
+  f=55   kf=0 enc=  1.1ms in=921600 B out=8344 B chunks= 7 seq=402..408 gap= 34.8ms lat_tx=  6.6ms
+  f=56   kf=0 enc=  1.2ms in=921600 B out=8485 B chunks= 7 seq=409..415 gap= 32.4ms lat_tx=  6.0ms
+  f=57   kf=0 enc=  1.2ms in=921600 B out=8125 B chunks= 7 seq=416..422 gap= 34.4ms lat_tx=  6.0ms
+  f=58   kf=0 enc=  1.2ms in=921600 B out=8178 B chunks= 7 seq=423..429 gap= 32.1ms lat_tx=  6.6ms
+  f=59   kf=0 enc=  1.1ms in=921600 B out=8409 B chunks= 7 seq=430..436 gap= 33.3ms lat_tx=  5.6ms
+  f=60   kf=1 enc=  1.1ms in=921600 B out=36625 B chunks=30 seq=437..466 gap= 33.0ms lat_tx=  7.0ms
+  t= 2.1s frames=61 chunks=467 kf=2  tx=2.13 Mbps  fps=29.5
+    stages: read=1.90ms(6%) conv=3.69ms(11%) enc=1.11ms(3%) chunk=0.04ms(0%) send=0.54ms(2%) pace=0.02ms(0%) tail=25.65ms(78%) | loop=32.96ms -> 30.3 fps ceiling
+    errors: read=0 conv=0 enc=0 send=0  pacer_slept=1.4ms/frame
+  f=61   kf=0 enc=  0.9ms in=921600 B out=3296 B chunks= 3 seq=467..469 gap= 34.2ms lat_tx=  5.1ms
+  f=62   kf=0 enc=  1.2ms in=921600 B out=5249 B chunks= 5 seq=470..474 gap= 33.1ms lat_tx=  5.9ms
+  f=63   kf=0 enc=  0.8ms in=921600 B out=6578 B chunks= 6 seq=475..480 gap= 34.4ms lat_tx=  5.5ms
+  f=64   kf=0 enc=  0.8ms in=921600 B out=7115 B chunks= 6 seq=481..486 gap= 32.6ms lat_tx= 10.6ms
+  f=65   kf=0 enc=  0.9ms in=921600 B out=7352 B chunks= 6 seq=487..492 gap= 33.0ms lat_tx=  9.3ms
+  f=66   kf=0 enc=  1.0ms in=921600 B out=7559 B chunks= 7 seq=493..499 gap= 34.4ms lat_tx=  6.7ms
+  f=67   kf=0 enc=  0.8ms in=921600 B out=7608 B chunks= 7 seq=500..506 gap= 32.5ms lat_tx=  6.5ms
+  f=68   kf=0 enc=  0.9ms in=921600 B out=7734 B chunks= 7 seq=507..513 gap= 33.0ms lat_tx=  5.6ms
+  f=69   kf=0 enc=  1.1ms in=921600 B out=7800 B chunks= 7 seq=514..520 gap= 33.1ms lat_tx=  5.1ms
+  f=70   kf=0 enc=  1.3ms in=921600 B out=7889 B chunks= 7 seq=521..527 gap= 33.8ms lat_tx=  5.8ms
+  f=71   kf=0 enc=  0.8ms in=921600 B out=7888 B chunks= 7 seq=528..534 gap= 33.4ms lat_tx=  5.8ms
+  f=72   kf=0 enc=  0.9ms in=921600 B out=7961 B chunks= 7 seq=535..541 gap= 33.5ms lat_tx=  5.8ms
+  f=73   kf=0 enc=  0.8ms in=921600 B out=7856 B chunks= 7 seq=542..548 gap= 32.8ms lat_tx=  5.0ms
+  f=74   kf=0 enc=  1.0ms in=921600 B out=8064 B chunks= 7 seq=549..555 gap= 34.9ms lat_tx=  5.4ms
+  f=75   kf=0 enc=  1.0ms in=921600 B out=8018 B chunks= 7 seq=556..562 gap= 33.4ms lat_tx=  5.9ms
+  f=76   kf=0 enc=  0.8ms in=921600 B out=8001 B chunks= 7 seq=563..569 gap= 32.0ms lat_tx=  5.4ms
+  f=77   kf=0 enc=  0.8ms in=921600 B out=7976 B chunks= 7 seq=570..576 gap= 33.1ms lat_tx=  9.6ms
+  f=78   kf=0 enc=  1.3ms in=921600 B out=7946 B chunks= 7 seq=577..583 gap= 33.7ms lat_tx=  8.5ms
+  f=79   kf=0 enc=  0.8ms in=921600 B out=8165 B chunks= 7 seq=584..590 gap= 34.1ms lat_tx=  5.8ms
+  f=80   kf=0 enc=  0.8ms in=921600 B out=8006 B chunks= 7 seq=591..597 gap= 32.8ms lat_tx=  6.0ms
+  f=81   kf=0 enc=  1.0ms in=921600 B out=8197 B chunks= 7 seq=598..604 gap= 33.3ms lat_tx=  5.1ms
+  f=82   kf=0 enc=  0.8ms in=921600 B out=8365 B chunks= 7 seq=605..611 gap= 33.6ms lat_tx=  5.1ms
+  f=83   kf=0 enc=  1.6ms in=921600 B out=8581 B chunks= 7 seq=612..618 gap= 33.3ms lat_tx=  6.0ms
+  f=84   kf=0 enc=  1.7ms in=921600 B out=8867 B chunks= 8 seq=619..626 gap= 33.9ms lat_tx=  6.2ms
+  f=85   kf=0 enc=  1.3ms in=921600 B out=9132 B chunks= 8 seq=627..634 gap= 31.4ms lat_tx=  6.0ms
+  f=86   kf=0 enc=  0.9ms in=921600 B out=9167 B chunks= 8 seq=635..642 gap= 34.3ms lat_tx=  6.0ms
+  f=87   kf=0 enc=  2.6ms in=921600 B out=9073 B chunks= 8 seq=643..650 gap= 33.1ms lat_tx=  7.9ms
+  f=88   kf=0 enc=  0.9ms in=921600 B out=8951 B chunks= 8 seq=651..658 gap= 33.4ms lat_tx=  5.6ms
+  f=89   kf=0 enc=  1.5ms in=921600 B out=8863 B chunks= 8 seq=659..666 gap= 33.4ms lat_tx=  6.0ms
+  f=90   kf=0 enc=  1.1ms in=921600 B out=8888 B chunks= 8 seq=667..674 gap= 33.1ms lat_tx=  8.5ms
+  t= 3.1s frames=91 chunks=675 kf=2  tx=2.06 Mbps  fps=29.7
+    stages: read=0.86ms(3%) conv=3.62ms(11%) enc=1.07ms(3%) chunk=0.04ms(0%) send=0.48ms(1%) pace=0.02ms(0%) tail=26.91ms(82%) | loop=33.00ms -> 30.3 fps ceiling
+    errors: read=0 conv=0 enc=0 send=0  pacer_slept=1.4ms/frame
+  f=91   kf=0 enc=  0.8ms in=921600 B out=8460 B chunks= 7 seq=675..681 gap= 33.7ms lat_tx=  7.8ms
+  f=92   kf=0 enc=  0.9ms in=921600 B out=8387 B chunks= 7 seq=682..688 gap= 33.0ms lat_tx=  6.5ms
+  f=93   kf=0 enc=  1.5ms in=921600 B out=8164 B chunks= 7 seq=689..695 gap= 33.0ms lat_tx=  5.9ms
+  f=94   kf=0 enc=  1.0ms in=921600 B out=8078 B chunks= 7 seq=696..702 gap= 33.5ms lat_tx=  6.1ms
+  f=95   kf=0 enc=  1.2ms in=921600 B out=8101 B chunks= 7 seq=703..709 gap= 33.0ms lat_tx=  6.4ms
+  f=96   kf=0 enc=  0.9ms in=921600 B out=8277 B chunks= 7 seq=710..716 gap= 33.9ms lat_tx=  5.5ms
+  f=97   kf=0 enc=  1.2ms in=921600 B out=8134 B chunks= 7 seq=717..723 gap= 33.3ms lat_tx=  7.1ms
+  f=98   kf=0 enc=  0.9ms in=921600 B out=8249 B chunks= 7 seq=724..730 gap= 32.2ms lat_tx=  6.0ms
+  f=99   kf=0 enc=  1.5ms in=921600 B out=8448 B chunks= 7 seq=731..737 gap= 34.0ms lat_tx=  6.1ms
+  f=100  kf=0 enc=  0.8ms in=921600 B out=8329 B chunks= 7 seq=738..744 gap= 33.6ms lat_tx=  5.6ms
+  f=101  kf=0 enc=  1.3ms in=921600 B out=8343 B chunks= 7 seq=745..751 gap= 33.7ms lat_tx=  6.0ms
+  f=102  kf=0 enc=  1.1ms in=921600 B out=8363 B chunks= 7 seq=752..758 gap= 33.0ms lat_tx=  6.2ms
+  f=103  kf=0 enc=  1.2ms in=921600 B out=8062 B chunks= 7 seq=759..765 gap= 32.5ms lat_tx=  8.6ms
+  f=104  kf=0 enc=  1.0ms in=921600 B out=8452 B chunks= 7 seq=766..772 gap= 35.0ms lat_tx=  6.3ms
+  f=105  kf=0 enc=  1.3ms in=921600 B out=8352 B chunks= 7 seq=773..779 gap= 32.0ms lat_tx=  6.3ms
+  f=106  kf=0 enc=  1.6ms in=921600 B out=8428 B chunks= 7 seq=780..786 gap= 35.1ms lat_tx=  5.9ms
+  f=107  kf=0 enc=  2.5ms in=921600 B out=8335 B chunks= 7 seq=787..793 gap= 32.0ms lat_tx=  7.4ms
+  f=108  kf=0 enc=  1.0ms in=921600 B out=8665 B chunks= 8 seq=794..801 gap= 33.0ms lat_tx=  6.1ms
+  f=109  kf=0 enc=  2.1ms in=921600 B out=8347 B chunks= 7 seq=802..808 gap= 33.2ms lat_tx=  7.8ms
+  f=110  kf=0 enc=  1.2ms in=921600 B out=8344 B chunks= 7 seq=809..815 gap= 33.9ms lat_tx=  5.9ms
+  f=111  kf=0 enc=  0.9ms in=921600 B out=8862 B chunks= 8 seq=816..823 gap= 34.0ms lat_tx=  7.4ms
+  f=112  kf=0 enc=  0.9ms in=921600 B out=9958 B chunks= 9 seq=824..832 gap= 32.2ms lat_tx=  7.5ms
+  f=113  kf=0 enc=  1.1ms in=921600 B out=10666 B chunks= 9 seq=833..841 gap= 34.4ms lat_tx=  6.7ms
+  f=114  kf=0 enc=  1.3ms in=921600 B out=10662 B chunks= 9 seq=842..850 gap= 32.0ms lat_tx=  6.2ms
+  f=115  kf=0 enc=  2.2ms in=921600 B out=8960 B chunks= 8 seq=851..858 gap= 34.1ms lat_tx=  7.4ms
+  f=116  kf=0 enc=  1.3ms in=921600 B out=9247 B chunks= 8 seq=859..866 gap= 33.4ms lat_tx=  7.2ms
+  f=117  kf=0 enc=  1.9ms in=921600 B out=9010 B chunks= 8 seq=867..874 gap= 33.0ms lat_tx=  7.3ms
+  f=118  kf=0 enc=  3.2ms in=921600 B out=9968 B chunks= 9 seq=875..883 gap= 33.1ms lat_tx=  8.3ms
+  f=119  kf=0 enc=  1.5ms in=921600 B out=10434 B chunks= 9 seq=884..892 gap= 34.2ms lat_tx=  5.8ms
+  f=120  kf=1 enc=  1.4ms in=921600 B out=36075 B chunks=30 seq=893..922 gap= 32.0ms lat_tx=  8.0ms
+  f=121  kf=0 enc=  1.1ms in=921600 B out=4742 B chunks= 4 seq=923..926 gap= 33.9ms lat_tx=  6.8ms
+  t= 4.1s frames=122 chunks=927 kf=3  tx=2.12 Mbps  fps=29.8
+    stages: read=0.31ms(1%) conv=4.16ms(13%) enc=1.35ms(4%) chunk=0.04ms(0%) send=0.53ms(2%) pace=0.02ms(0%) tail=26.55ms(81%) | loop=32.96ms -> 30.3 fps ceiling
+    errors: read=0 conv=0 enc=0 send=0  pacer_slept=1.4ms/frame
+  f=122  kf=0 enc=  1.1ms in=921600 B out=6609 B chunks= 6 seq=927..932 gap= 33.1ms lat_tx=  5.6ms
+  f=123  kf=0 enc=  1.6ms in=921600 B out=7710 B chunks= 7 seq=933..939 gap= 34.4ms lat_tx=  7.0ms
+  f=124  kf=0 enc=  3.0ms in=921600 B out=7999 B chunks= 7 seq=940..946 gap= 33.0ms lat_tx=  8.1ms
+  f=125  kf=0 enc=  0.9ms in=921600 B out=7583 B chunks= 7 seq=947..953 gap= 34.0ms lat_tx=  5.5ms
+  f=126  kf=0 enc=  0.8ms in=921600 B out=7899 B chunks= 7 seq=954..960 gap= 32.4ms lat_tx=  5.5ms
+  f=127  kf=0 enc=  1.1ms in=921600 B out=7589 B chunks= 7 seq=961..967 gap= 33.2ms lat_tx=  6.5ms
+  f=128  kf=0 enc=  0.9ms in=921600 B out=7619 B chunks= 7 seq=968..974 gap= 33.0ms lat_tx=  5.5ms
+  f=129  kf=0 enc=  2.0ms in=921600 B out=7949 B chunks= 7 seq=975..981 gap= 34.5ms lat_tx=  6.5ms
+  f=130  kf=0 enc=  1.1ms in=921600 B out=7795 B chunks= 7 seq=982..988 gap= 32.9ms lat_tx=  6.6ms
+  f=131  kf=0 enc=  1.1ms in=921600 B out=7854 B chunks= 7 seq=989..995 gap= 33.5ms lat_tx=  6.6ms
+  f=132  kf=0 enc=  2.3ms in=921600 B out=7662 B chunks= 7 seq=996..1002 gap= 33.0ms lat_tx=  7.1ms
+  f=133  kf=0 enc=  1.6ms in=921600 B out=7846 B chunks= 7 seq=1003..1009 gap= 32.5ms lat_tx=  7.6ms
+  f=134  kf=0 enc=  1.1ms in=921600 B out=7726 B chunks= 7 seq=1010..1016 gap= 35.0ms lat_tx=  6.5ms
+  f=135  kf=0 enc=  1.2ms in=921600 B out=7266 B chunks= 6 seq=1017..1022 gap= 32.0ms lat_tx=  6.3ms
+  f=136  kf=0 enc=  0.9ms in=921600 B out=7500 B chunks= 7 seq=1023..1029 gap= 33.6ms lat_tx=  5.6ms
+  f=137  kf=0 enc=  1.0ms in=921600 B out=7729 B chunks= 7 seq=1030..1036 gap= 33.2ms lat_tx=  5.9ms
+  f=138  kf=0 enc=  2.4ms in=921600 B out=7603 B chunks= 7 seq=1037..1043 gap= 34.0ms lat_tx=  7.2ms
+  f=139  kf=0 enc=  1.2ms in=921600 B out=7550 B chunks= 7 seq=1044..1050 gap= 32.5ms lat_tx=  5.2ms
+  f=140  kf=0 enc=  0.8ms in=921600 B out=7599 B chunks= 7 seq=1051..1057 gap= 34.0ms lat_tx=  6.0ms
+  f=141  kf=0 enc=  1.2ms in=921600 B out=7524 B chunks= 7 seq=1058..1064 gap= 33.8ms lat_tx=  6.9ms
+  f=142  kf=0 enc=  0.9ms in=921600 B out=7608 B chunks= 7 seq=1065..1071 gap= 33.5ms lat_tx=  5.4ms
+  f=143  kf=0 enc=  1.9ms in=921600 B out=7836 B chunks= 7 seq=1072..1078 gap= 31.9ms lat_tx=  7.9ms
+  f=144  kf=0 enc=  1.0ms in=921600 B out=8144 B chunks= 7 seq=1079..1085 gap= 33.0ms lat_tx=  5.8ms
+  f=145  kf=0 enc=  0.9ms in=921600 B out=7746 B chunks= 7 seq=1086..1092 gap= 34.2ms lat_tx=  6.1ms
+  f=146  kf=0 enc=  0.8ms in=921600 B out=8052 B chunks= 7 seq=1093..1099 gap= 33.6ms lat_tx=  5.5ms
+  f=147  kf=0 enc=  1.2ms in=921600 B out=7850 B chunks= 7 seq=1100..1106 gap= 34.3ms lat_tx=  8.6ms
+  f=148  kf=0 enc=  1.2ms in=921600 B out=8142 B chunks= 7 seq=1107..1113 gap= 32.7ms lat_tx=  9.2ms
+  f=149  kf=0 enc=  1.3ms in=921600 B out=8022 B chunks= 7 seq=1114..1120 gap= 33.9ms lat_tx=  7.8ms
+  f=150  kf=0 enc=  1.0ms in=921600 B out=8312 B chunks= 7 seq=1121..1127 gap= 33.6ms lat_tx=  5.2ms
+  f=151  kf=0 enc=  2.4ms in=921600 B out=8065 B chunks= 7 seq=1128..1134 gap= 32.3ms lat_tx=  8.7ms
+  t= 5.1s frames=152 chunks=1135 kf=3  tx=2.07 Mbps  fps=29.8
+    stages: read=0.16ms(0%) conv=4.38ms(13%) enc=1.33ms(4%) chunk=0.03ms(0%) send=0.40ms(1%) pace=0.02ms(0%) tail=26.77ms(81%) | loop=33.10ms -> 30.2 fps ceiling
+    errors: read=0 conv=0 enc=0 send=0  pacer_slept=1.4ms/frame
+  f=152  kf=0 enc=  1.3ms in=921600 B out=8075 B chunks= 7 seq=1135..1141 gap= 35.0ms lat_tx=  6.6ms
+  f=153  kf=0 enc=  1.4ms in=921600 B out=8312 B chunks= 7 seq=1142..1148 gap= 31.3ms lat_tx=  5.8ms
+  f=154  kf=0 enc=  2.0ms in=921600 B out=8320 B chunks= 7 seq=1149..1155 gap= 33.2ms lat_tx=  7.9ms
+  f=155  kf=0 enc=  1.8ms in=921600 B out=8464 B chunks= 7 seq=1156..1162 gap= 34.0ms lat_tx=  7.4ms
+  f=156  kf=0 enc=  1.1ms in=921600 B out=8254 B chunks= 7 seq=1163..1169 gap= 33.9ms lat_tx=  6.2ms
+  f=157  kf=0 enc=  1.3ms in=921600 B out=8376 B chunks= 7 seq=1170..1176 gap= 32.4ms lat_tx=  6.7ms
+  f=158  kf=0 enc=  1.1ms in=921600 B out=7922 B chunks= 7 seq=1177..1183 gap= 34.0ms lat_tx=  5.6ms
+  f=159  kf=0 enc=  1.3ms in=921600 B out=8225 B chunks= 7 seq=1184..1190 gap= 33.0ms lat_tx=  6.4ms
+  f=160  kf=0 enc=  1.2ms in=921600 B out=8185 B chunks= 7 seq=1191..1197 gap= 33.3ms lat_tx=  6.0ms
+  f=161  kf=0 enc=  1.1ms in=921600 B out=8428 B chunks= 7 seq=1198..1204 gap= 34.0ms lat_tx=  5.9ms
+  f=162  kf=0 enc=  1.1ms in=921600 B out=8040 B chunks= 7 seq=1205..1211 gap= 31.0ms lat_tx=  6.4ms
+  f=163  kf=0 enc=  1.3ms in=921600 B out=8507 B chunks= 7 seq=1212..1218 gap= 34.5ms lat_tx=  7.6ms
+  f=164  kf=0 enc=  1.6ms in=921600 B out=8239 B chunks= 7 seq=1219..1225 gap= 37.9ms lat_tx= 12.5ms
+  f=165  kf=0 enc=  1.5ms in=921600 B out=8221 B chunks= 7 seq=1226..1232 gap= 28.2ms lat_tx=  7.5ms
+  f=166  kf=0 enc=  1.3ms in=921600 B out=8278 B chunks= 7 seq=1233..1239 gap= 33.8ms lat_tx=  8.0ms
+  f=167  kf=0 enc=  1.2ms in=921600 B out=8502 B chunks= 7 seq=1240..1246 gap= 33.9ms lat_tx=  6.2ms
+  f=168  kf=0 enc=  1.2ms in=921600 B out=8328 B chunks= 7 seq=1247..1253 gap= 33.1ms lat_tx=  9.6ms
+  f=169  kf=0 enc=  1.5ms in=921600 B out=8287 B chunks= 7 seq=1254..1260 gap= 34.5ms lat_tx=  6.7ms
+  f=170  kf=0 enc=  1.0ms in=921600 B out=8147 B chunks= 7 seq=1261..1267 gap= 32.9ms lat_tx=  6.3ms
+  f=171  kf=0 enc=  2.4ms in=921600 B out=8218 B chunks= 7 seq=1268..1274 gap= 31.4ms lat_tx=  7.4ms
+  f=172  kf=0 enc=  1.2ms in=921600 B out=8275 B chunks= 7 seq=1275..1281 gap= 35.9ms lat_tx=  5.9ms
+  f=173  kf=0 enc=  0.9ms in=921600 B out=8060 B chunks= 7 seq=1282..1288 gap= 32.0ms lat_tx=  5.1ms
+  f=174  kf=0 enc=  2.7ms in=921600 B out=7993 B chunks= 7 seq=1289..1295 gap= 33.0ms lat_tx=  7.5ms
+  f=175  kf=0 enc=  1.0ms in=921600 B out=8152 B chunks= 7 seq=1296..1302 gap= 33.6ms lat_tx=  5.2ms
+  f=176  kf=0 enc=  1.1ms in=921600 B out=8257 B chunks= 7 seq=1303..1309 gap= 33.0ms lat_tx=  5.8ms
+  f=177  kf=0 enc=  1.1ms in=921600 B out=8472 B chunks= 7 seq=1310..1316 gap= 32.9ms lat_tx=  6.0ms
+  f=178  kf=0 enc=  0.9ms in=921600 B out=8295 B chunks= 7 seq=1317..1323 gap= 33.3ms lat_tx=  6.5ms
+done: 179 frames, 1324 chunks, 3 keyframes, 2.06 Mbps avg, 29.8 fps

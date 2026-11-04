@@ -1,0 +1,28 @@
+﻿sender: 40-C2-BA-52-70-95 -> C0-35-32-19-CC-FB via Realtek PCIe GbE Family Controller | 640x480@30 2500000 bps | mtu-chunk=1200
+audio: loopback 48000 Hz mono opus 64000 bps (dev=default  src=������ (Realtek(R) Audio) [Loopback] [loopback])
+  t= 1.0s frames=27 chunks=234 kf=1  tx=2.18 Mbps  fps=26.7
+    fb #70 n=19 dup=32 per=47ms rx=1.24Mbps loss=1000/1000 jit=34.8ms q=63ms maxfid=23 ok=17 lost=6
+    audio 43 frames 6990B rms=4480.6
+  t= 2.0s frames=57 chunks=504 kf=1  tx=2.37 Mbps  fps=28.4
+    fb #85 n=34 dup=62 per=34ms rx=2.19Mbps loss=0/1000 jit=22.6ms q=48ms maxfid=54 ok=36 lost=18
+    audio 93 frames 15756B rms=7154.0
+  t= 3.0s frames=88 chunks=802 kf=2  tx=2.49 Mbps  fps=28.9
+    fb #101 n=50 dup=94 per=58ms rx=2.65Mbps loss=0/1000 jit=25.4ms q=52ms maxfid=85 ok=58 lost=27
+    audio 145 frames 24622B rms=10483.1
+  t= 4.0s frames=118 chunks=1094 kf=2  tx=2.55 Mbps  fps=29.2
+    fb #118 n=67 dup=128 per=39ms rx=2.77Mbps loss=0/1000 jit=25.4ms q=52ms maxfid=115 ok=89 lost=27
+    audio 195 frames 33418B rms=11638.3
+  t= 5.1s frames=149 chunks=1386 kf=3  tx=2.57 Mbps  fps=29.4
+    fb #134 n=83 dup=160 per=33ms rx=1.49Mbps loss=0/1000 jit=28.1ms q=55ms maxfid=145 ok=118 lost=27
+    audio 247 frames 42402B rms=12694.2
+  t= 6.1s frames=180 chunks=1665 kf=3  tx=2.57 Mbps  fps=29.5
+    fb #150 n=99 dup=192 per=39ms rx=2.72Mbps loss=0/1000 jit=27.1ms q=54ms maxfid=176 ok=150 lost=27
+    audio 298 frames 50919B rms=13433.1
+  t= 7.1s frames=210 chunks=1951 kf=4  tx=2.58 Mbps  fps=29.5
+    fb #167 n=116 dup=226 per=59ms rx=1.55Mbps loss=0/1000 jit=27.2ms q=54ms maxfid=207 ok=180 lost=27
+    audio 348 frames 59046B rms=13921.0
+  t= 8.1s frames=241 chunks=2255 kf=5  tx=2.61 Mbps  fps=29.6
+    fb #185 n=134 dup=262 per=70ms rx=2.79Mbps loss=0/1000 jit=27.1ms q=54ms maxfid=239 ok=213 lost=27
+    audio 400 frames 68175B rms=14276.3
+done: 267 frames, 2483 chunks, 5 keyframes, 2.59 Mbps avg, 29.6 fps
+audio: 443 frames, 76848 bytes payload, rms=14464.9, starved=0

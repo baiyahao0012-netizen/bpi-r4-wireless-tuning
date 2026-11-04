@@ -1,0 +1,21 @@
+﻿receiver on Realtek 8852CE WiFi 6E PCI-E NIC (open 38 ms)  jitter_buffer=OFF
+  t= 1.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0
+  t= 2.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0
+  t= 3.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0
+  t= 4.1s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0
+  t= 5.1s v=21/0 a=0 chunks=193 rx=0.34Mbps dec=20 lat p50=11/p95=50
+  t= 6.1s v=51/0 a=0 chunks=475 rx=0.71Mbps dec=50 lat p50=11/p95=34
+  t= 7.1s v=82/0 a=0 chunks=769 rx=0.98Mbps dec=81 lat p50=11/p95=32
+  t= 8.1s v=112/0 a=0 chunks=1035 rx=1.16Mbps dec=111 lat p50=11/p95=34
+  t= 9.1s v=142/0 a=0 chunks=1326 rx=1.32Mbps dec=141 lat p50=12/p95=32
+  t=10.1s v=173/0 a=0 chunks=1611 rx=1.44Mbps dec=172 lat p50=12/p95=33
+  t=11.1s v=203/0 a=0 chunks=1893 rx=1.54Mbps dec=202 lat p50=11/p95=33
+  t=12.2s v=234/0 a=0 chunks=2166 rx=1.62Mbps dec=233 lat p50=12/p95=33
+  t=13.2s v=264/0 a=0 chunks=2463 rx=1.70Mbps dec=263 lat p50=13/p95=33
+
+RESULT video ok=269 lost=0 frame_loss=0.00% chunks=2513 dup=0 decoded=268 other=6310 bad=0 padded=2 dropped=0 dec_err=0 q_left=0
+       audio ok=0 lost=0 bytes=0 decoded_samples=0 (0.00 s) decoded_rms=0.0
+one-way latency ms: p50=12.6 p95=32.8 p99=36.5 max=74.2 (n=2513)
+frame assemble ms: p50=0.3 p95=31.8 | arrival gap ms: p50=31.5 p95=58.8
+A/V sync skew ms: p50=0.0 p95=0.0 |max|=0.0 (n=0, + = audio leads)
+wrote r_C_clean.h264 (2851025 bytes)

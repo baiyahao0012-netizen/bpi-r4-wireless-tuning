@@ -1,0 +1,5 @@
+IsAdmin: True
+GbE Family   SEND OK   (Realtek PCIe GbE Family Controller)
+8852         SEND FAIL send: send error: PacketSendPacket failed: ����ϵͳ�ϵ��豸û�з������á�  (31)
+MediaTek     SEND FAIL send: send error: PacketSendPacket failed: ����ϵͳ�ϵ��豸û�з������á�  (31)
+done

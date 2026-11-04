@@ -1,0 +1,28 @@
+receiver transport=l2 on l2 capture on Realtek 8852CE WiFi 6E PCI-E NIC (open 29 ms)  jitter_buffer=on [40..200 ms]
+feedback -> C0-35-32-19-CC-FB every 50 ms x3
+audio out: dev=16 48000 Hz  ÑïÉùÆ÷ (Realtek(R) Audio)
+  t= 1.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 2.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 3.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+  t= 4.1s v=14/1 a=23 chunks=153 rx=0.29Mbps dec=0 lat p50=12/p95=28 | jb D=55ms av=+16ms
+  t= 5.1s v=42/3 a=74 chunks=471 rx=0.71Mbps dec=0 lat p50=10/p95=29 | jb D=51ms av=+18ms
+  t= 6.1s v=72/3 a=125 chunks=820 rx=1.05Mbps dec=12 lat p50=10/p95=28 | jb D=51ms av=+18ms
+  t= 7.1s v=101/5 a=175 chunks=1140 rx=1.24Mbps dec=31 lat p50=11/p95=30 | jb D=52ms av=+20ms
+  t= 8.1s v=130/7 a=227 chunks=1509 rx=1.44Mbps dec=56 lat p50=12/p95=31 | jb D=55ms av=+19ms
+  t= 9.1s v=159/7 a=277 chunks=1835 rx=1.55Mbps dec=86 lat p50=12/p95=31 | jb D=56ms av=+17ms
+  t=10.1s v=188/9 a=327 chunks=2189 rx=1.66Mbps dec=106 lat p50=11/p95=31 | jb D=57ms av=+17ms
+  t=11.2s v=217/11 a=378 chunks=2529 rx=1.75Mbps dec=133 lat p50=11/p95=31 | jb D=57ms av=+21ms
+
+RESULT video ok=240 lost=14 frame_loss=5.51% chunks=2810 dup=0 decoded=158 other=749 bad=0 padded=2 dropped=13 dec_err=57 q_left=0
+       audio ok=420 lost=0 bytes=19444 decoded_samples=401280 (8.36 s) decoded_rms=0.1
+one-way latency ms: p50=11.1 p95=30.7 p99=33.5 max=36.3 (n=2390)
+frame assemble ms: p50=0.4 p95=22.8 | arrival gap ms: p50=31.4 p95=61.6
+jitter buffer: D=57ms  video late=0 under=11  audio late=0 under=1
+release interval video ms: p50=32.5 p95=48.2 | audio ms: p50=20.1 p95=22.2
+capture clock: audio-video transit drift -8 ms over 12 s (-0.07% -- a capture device running slow shows up here)
+A/V sync skew ms: p50=17.1 p95=30.8 |max|=35.5 (n=239, + = audio leads)
+feedback sent: 188 reports (561 frames on the wire)
+wrote D:\Desktop\AI ¸¨Öú¶Ô»°\_work_final\rtc\bench\pilot\logs\l2_lossy_01.h264 (2509365 bytes)

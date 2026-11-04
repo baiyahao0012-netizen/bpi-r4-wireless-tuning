@@ -1,0 +1,30 @@
+﻿receiver on Realtek 8852CE WiFi 6E PCI-E NIC (open 26 ms)  jitter_buffer=on [40..200 ms]
+feedback -> C0-35-32-19-CC-FB every 50 ms x3 via Realtek PCIe GbE Family Controller
+audio out: dev=16 48000 Hz  ������ (Realtek(R) Audio)
+  t= 1.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 2.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 3.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+  t= 4.0s v=5/2 a=13 chunks=92 rx=0.18Mbps dec=0 lat p50=8/p95=32 | jb D=40ms av=+24ms
+  t= 5.0s v=24/12 a=63 chunks=398 rx=0.62Mbps dec=0 lat p50=8/p95=26 | jb D=44ms av=+15ms
+  t= 6.0s v=42/25 a=114 chunks=731 rx=0.96Mbps dec=0 lat p50=9/p95=27 | jb D=51ms av=+17ms
+  t= 7.1s v=62/36 a=163 chunks=1051 rx=1.18Mbps dec=0 lat p50=9/p95=27 | jb D=51ms av=+20ms
+  t= 8.1s v=82/46 a=214 chunks=1377 rx=1.35Mbps dec=0 lat p50=9/p95=27 | jb D=54ms av=+17ms
+  t= 9.1s v=101/56 a=264 chunks=1703 rx=1.49Mbps dec=0 lat p50=10/p95=28 | jb D=55ms av=+15ms
+  t=10.1s v=119/69 a=316 chunks=2025 rx=1.59Mbps dec=0 lat p50=10/p95=27 | jb D=55ms av=+16ms
+  t=11.1s v=137/81 a=366 chunks=2349 rx=1.68Mbps dec=0 lat p50=10/p95=28 | jb D=57ms av=+18ms
+  t=12.1s v=156/93 a=417 chunks=2688 rx=1.76Mbps dec=0 lat p50=10/p95=28 | jb D=57ms av=+17ms
+  t=13.1s v=167/100 a=443 chunks=2892 rx=1.75Mbps dec=0 lat p50=10/p95=29 | jb D=57ms av=+15ms
+
+RESULT video ok=167 lost=100 frame_loss=37.45% chunks=2892 dup=0 decoded=0 other=6208 bad=0 padded=1 dropped=101 dec_err=166 q_left=0
+       audio ok=443 lost=0 bytes=78448 decoded_samples=425280 (8.86 s) decoded_rms=13564.3
+one-way latency ms: p50=9.8 p95=29.2 p99=33.3 max=37.2 (n=2449)
+frame assemble ms: p50=0.4 p95=26.9 | arrival gap ms: p50=59.8 p95=85.4
+jitter buffer: D=57ms  video late=0 under=95  audio late=0 under=1
+release interval video ms: p50=64.0 p95=75.6 | audio ms: p50=20.0 p95=21.8
+capture clock: audio-video transit drift -9 ms over 14 s (-0.07% -- a capture device running slow shows up here)
+A/V sync skew ms: p50=16.5 p95=29.0 |max|=34.4 (n=167, + = audio leads)
+feedback sent: 226 reports (675 frames on the wire)
+wrote r2_AL.h264 (1735710 bytes)

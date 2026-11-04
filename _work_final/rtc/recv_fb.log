@@ -1,0 +1,556 @@
+﻿receiver on Realtek 8852CE WiFi 6E PCI-E NIC (open 34 ms)  jitter_buffer=on [40..200 ms]
+feedback -> C0-35-32-19-CC-FB every 50 ms x3 via Realtek PCIe GbE Family Controller
+  << fb#0 win=52ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 1 reports on the wire
+  << fb#1 win=56ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 2 reports on the wire
+  << fb#2 win=53ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#3 win=62ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#4 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#5 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#6 win=65ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#7 win=60ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#8 win=62ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#9 win=81ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#10 win=62ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#11 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#12 win=62ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#13 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#14 win=61ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#15 win=64ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  t= 1.0s ok=0 lost=0 chunks=0 dup=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 gap=0.0ms | jb D=40ms held p50=0ms late=0 under=0
+  << fb#16 win=53ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#17 win=50ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#18 win=57ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#19 win=59ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#20 win=64ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#21 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#22 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#23 win=56ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#24 win=57ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#25 win=54ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#26 win=57ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#27 win=77ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#28 win=62ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#29 win=66ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#30 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#31 win=61ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#32 win=62ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  t= 2.0s ok=0 lost=0 chunks=0 dup=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 gap=0.0ms | jb D=40ms held p50=0ms late=0 under=0
+  << fb#33 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#34 win=64ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#35 win=64ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#36 win=60ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#37 win=62ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#38 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#39 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#40 win=64ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#41 win=75ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#42 win=62ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#43 win=64ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#44 win=64ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#45 win=50ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#46 win=58ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#47 win=56ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#48 win=70ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  t= 3.0s ok=0 lost=0 chunks=0 dup=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 gap=0.0ms | jb D=40ms held p50=0ms late=0 under=0
+  << fb#49 win=50ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#50 win=61ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#51 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#52 win=55ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#53 win=54ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#54 win=79ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#55 win=78ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#56 win=54ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#57 win=50ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#58 win=52ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#59 win=53ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#60 win=50ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#61 win=50ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#62 win=54ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#63 win=71ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#64 win=62ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#65 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  t= 4.0s ok=0 lost=0 chunks=0 dup=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 gap=0.0ms | jb D=40ms held p50=0ms late=0 under=0
+  << fb#66 win=61ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#67 win=63ms bytes=0 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  << fb#68 win=62ms bytes=1200 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  fid=0    got=18/18 lat= 29.9.. 62.1ms asm= 32.3ms gap=   0.0ms key=1 -> hold  40.0ms (D=40)
+  << fb#69 win=61ms bytes=21058 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  fid=1    got=4/4 lat= 22.3.. 22.6ms asm=  0.3ms gap=  61.3ms key=0 -> hold  40.0ms (D=40)
+  >> play pts=0.000s held= 40.0ms late_by= 3.4ms D=   40ms 
+  fid=2    got=7/7 lat=  2.8..  2.9ms asm=  0.2ms gap=  14.7ms key=0 -> hold  40.0ms (D=40)
+  >> play pts=0.069s held= 40.0ms late_by= 2.9ms D=   40ms 
+  >> play pts=0.104s held= 40.0ms late_by= 3.6ms D=   40ms 
+  << fb#70 win=58ms bytes=10798 loss=0/1000 jit=0.0ms q=40ms -> 3 reports on the wire
+  fid=3    got=6/6 lat= 14.7.. 14.8ms asm=  0.1ms gap=  44.2ms key=0 -> hold  27.6ms (D=40)
+  fid=4    got=7/7 lat=  4.6..  8.8ms asm=  4.2ms gap=  23.8ms key=0 -> hold  33.8ms (D=40)
+  >> play pts=0.136s held= 27.6ms late_by= 0.3ms D=   40ms 
+  << fb#71 win=52ms bytes=14526 loss=0/1000 jit=12.4ms q=40ms -> 3 reports on the wire
+  >> play pts=0.170s held= 33.8ms late_by= 5.4ms D=   40ms 
+  fid=5    got=4/4 lat= 15.8.. 15.9ms asm=  0.1ms gap=  43.6ms key=0 -> hold  27.8ms (D=40)
+  >> play pts=0.203s held= 27.8ms late_by= 4.0ms D=   40ms 
+  fid=6    got=6/6 lat=  1.5.. 15.3ms asm= 13.7ms gap=  18.4ms key=0 -> hold  28.4ms (D=40)
+  << fb#72 win=65ms bytes=11203 loss=0/1000 jit=12.4ms q=40ms -> 3 reports on the wire
+  fid=7    got=6/6 lat=  7.5..  7.6ms asm=  0.1ms gap=  39.8ms key=0 -> hold  36.0ms (D=40)
+  >> play pts=0.236s held= 28.4ms late_by= 2.2ms D=   40ms 
+  fid=8    got=6/6 lat=  9.3..  9.5ms asm=  0.2ms gap=  35.3ms key=0 -> hold  33.9ms (D=40)
+  >> play pts=0.269s held= 36.0ms late_by= 4.6ms D=   40ms 
+  << fb#73 win=50ms bytes=13976 loss=0/1000 jit=12.4ms q=40ms -> 3 reports on the wire
+  >> play pts=0.303s held= 33.9ms late_by= 6.1ms D=   40ms 
+  fid=9    got=6/6 lat= 16.9.. 17.1ms asm=  0.1ms gap=  40.5ms key=0 -> hold  26.9ms (D=40)
+  << fb#74 win=50ms bytes=6987 loss=0/1000 jit=13.1ms q=40ms -> 3 reports on the wire
+  fid=10   got=7/7 lat=  9.9.. 10.0ms asm=  0.1ms gap=  26.7ms key=0 -> hold  33.8ms (D=40)
+  >> play pts=0.336s held= 26.9ms late_by= 4.6ms D=   40ms 
+  >> play pts=0.370s held= 33.8ms late_by= 1.8ms D=   40ms 
+  << fb#75 win=52ms bytes=7237 loss=0/1000 jit=13.1ms q=40ms -> 3 reports on the wire
+  fid=11   got=6/6 lat=  9.1..  9.3ms asm=  0.2ms gap=  41.1ms key=0 -> hold  34.1ms (D=40)
+  fid=12   got=6/6 lat=  7.9..  8.0ms asm=  0.1ms gap=  31.3ms key=0 -> hold  35.6ms (D=40)
+  >> play pts=0.411s held= 34.1ms late_by= 3.1ms D=   40ms 
+  << fb#76 win=53ms bytes=14003 loss=0/1000 jit=13.1ms q=40ms -> 3 reports on the wire
+  >> play pts=0.444s held= 35.6ms late_by= 1.4ms D=   40ms 
+  fid=13   got=7/7 lat= 14.3.. 14.4ms asm=  0.1ms gap=  37.5ms key=0 -> hold  29.5ms (D=40)
+  fid=14   got=6/6 lat=  6.0..  6.3ms asm=  0.3ms gap=  23.9ms key=0 -> hold  37.6ms (D=40)
+  >> play pts=0.475s held= 29.5ms late_by= 4.1ms D=   40ms 
+  << fb#77 win=54ms bytes=14579 loss=0/1000 jit=13.1ms q=40ms -> 3 reports on the wire
+  >> play pts=0.507s held= 37.6ms late_by= 4.7ms D=   40ms 
+  fid=15   got=7/7 lat= 22.1.. 22.2ms asm=  0.1ms gap=  47.6ms key=0 -> hold  24.5ms (D=43)
+  fid=16   got=7/7 lat=  6.0..  6.1ms asm=  0.1ms gap=  16.3ms key=0 -> hold  40.1ms (D=43)
+  << fb#78 win=54ms bytes=15042 loss=0/1000 jit=18.0ms q=42ms -> 3 reports on the wire
+  >> play pts=0.539s held= 24.5ms late_by= 1.3ms D=   43ms 
+  fid=17   got=7/7 lat=  5.5.. 10.3ms asm=  4.8ms gap=  31.6ms key=0 -> hold  36.3ms (D=43)
+  >> play pts=0.571s held= 40.1ms late_by= 0.5ms D=   43ms 
+  << fb#79 win=52ms bytes=7283 loss=0/1000 jit=18.0ms q=42ms -> 3 reports on the wire
+  fid=18   got=7/7 lat=  8.7.. 14.0ms asm=  5.3ms gap=  36.0ms key=0 -> hold  32.1ms (D=43)
+  >> play pts=0.603s held= 36.3ms late_by= 0.1ms D=   43ms 
+  >> play pts=0.636s held= 32.1ms late_by= 1.2ms D=   43ms 
+  << fb#80 win=50ms bytes=7611 loss=0/1000 jit=18.0ms q=42ms -> 3 reports on the wire
+  fid=19   got=7/7 lat= 24.5.. 30.8ms asm=  6.3ms gap=  48.8ms key=0 -> hold  26.7ms (D=53)
+  fid=20   got=7/7 lat= 17.8.. 17.9ms asm=  0.2ms gap=  26.8ms key=0 -> hold  28.1ms (D=43)
+  >> play pts=0.669s held= 26.7ms late_by= 4.2ms D=   43ms 
+  << fb#81 win=52ms bytes=15443 loss=0/1000 jit=18.0ms q=42ms -> 3 reports on the wire
+  >> play pts=0.702s held= 28.1ms late_by= 3.1ms D=   43ms 
+  fid=21   got=7/7 lat= 20.8.. 25.1ms asm=  4.2ms gap=  37.2ms key=0 -> hold  25.3ms (D=46)
+  >> play pts=0.737s held= 25.3ms late_by= 3.1ms D=   46ms 
+  << fb#82 win=55ms bytes=15125 loss=0/1000 jit=21.2ms q=46ms -> 3 reports on the wire
+  fid=22   got=7/7 lat=  7.7.. 19.5ms asm= 11.8ms gap=  21.4ms key=0 -> hold  28.9ms (D=46)
+  fid=23   got=7/7 lat=  9.5..  9.7ms asm=  0.1ms gap=  33.4ms key=0 -> hold  40.3ms (D=46)
+  >> play pts=0.769s held= 28.9ms late_by= 2.9ms D=   46ms 
+  << fb#83 win=54ms bytes=8521 loss=0/1000 jit=21.2ms q=46ms -> 3 reports on the wire
+  fid=24   got=7/7 lat=  1.6..  7.7ms asm=  6.1ms gap=  33.0ms key=0 -> hold  42.6ms (D=46)
+  >> play pts=0.802s held= 40.3ms late_by= 3.2ms D=   46ms 
+  t= 5.1s ok=25 lost=0 chunks=173 dup=0 rx=0.31Mbps dec=0 lat p50=10/p95=62 gap=35.3ms | jb D=46ms held p50=34ms late=0 under=0
+  fid=25   got=7/7 lat= 15.9.. 16.2ms asm=  0.2ms gap=  46.5ms key=0 -> hold  34.3ms (D=46)
+  >> play pts=0.843s held= 42.6ms late_by= 2.6ms D=   46ms 
+  << fb#84 win=52ms bytes=16214 loss=0/1000 jit=21.2ms q=46ms -> 3 reports on the wire
+  fid=26   got=7/7 lat= 13.8.. 14.0ms asm=  0.1ms gap=  29.7ms key=0 -> hold  36.4ms (D=46)
+  >> play pts=0.876s held= 34.3ms late_by= 3.6ms D=   46ms 
+  << fb#85 win=53ms bytes=8088 loss=0/1000 jit=21.2ms q=46ms -> 3 reports on the wire
+  fid=27   got=7/7 lat= 16.4.. 16.6ms asm=  0.2ms gap=  34.6ms key=0 -> hold  33.5ms (D=46)
+  >> play pts=0.907s held= 36.4ms late_by= 4.6ms D=   46ms 
+  >> play pts=0.939s held= 33.5ms late_by=10.7ms D=   46ms 
+  << fb#86 win=51ms bytes=14150 loss=0/1000 jit=21.2ms q=46ms -> 3 reports on the wire
+  fid=28   got=7/7 lat=  8.3.. 29.5ms asm= 21.1ms gap=  23.8ms key=0 -> hold  26.4ms (D=52)
+  >> play pts=0.971s held= 26.4ms late_by= 4.7ms D=   52ms 
+  fid=29   got=7/7 lat= 28.8.. 28.9ms asm=  0.1ms gap=  52.4ms key=0 -> hold  27.0ms (D=52)
+  >> play pts=1.003s held= 27.0ms late_by= 3.7ms D=   52ms 
+  << fb#87 win=63ms bytes=11662 loss=0/1000 jit=25.6ms q=52ms -> 3 reports on the wire
+  fid=30   got=7/7 lat= 27.1.. 27.8ms asm=  0.7ms gap=  30.9ms key=0 -> hold  28.5ms (D=52)
+  >> play pts=1.036s held= 28.5ms late_by= 2.0ms D=   52ms 
+  fid=31   got=7/7 lat= 25.9.. 26.0ms asm=  0.2ms gap=  31.7ms key=0 -> hold  30.3ms (D=52)
+  << fb#88 win=62ms bytes=16492 loss=0/1000 jit=25.6ms q=52ms -> 3 reports on the wire
+  >> play pts=1.069s held= 30.3ms late_by= 0.1ms D=   52ms 
+  fid=32   got=7/7 lat= 22.5.. 23.0ms asm=  0.5ms gap=  30.3ms key=0 -> hold  33.6ms (D=52)
+  fid=33   got=8/8 lat= 20.9.. 21.1ms asm=  0.2ms gap=  31.0ms key=0 -> hold  35.9ms (D=52)
+  >> play pts=1.103s held= 33.6ms late_by=11.7ms D=   52ms 
+  >> play pts=1.136s held= 35.9ms late_by=10.8ms D=   52ms 
+  << fb#89 win=78ms bytes=17386 loss=0/1000 jit=25.6ms q=52ms -> 3 reports on the wire
+  fid=34   got=8/8 lat= 33.2.. 33.7ms asm=  0.6ms gap=  46.8ms key=0 -> hold  24.1ms (D=53)
+  >> play pts=1.170s held= 24.1ms late_by= 5.6ms D=   53ms 
+  fid=35   got=8/8 lat=  2.0.. 31.7ms asm= 29.8ms gap=   0.8ms key=0 -> hold  26.9ms (D=54)
+  >> play pts=1.202s held= 26.9ms late_by= 2.9ms D=   54ms 
+  << fb#90 win=60ms bytes=17704 loss=0/1000 jit=27.4ms q=54ms -> 3 reports on the wire
+  fid=36   got=8/8 lat= 26.3.. 26.9ms asm=  0.6ms gap=  59.5ms key=0 -> hold  31.1ms (D=54)
+  fid=37   got=8/8 lat= 19.5.. 19.6ms asm=  0.2ms gap=  31.2ms key=0 -> hold  39.0ms (D=54)
+  >> play pts=1.236s held= 31.1ms late_by=15.2ms D=   54ms 
+  >> play pts=1.275s held= 39.0ms late_by= 7.3ms D=   54ms 
+  << fb#91 win=78ms bytes=25663 loss=0/1000 jit=27.4ms q=54ms -> 3 reports on the wire
+  fid=38   got=8/8 lat=  1.9.. 33.2ms asm= 31.3ms gap=  15.6ms key=0 -> hold  27.3ms (D=56)
+  fid=39   got=8/8 lat=  3.1..  3.2ms asm=  0.2ms gap=  31.4ms key=0 -> hold  56.5ms (D=56)
+  >> play pts=1.308s held= 27.3ms late_by= 4.2ms D=   56ms 
+  >> play pts=1.339s held= 56.5ms late_by= 5.2ms D=   56ms 
+  << fb#92 win=62ms bytes=15565 loss=0/1000 jit=29.2ms q=56ms -> 3 reports on the wire
+  fid=40   got=8/8 lat=  1.9.. 32.8ms asm= 30.8ms gap=  31.6ms key=0 -> hold  26.5ms (D=56)
+  >> play pts=1.371s held= 26.5ms late_by= 3.3ms D=   56ms 
+  fid=41   got=8/8 lat=  1.0.. 31.1ms asm= 30.1ms gap=  31.0ms key=0 -> hold  28.3ms (D=56)
+  >> play pts=1.403s held= 28.3ms late_by= 2.1ms D=   56ms 
+  << fb#93 win=61ms bytes=12648 loss=0/1000 jit=29.2ms q=56ms -> 3 reports on the wire
+  fid=42   got=8/8 lat= 29.3.. 29.5ms asm=  0.2ms gap=  61.0ms key=0 -> hold  29.6ms (D=56)
+  >> play pts=1.436s held= 29.6ms late_by= 1.7ms D=   56ms 
+  fid=43   got=8/8 lat= 27.5.. 27.7ms asm=  0.2ms gap=  31.7ms key=0 -> hold  31.8ms (D=56)
+  << fb#94 win=50ms bytes=17914 loss=0/1000 jit=29.2ms q=56ms -> 3 reports on the wire
+  fid=44   got=8/8 lat= 12.1.. 12.2ms asm=  0.1ms gap=  18.5ms key=0 -> hold  46.5ms (D=56)
+  >> play pts=1.470s held= 31.8ms late_by= 3.1ms D=   56ms 
+  fid=45   got=8/8 lat= 15.0.. 15.2ms asm=  0.2ms gap=  36.5ms key=0 -> hold  43.5ms (D=56)
+  >> play pts=1.503s held= 46.5ms late_by=14.2ms D=   56ms 
+  << fb#95 win=61ms bytes=18030 loss=0/1000 jit=29.2ms q=56ms -> 3 reports on the wire
+  fid=46   got=8/8 lat=  7.7..  7.9ms asm=  0.2ms gap=  24.9ms key=0 -> hold  51.6ms (D=56)
+  >> play pts=1.536s held= 43.5ms late_by=12.2ms D=   56ms 
+  fid=47   got=8/8 lat=  5.5..  5.7ms asm=  0.2ms gap=  31.0ms key=0 -> hold  53.6ms (D=56)
+  >> play pts=1.569s held= 51.6ms late_by= 2.8ms D=   56ms 
+  << fb#96 win=55ms bytes=17718 loss=0/1000 jit=29.2ms q=56ms -> 3 reports on the wire
+  fid=48   got=8/8 lat=  6.1..  6.3ms asm=  0.1ms gap=  34.7ms key=0 -> hold  52.4ms (D=56)
+  >> play pts=1.602s held= 53.6ms late_by= 1.1ms D=   56ms 
+  fid=49   got=8/8 lat=  1.2..  6.4ms asm=  5.1ms gap=  28.1ms key=0 -> hold  53.2ms (D=56)
+  << fb#97 win=54ms bytes=18058 loss=0/1000 jit=29.2ms q=56ms -> 3 reports on the wire
+  >> play pts=1.636s held= 52.4ms late_by= 5.3ms D=   56ms 
+  fid=50   got=8/8 lat=  3.4.. 15.7ms asm= 12.4ms gap=  40.3ms key=0 -> hold  43.3ms (D=56)
+  >> play pts=1.670s held= 53.2ms late_by= 3.4ms D=   56ms 
+  << fb#98 win=60ms bytes=8829 loss=0/1000 jit=29.2ms q=56ms -> 3 reports on the wire
+  fid=51   got=8/8 lat=  6.5..  6.7ms asm=  0.1ms gap=  34.8ms key=0 -> hold  53.1ms (D=56)
+  >> play pts=1.707s held= 43.3ms late_by= 7.7ms D=   56ms 
+  fid=52   got=8/8 lat=  6.6..  6.8ms asm=  0.2ms gap=  33.2ms key=0 -> hold  51.6ms (D=56)
+  >> play pts=1.739s held= 53.1ms late_by= 5.8ms D=   56ms 
+  << fb#99 win=59ms bytes=18128 loss=0/1000 jit=29.2ms q=56ms -> 3 reports on the wire
+  fid=53   got=8/8 lat=  2.1.. 25.6ms asm= 23.5ms gap=  26.4ms key=0 -> hold  34.1ms (D=56)
+  >> play pts=1.771s held= 51.6ms late_by=14.0ms D=   56ms 
+  fid=54   got=8/8 lat=  8.1..  8.4ms asm=  0.3ms gap=  39.3ms key=0 -> hold  50.3ms (D=56)
+  << fb#100 win=55ms bytes=17408 loss=0/1000 jit=29.2ms q=56ms -> 3 reports on the wire
+  >> play pts=1.803s held= 34.1ms late_by= 1.8ms D=   56ms 
+  fid=55   got=8/8 lat=  5.3.. 10.4ms asm=  5.1ms gap=  30.1ms key=0 -> hold  49.2ms (D=56)
+  >> play pts=1.836s held= 50.3ms late_by= 0.5ms D=   56ms 
+  t= 6.1s ok=56 lost=0 chunks=412 dup=0 rx=0.61Mbps dec=0 lat p50=14/p95=33 gap=31.7ms | jb D=56ms held p50=34ms late=0 under=0
+  << fb#101 win=64ms bytes=8408 loss=0/1000 jit=29.2ms q=56ms -> 3 reports on the wire
+  fid=56   got=7/7 lat= 20.4.. 20.5ms asm=  0.1ms gap=  49.3ms key=0 -> hold  38.4ms (D=56)
+  >> play pts=1.870s held= 49.2ms late_by=10.4ms D=   56ms 
+  fid=57   got=7/7 lat=  3.5..  3.7ms asm=  0.2ms gap=  15.6ms key=0 -> hold  56.2ms (D=56)
+  >> play pts=1.903s held= 38.4ms late_by= 6.5ms D=   56ms 
+  << fb#102 win=52ms bytes=15935 loss=0/1000 jit=29.2ms q=56ms -> 3 reports on the wire
+  fid=58   got=7/7 lat=  4.9..  5.0ms asm=  0.1ms gap=  36.5ms key=0 -> hold  53.8ms (D=56)
+  >> play pts=1.936s held= 56.2ms late_by= 5.4ms D=   56ms 
+  >> play pts=1.971s held= 53.8ms late_by= 2.4ms D=   56ms 
+  << fb#103 win=57ms bytes=7907 loss=0/1000 jit=29.2ms q=56ms -> 3 reports on the wire
+  fid=59   got=7/7 lat= 30.5.. 30.7ms asm=  0.2ms gap=  56.8ms key=0 -> hold  28.8ms (D=56)
+  >> play pts=2.002s held= 28.8ms late_by= 2.1ms D=   56ms 
+  fid=60   got=30/30 lat=  4.9.. 28.7ms asm= 23.8ms gap=   7.6ms key=1 -> hold  29.6ms (D=55)
+  >> play pts=2.035s held= 29.6ms late_by= 2.0ms D=   55ms 
+  << fb#104 win=63ms bytes=44545 loss=0/1000 jit=28.2ms q=55ms -> 3 reports on the wire
+  fid=61   got=3/3 lat= 26.3.. 26.8ms asm=  0.5ms gap=  55.4ms key=0 -> hold  31.7ms (D=55)
+  fid=62   got=5/5 lat= 22.8.. 22.8ms asm=  0.1ms gap=  30.4ms key=0 -> hold  35.8ms (D=55)
+  >> play pts=2.070s held= 31.7ms late_by=14.1ms D=   55ms 
+  fid=63   got=6/6 lat=  3.4..  3.7ms asm=  0.3ms gap=  15.9ms key=0 -> hold  54.9ms (D=55)
+  >> play pts=2.104s held= 35.8ms late_by=10.7ms D=   55ms 
+  << fb#105 win=77ms bytes=12975 loss=0/1000 jit=28.2ms q=55ms -> 3 reports on the wire
+  >> play pts=2.139s held= 54.9ms late_by= 0.8ms D=   55ms 
+  fid=64   got=6/6 lat= 26.8.. 27.0ms asm=  0.2ms gap=  56.3ms key=0 -> hold  31.7ms (D=55)
+  fid=65   got=6/6 lat= 12.5.. 12.6ms asm=  0.1ms gap=  17.9ms key=0 -> hold  45.2ms (D=55)
+  << fb#106 win=50ms bytes=14003 loss=0/1000 jit=28.2ms q=55ms -> 3 reports on the wire
+  >> play pts=2.172s held= 31.7ms late_by= 5.5ms D=   55ms 
+  fid=66   got=7/7 lat=  7.6..  7.8ms asm=  0.1ms gap=  28.7ms key=0 -> hold  50.6ms (D=55)
+  >> play pts=2.203s held= 45.2ms late_by= 3.1ms D=   55ms 
+  << fb#107 win=53ms bytes=7255 loss=0/1000 jit=28.2ms q=55ms -> 3 reports on the wire
+  >> play pts=2.237s held= 50.6ms late_by= 2.0ms D=   55ms 
+  fid=67   got=7/7 lat= 18.6.. 23.8ms asm=  5.2ms gap=  47.8ms key=0 -> hold  31.6ms (D=55)
+  fid=68   got=7/7 lat= 10.2.. 10.3ms asm=  0.1ms gap=  23.3ms key=0 -> hold  45.9ms (D=55)
+  >> play pts=2.271s held= 31.6ms late_by= 4.6ms D=   55ms 
+  << fb#108 win=59ms bytes=14920 loss=0/1000 jit=28.2ms q=55ms -> 3 reports on the wire
+  fid=69   got=7/7 lat=  8.0..  8.1ms asm=  0.1ms gap=  29.9ms key=0 -> hold  50.1ms (D=55)
+  >> play pts=2.304s held= 45.9ms late_by= 0.6ms D=   55ms 
+  >> play pts=2.338s held= 50.1ms late_by= 9.8ms D=   55ms 
+  << fb#109 win=72ms bytes=7610 loss=0/1000 jit=28.2ms q=55ms -> 3 reports on the wire
+  fid=70   got=7/7 lat= 37.0.. 37.1ms asm=  0.1ms gap=  60.5ms key=0 -> hold  22.5ms (D=56)
+  >> play pts=2.369s held= 22.5ms late_by=10.4ms D=   56ms 
+  fid=71   got=7/7 lat=  2.3.. 35.3ms asm= 32.9ms gap=   0.3ms key=0 -> hold  23.4ms (D=57)
+  >> play pts=2.403s held= 23.4ms late_by= 8.4ms D=   57ms 
+  << fb#110 win=66ms bytes=16027 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  fid=72   got=7/7 lat= 33.8.. 34.6ms asm=  0.8ms gap=  64.7ms key=0 -> hold  24.0ms (D=57)
+  fid=73   got=7/7 lat=  3.6..  3.7ms asm=  0.1ms gap=   0.9ms key=0 -> hold  57.0ms (D=57)
+  >> play pts=2.436s held= 24.0ms late_by= 7.1ms D=   57ms 
+  fid=74   got=7/7 lat=  2.5.. 34.2ms asm= 31.7ms gap=  31.2ms key=0 -> hold  27.6ms (D=58)
+  >> play pts=2.469s held= 57.0ms late_by= 5.8ms D=   58ms 
+  << fb#111 win=64ms bytes=21797 loss=0/1000 jit=30.3ms q=58ms -> 3 reports on the wire
+  >> play pts=2.502s held= 27.6ms late_by= 4.8ms D=   58ms 
+  fid=75   got=7/7 lat= 30.7.. 30.9ms asm=  0.1ms gap=  64.3ms key=0 -> hold  30.0ms (D=58)
+  >> play pts=2.537s held= 30.0ms late_by= 0.7ms D=   58ms 
+  << fb#112 win=63ms bytes=8884 loss=0/1000 jit=30.3ms q=58ms -> 3 reports on the wire
+  fid=76   got=7/7 lat= 27.4.. 28.1ms asm=  0.7ms gap=  30.9ms key=0 -> hold  33.0ms (D=58)
+  fid=77   got=7/7 lat= 18.7.. 18.8ms asm=  0.1ms gap=  24.1ms key=0 -> hold  41.8ms (D=58)
+  >> play pts=2.571s held= 33.0ms late_by=13.7ms D=   58ms 
+  fid=78   got=7/7 lat=  8.1..  8.4ms asm=  0.3ms gap=  23.2ms key=0 -> hold  52.7ms (D=58)
+  >> play pts=2.604s held= 41.8ms late_by= 0.4ms D=   58ms 
+  << fb#113 win=67ms bytes=22569 loss=0/1000 jit=30.3ms q=58ms -> 3 reports on the wire
+  fid=79   got=7/7 lat=  5.9.. 14.0ms asm=  8.1ms gap=  30.9ms key=0 -> hold  46.2ms (D=58)
+  >> play pts=2.638s held= 52.7ms late_by= 9.9ms D=   58ms 
+  fid=80   got=7/7 lat=  5.9..  6.0ms asm=  0.1ms gap=  32.1ms key=0 -> hold  53.8ms (D=57)
+  >> play pts=2.670s held= 46.2ms late_by= 8.0ms D=   57ms 
+  << fb#114 win=74ms bytes=17366 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=81   got=7/7 lat=  2.9..  3.6ms asm=  0.7ms gap=  30.1ms key=0 -> hold  57.2ms (D=57)
+  >> play pts=2.702s held= 53.8ms late_by= 6.4ms D=   57ms 
+  << fb#115 win=53ms bytes=7990 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=82   got=7/7 lat= 19.4.. 19.9ms asm=  0.5ms gap=  53.4ms key=0 -> hold  38.1ms (D=57)
+  >> play pts=2.736s held= 57.2ms late_by= 4.3ms D=   57ms 
+  >> play pts=2.770s held= 38.1ms late_by= 0.7ms D=   57ms 
+  fid=83   got=7/7 lat= 29.2.. 29.5ms asm=  0.3ms gap=  39.3ms key=0 -> hold  31.2ms (D=57)
+  << fb#116 win=70ms bytes=15972 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=84   got=7/7 lat= 24.9.. 25.3ms asm=  0.4ms gap=  31.0ms key=0 -> hold  34.8ms (D=57)
+  >> play pts=2.803s held= 31.2ms late_by= 0.0ms D=   57ms 
+  fid=85   got=7/7 lat= 23.6.. 23.7ms asm=  0.1ms gap=  30.3ms key=0 -> hold  37.4ms (D=57)
+  >> play pts=2.837s held= 34.8ms late_by= 9.1ms D=   57ms 
+  t= 7.1s ok=86 lost=0 chunks=636 dup=0 rx=0.81Mbps dec=0 lat p50=13/p95=34 gap=31.4ms | jb D=57ms held p50=35ms late=0 under=0
+  fid=86   got=7/7 lat=  3.4..  3.6ms asm=  0.1ms gap=  14.6ms key=0 -> hold  56.1ms (D=57)
+  >> play pts=2.870s held= 37.4ms late_by= 9.7ms D=   57ms 
+  << fb#117 win=77ms bytes=22742 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=87   got=7/7 lat=  4.9..  5.0ms asm=  0.1ms gap=  33.2ms key=0 -> hold  56.2ms (D=57)
+  >> play pts=2.903s held= 56.1ms late_by= 6.2ms D=   57ms 
+  >> play pts=2.936s held= 56.2ms late_by= 4.2ms D=   57ms 
+  << fb#118 win=61ms bytes=9127 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=88   got=8/8 lat= 31.5.. 32.1ms asm=  0.7ms gap=  60.6ms key=0 -> hold  29.4ms (D=57)
+  >> play pts=2.971s held= 29.4ms late_by= 0.5ms D=   57ms 
+  fid=89   got=8/8 lat= 28.8.. 29.0ms asm=  0.2ms gap=  30.7ms key=0 -> hold  31.8ms (D=57)
+  >> play pts=3.003s held= 31.8ms late_by= 0.9ms D=   57ms 
+  << fb#119 win=64ms bytes=17266 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=90   got=8/8 lat= 25.2.. 26.1ms asm=  0.9ms gap=  32.9ms key=0 -> hold  31.5ms (D=57)
+  fid=91   got=8/8 lat= 24.9.. 25.1ms asm=  0.2ms gap=  30.8ms key=0 -> hold  35.2ms (D=57)
+  >> play pts=3.037s held= 31.5ms late_by=16.1ms D=   57ms 
+  fid=92   got=8/8 lat= 10.1.. 10.5ms asm=  0.4ms gap=  17.7ms key=0 -> hold  49.7ms (D=57)
+  >> play pts=3.070s held= 35.2ms late_by=11.9ms D=   57ms 
+  << fb#120 win=78ms bytes=26810 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=93   got=8/8 lat=  5.0..  5.6ms asm=  0.7ms gap=  29.6ms key=0 -> hold  53.2ms (D=57)
+  >> play pts=3.103s held= 49.7ms late_by= 9.9ms D=   57ms 
+  >> play pts=3.136s held= 53.2ms late_by= 7.2ms D=   57ms 
+  << fb#121 win=61ms bytes=8996 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=94   got=8/8 lat= 30.5.. 31.0ms asm=  0.6ms gap=  61.1ms key=0 -> hold  29.6ms (D=57)
+  >> play pts=3.173s held= 29.6ms late_by= 1.4ms D=   57ms 
+  fid=95   got=9/9 lat=  1.3.. 32.4ms asm= 31.1ms gap=   0.7ms key=0 -> hold  28.4ms (D=57)
+  fid=96   got=8/8 lat= 14.9.. 15.1ms asm=  0.1ms gap=  47.3ms key=0 -> hold  45.1ms (D=57)
+  >> play pts=3.203s held= 28.4ms late_by= 2.2ms D=   57ms 
+  << fb#122 win=62ms bytes=26320 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=97   got=8/8 lat=  2.9.. 12.8ms asm=  9.9ms gap=  20.4ms key=0 -> hold  47.7ms (D=57)
+  >> play pts=3.236s held= 45.1ms late_by= 7.6ms D=   57ms 
+  fid=98   got=8/8 lat=  3.2..  3.4ms asm=  0.2ms gap=  32.7ms key=0 -> hold  57.4ms (D=57)
+  << fb#123 win=56ms bytes=18162 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  >> play pts=3.269s held= 47.7ms late_by= 7.8ms D=   57ms 
+  fid=99   got=8/8 lat=  7.3.. 14.7ms asm=  7.4ms gap=  38.0ms key=0 -> hold  46.5ms (D=57)
+  >> play pts=3.302s held= 57.4ms late_by=12.3ms D=   57ms 
+  << fb#124 win=53ms bytes=9279 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=100  got=8/8 lat=  6.3..  6.5ms asm=  0.2ms gap=  32.7ms key=0 -> hold  54.0ms (D=57)
+  >> play pts=3.336s held= 46.5ms late_by= 8.0ms D=   57ms 
+  fid=101  got=8/8 lat=  3.2..  3.5ms asm=  0.3ms gap=  29.6ms key=0 -> hold  56.6ms (D=57)
+  >> play pts=3.370s held= 54.0ms late_by= 7.0ms D=   57ms 
+  << fb#125 win=62ms bytes=18192 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  >> play pts=3.403s held= 56.6ms late_by= 5.8ms D=   57ms 
+  fid=102  got=8/8 lat=  1.3.. 32.3ms asm= 30.9ms gap=  32.0ms key=0 -> hold  27.7ms (D=57)
+  >> play pts=3.436s held= 27.7ms late_by= 3.3ms D=   57ms 
+  << fb#126 win=62ms bytes=9732 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  fid=103  got=8/8 lat= 30.3.. 31.0ms asm=  0.7ms gap=  61.9ms key=0 -> hold  29.0ms (D=57)
+  >> play pts=3.469s held= 29.0ms late_by= 2.0ms D=   57ms 
+  fid=104  got=7/7 lat= 26.6.. 26.7ms asm=  0.2ms gap=  31.9ms key=0 -> hold  30.8ms (D=57)
+  << fb#127 win=62ms bytes=15454 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  >> play pts=3.502s held= 30.8ms late_by= 0.0ms D=   57ms 
+  fid=105  got=7/7 lat= 23.8.. 24.0ms asm=  0.2ms gap=  31.0ms key=0 -> hold  33.6ms (D=57)
+  fid=106  got=7/7 lat= 24.8.. 25.0ms asm=  0.1ms gap=  31.8ms key=0 -> hold  34.8ms (D=57)
+  >> play pts=3.536s held= 33.6ms late_by=13.9ms D=   57ms 
+  fid=107  got=7/7 lat=  8.3..  8.6ms asm=  0.3ms gap=  15.9ms key=0 -> hold  51.6ms (D=57)
+  >> play pts=3.569s held= 34.8ms late_by=12.1ms D=   57ms 
+  << fb#128 win=79ms bytes=25262 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  fid=108  got=7/7 lat=  5.1..  5.8ms asm=  0.6ms gap=  31.2ms key=0 -> hold  54.5ms (D=57)
+  >> play pts=3.602s held= 51.6ms late_by=10.5ms D=   57ms 
+  fid=109  got=7/7 lat=  2.2.. 13.2ms asm= 11.0ms gap=  31.6ms key=0 -> hold  45.5ms (D=57)
+  << fb#129 win=53ms bytes=14571 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  >> play pts=3.636s held= 54.5ms late_by= 7.2ms D=   57ms 
+  fid=110  got=7/7 lat=  4.2..  4.4ms asm=  0.1ms gap=  35.3ms key=0 -> hold  54.4ms (D=57)
+  >> play pts=3.669s held= 45.5ms late_by= 5.2ms D=   57ms 
+  >> play pts=3.703s held= 54.4ms late_by= 4.0ms D=   57ms 
+  << fb#130 win=72ms bytes=9319 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  fid=111  got=7/7 lat= 29.9.. 30.5ms asm=  0.6ms gap=  58.5ms key=0 -> hold  29.4ms (D=57)
+  fid=112  got=7/7 lat=  8.6..  8.7ms asm=  0.1ms gap=  11.5ms key=0 -> hold  50.5ms (D=57)
+  >> play pts=3.737s held= 29.4ms late_by= 0.0ms D=   57ms 
+  fid=113  got=7/7 lat=  3.6..  3.7ms asm=  0.1ms gap=  28.4ms key=0 -> hold  56.0ms (D=57)
+  << fb#131 win=52ms bytes=22766 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  >> play pts=3.769s held= 50.5ms late_by=12.8ms D=   57ms 
+  fid=114  got=7/7 lat=  3.8..  9.5ms asm=  5.8ms gap=  35.2ms key=0 -> hold  49.8ms (D=57)
+  >> play pts=3.803s held= 56.0ms late_by=13.5ms D=   57ms 
+  << fb#132 win=58ms bytes=7834 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  fid=115  got=7/7 lat=  7.1..  7.2ms asm=  0.1ms gap=  35.0ms key=0 -> hold  52.4ms (D=57)
+  >> play pts=3.837s held= 49.8ms late_by= 8.9ms D=   57ms 
+  fid=116  got=7/7 lat=  4.2..  4.5ms asm=  0.2ms gap=  29.8ms key=0 -> hold  55.7ms (D=57)
+  >> play pts=3.869s held= 52.4ms late_by= 8.0ms D=   57ms 
+  << fb#133 win=61ms bytes=15355 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  t= 8.1s ok=117 lost=0 chunks=870 dup=0 rx=0.96Mbps dec=0 lat p50=10/p95=32 gap=31.6ms | jb D=57ms held p50=36ms late=0 under=0
+  >> play pts=3.902s held= 55.7ms late_by= 5.9ms D=   57ms 
+  fid=117  got=7/7 lat=  2.8.. 33.3ms asm= 30.5ms gap=  31.6ms key=0 -> hold  27.4ms (D=57)
+  >> play pts=3.935s held= 27.4ms late_by= 4.3ms D=   57ms 
+  << fb#134 win=63ms bytes=9215 loss=0/1000 jit=29.6ms q=57ms -> 3 reports on the wire
+  fid=118  got=7/7 lat= 29.6.. 30.2ms asm=  0.6ms gap=  62.2ms key=0 -> hold  30.1ms (D=57)
+  >> play pts=3.970s held= 30.1ms late_by= 1.0ms D=   57ms 
+  fid=119  got=7/7 lat= 30.2.. 30.3ms asm=  0.2ms gap=  32.1ms key=0 -> hold  30.4ms (D=57)
+  >> play pts=4.002s held= 30.4ms late_by= 0.3ms D=   57ms 
+  << fb#135 win=63ms bytes=51191 loss=0/1000 jit=29.6ms q=57ms -> 3 reports on the wire
+  fid=120  got=31/31 lat=  4.5.. 24.1ms asm= 19.7ms gap=  11.7ms key=1 -> hold  33.6ms (D=57)
+  fid=121  got=4/4 lat= 21.0.. 21.1ms asm=  0.1ms gap=  47.0ms key=0 -> hold  39.3ms (D=57)
+  >> play pts=4.037s held= 33.6ms late_by= 6.2ms D=   57ms 
+  fid=122  got=5/5 lat=  1.8..  1.9ms asm=  0.1ms gap=  12.8ms key=0 -> hold  56.6ms (D=57)
+  << fb#136 win=53ms bytes=10003 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  >> play pts=4.070s held= 39.3ms late_by= 7.3ms D=   57ms 
+  fid=123  got=6/6 lat=  1.8.. 15.9ms asm= 14.1ms gap=  34.2ms key=0 -> hold  42.6ms (D=57)
+  >> play pts=4.102s held= 56.6ms late_by=11.6ms D=   57ms 
+  << fb#137 win=56ms bytes=6599 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  fid=124  got=7/7 lat=  2.6.. 11.1ms asm=  8.5ms gap=  34.7ms key=0 -> hold  47.1ms (D=57)
+  >> play pts=4.136s held= 42.6ms late_by= 5.7ms D=   57ms 
+  >> play pts=4.170s held= 47.1ms late_by= 6.4ms D=   57ms 
+  << fb#138 win=62ms bytes=7275 loss=0/1000 jit=29.3ms q=57ms -> 3 reports on the wire
+  fid=125  got=7/7 lat= 32.4.. 32.6ms asm=  0.1ms gap=  62.5ms key=0 -> hold  25.9ms (D=57)
+  >> play pts=4.203s held= 25.9ms late_by= 5.3ms D=   57ms 
+  fid=126  got=7/7 lat= 30.1.. 30.3ms asm=  0.2ms gap=  31.6ms key=0 -> hold  27.7ms (D=57)
+  >> play pts=4.236s held= 27.7ms late_by= 4.0ms D=   57ms 
+  << fb#139 win=64ms bytes=16384 loss=0/1000 jit=29.6ms q=57ms -> 3 reports on the wire
+  fid=127  got=7/7 lat= 27.8.. 28.4ms asm=  0.6ms gap=  31.8ms key=0 -> hold  30.2ms (D=57)
+  >> play pts=4.271s held= 30.2ms late_by= 0.7ms D=   57ms 
+  fid=128  got=7/7 lat= 27.0.. 27.1ms asm=  0.1ms gap=  31.7ms key=0 -> hold  31.1ms (D=57)
+  >> play pts=4.303s held= 31.1ms late_by= 0.6ms D=   57ms 
+  << fb#140 win=64ms bytes=14856 loss=0/1000 jit=29.6ms q=57ms -> 3 reports on the wire
+  fid=129  got=7/7 lat= 25.5.. 26.0ms asm=  0.5ms gap=  31.9ms key=0 -> hold  32.2ms (D=57)
+  fid=130  got=7/7 lat=  5.0..  5.1ms asm=  0.2ms gap=  12.8ms key=0 -> hold  53.0ms (D=57)
+  >> play pts=4.336s held= 32.2ms late_by= 3.2ms D=   57ms 
+  << fb#141 win=60ms bytes=20304 loss=0/1000 jit=29.6ms q=57ms -> 3 reports on the wire
+  fid=131  got=7/7 lat=  3.7.. 16.8ms asm= 13.1ms gap=  34.7ms key=0 -> hold  38.4ms (D=57)
+  >> play pts=4.369s held= 53.0ms late_by= 9.2ms D=   57ms 
+  fid=132  got=7/7 lat=  5.1.. 17.9ms asm= 12.8ms gap=  33.1ms key=0 -> hold  40.3ms (D=57)
+  >> play pts=4.402s held= 38.4ms late_by= 1.5ms D=   57ms 
+  << fb#142 win=66ms bytes=10689 loss=0/1000 jit=29.6ms q=57ms -> 3 reports on the wire
+  fid=133  got=7/7 lat= 20.1.. 20.6ms asm=  0.5ms gap=  46.1ms key=0 -> hold  38.4ms (D=57)
+  >> play pts=4.437s held= 40.3ms late_by= 8.3ms D=   57ms 
+  >> play pts=4.469s held= 38.4ms late_by= 7.6ms D=   57ms 
+  fid=134  got=7/7 lat=  1.3.. 32.6ms asm= 31.3ms gap=  15.5ms key=0 -> hold  25.9ms (D=57)
+  >> play pts=4.502s held= 25.9ms late_by= 5.0ms D=   57ms 
+  << fb#143 win=78ms bytes=15279 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=135  got=7/7 lat= 28.8.. 29.3ms asm=  0.5ms gap=  62.2ms key=0 -> hold  27.7ms (D=57)
+  >> play pts=4.535s held= 27.7ms late_by= 3.8ms D=   57ms 
+  fid=136  got=7/7 lat= 29.6.. 29.9ms asm=  0.3ms gap=  32.3ms key=0 -> hold  28.9ms (D=57)
+  >> play pts=4.569s held= 28.9ms late_by= 2.1ms D=   57ms 
+  << fb#144 win=64ms bytes=15821 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=137  got=7/7 lat= 25.7.. 26.4ms asm=  0.7ms gap=  31.3ms key=0 -> hold  31.4ms (D=57)
+  fid=138  got=7/7 lat= 24.8.. 25.0ms asm=  0.1ms gap=  31.1ms key=0 -> hold  34.3ms (D=57)
+  >> play pts=4.603s held= 31.4ms late_by=15.0ms D=   57ms 
+  fid=139  got=7/7 lat=  7.5..  8.1ms asm=  0.7ms gap=  15.9ms key=0 -> hold  49.8ms (D=57)
+  >> play pts=4.636s held= 34.3ms late_by=11.0ms D=   57ms 
+  << fb#145 win=77ms bytes=22496 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=140  got=7/7 lat=  4.5..  4.6ms asm=  0.1ms gap=  30.1ms key=0 -> hold  54.2ms (D=57)
+  >> play pts=4.668s held= 49.8ms late_by= 3.9ms D=   57ms 
+  >> play pts=4.702s held= 54.2ms late_by=10.0ms D=   57ms 
+  << fb#146 win=65ms bytes=12830 loss=0/1000 jit=29.8ms q=57ms -> 3 reports on the wire
+  fid=141  got=7/7 lat=  4.5.. 34.8ms asm= 30.2ms gap=  34.6ms key=0 -> hold  23.5ms (D=57)
+  >> play pts=4.736s held= 23.5ms late_by= 2.2ms D=   57ms 
+  fid=142  got=7/7 lat= 24.0.. 24.1ms asm=  0.1ms gap=  56.1ms key=0 -> hold  32.2ms (D=57)
+  >> play pts=4.771s held= 32.2ms late_by= 2.6ms D=   57ms 
+  << fb#147 win=61ms bytes=12367 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=143  got=7/7 lat= 29.3.. 30.0ms asm=  0.7ms gap=  34.9ms key=0 -> hold  28.2ms (D=57)
+  >> play pts=4.802s held= 28.2ms late_by= 2.2ms D=   57ms 
+  fid=144  got=7/7 lat= 26.0.. 26.2ms asm=  0.2ms gap=  31.4ms key=0 -> hold  32.1ms (D=57)
+  << fb#148 win=62ms bytes=16205 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  fid=145  got=7/7 lat= 26.4.. 26.8ms asm=  0.4ms gap=  31.0ms key=0 -> hold  33.2ms (D=57)
+  >> play pts=4.837s held= 32.1ms late_by=13.6ms D=   57ms 
+  fid=146  got=7/7 lat=  8.8..  9.0ms asm=  0.2ms gap=  15.1ms key=0 -> hold  51.4ms (D=57)
+  >> play pts=4.869s held= 33.2ms late_by=12.2ms D=   57ms 
+  t= 9.1s ok=147 lost=0 chunks=1099 dup=0 rx=1.08Mbps dec=0 lat p50=14/p95=33 gap=31.7ms | jb D=57ms held p50=35ms late=0 under=0
+  fid=147  got=7/7 lat=  3.4..  3.8ms asm=  0.4ms gap=  30.7ms key=0 -> hold  55.3ms (D=57)
+  >> play pts=4.902s held= 51.4ms late_by=10.6ms D=   57ms 
+  << fb#149 win=77ms bytes=24339 loss=0/1000 jit=29.9ms q=57ms -> 3 reports on the wire
+  >> play pts=4.937s held= 55.3ms late_by= 6.8ms D=   57ms 
+  fid=148  got=7/7 lat=  1.8.. 33.2ms asm= 31.4ms gap=  31.4ms key=0 -> hold  25.8ms (D=58)
+  >> play pts=4.970s held= 25.8ms late_by= 5.4ms D=   58ms 
+  << fb#150 win=63ms bytes=8111 loss=0/1000 jit=30.3ms q=58ms -> 3 reports on the wire
+  fid=149  got=7/7 lat= 31.4.. 32.6ms asm=  1.2ms gap=  62.6ms key=0 -> hold  27.3ms (D=59)
+  >> play pts=5.003s held= 27.3ms late_by= 3.5ms D=   59ms 
+  fid=150  got=7/7 lat= 31.3.. 31.5ms asm=  0.2ms gap=  32.6ms key=0 -> hold  29.1ms (D=59)
+  >> play pts=5.036s held= 29.1ms late_by= 2.1ms D=   59ms 
+  << fb#151 win=64ms bytes=16162 loss=0/1000 jit=31.1ms q=59ms -> 3 reports on the wire
+  fid=151  got=7/7 lat= 27.1.. 27.8ms asm=  0.7ms gap=  31.3ms key=0 -> hold  31.5ms (D=59)
+  fid=152  got=7/7 lat= 25.7.. 25.8ms asm=  0.1ms gap=  30.7ms key=0 -> hold  33.5ms (D=59)
+  >> play pts=5.070s held= 31.5ms late_by=13.4ms D=   59ms 
+  fid=153  got=7/7 lat=  8.8..  9.1ms asm=  0.3ms gap=  14.9ms key=0 -> hold  52.7ms (D=59)
+  >> play pts=5.102s held= 33.5ms late_by=11.7ms D=   59ms 
+  << fb#152 win=76ms bytes=24136 loss=0/1000 jit=31.1ms q=59ms -> 3 reports on the wire
+  fid=154  got=7/7 lat=  6.2..  6.8ms asm=  0.6ms gap=  30.4ms key=0 -> hold  54.5ms (D=59)
+  >> play pts=5.137s held= 52.7ms late_by= 9.2ms D=   59ms 
+  fid=155  got=7/7 lat=  4.2..  4.4ms asm=  0.2ms gap=  32.0ms key=0 -> hold  56.9ms (D=59)
+  >> play pts=5.169s held= 54.5ms late_by= 7.7ms D=   59ms 
+  << fb#153 win=63ms bytes=15145 loss=0/1000 jit=31.1ms q=59ms -> 3 reports on the wire
+  fid=156  got=7/7 lat=  2.1.. 10.9ms asm=  8.9ms gap=  31.9ms key=0 -> hold  50.1ms (D=59)
+  >> play pts=5.203s held= 56.9ms late_by= 0.6ms D=   59ms 
+  fid=157  got=7/7 lat=  3.6.. 11.7ms asm=  8.2ms gap=  34.3ms key=0 -> hold  49.3ms (D=59)
+  << fb#154 win=51ms bytes=16330 loss=0/1000 jit=31.1ms q=59ms -> 3 reports on the wire
+  >> play pts=5.237s held= 50.1ms late_by= 2.9ms D=   59ms 
+  >> play pts=5.269s held= 49.3ms late_by= 1.4ms D=   59ms 
+  fid=158  got=7/7 lat= 28.9.. 29.2ms asm=  0.3ms gap=  58.9ms key=0 -> hold  31.7ms (D=59)
+  << fb#155 win=74ms bytes=9555 loss=0/1000 jit=31.1ms q=59ms -> 3 reports on the wire
+  fid=159  got=7/7 lat= 26.6.. 27.2ms asm=  0.6ms gap=  30.8ms key=0 -> hold  33.8ms (D=59)
+  >> play pts=5.303s held= 31.7ms late_by=13.8ms D=   59ms 
+  fid=160  got=7/7 lat=  8.5..  8.6ms asm=  0.2ms gap=  15.3ms key=0 -> hold  53.1ms (D=59)
+  >> play pts=5.336s held= 33.8ms late_by=12.4ms D=   59ms 
+  fid=161  got=7/7 lat=  5.3..  5.7ms asm=  0.4ms gap=  31.4ms key=0 -> hold  55.0ms (D=59)
+  >> play pts=5.370s held= 53.1ms late_by= 9.9ms D=   59ms 
+  << fb#156 win=78ms bytes=24355 loss=0/1000 jit=31.1ms q=59ms -> 3 reports on the wire
+  fid=162  got=7/7 lat=  3.7..  4.3ms asm=  0.6ms gap=  31.7ms key=0 -> hold  55.7ms (D=59)
+  >> play pts=5.404s held= 55.0ms late_by= 8.1ms D=   59ms 
+  fid=163  got=7/7 lat=  4.1..  4.2ms asm=  0.2ms gap=  32.1ms key=0 -> hold  56.2ms (D=59)
+  >> play pts=5.436s held= 55.7ms late_by= 7.3ms D=   59ms 
+  << fb#157 win=64ms bytes=15118 loss=0/1000 jit=31.1ms q=59ms -> 3 reports on the wire
+  fid=164  got=7/7 lat=  1.3.. 21.9ms asm= 20.6ms gap=  31.9ms key=0 -> hold  38.0ms (D=59)
+  >> play pts=5.468s held= 56.2ms late_by= 7.4ms D=   59ms 
+  >> play pts=5.503s held= 38.0ms late_by= 3.6ms D=   59ms 
+  << fb#158 win=63ms bytes=9350 loss=0/1000 jit=31.1ms q=59ms -> 3 reports on the wire
+  fid=165  got=7/7 lat= 31.7.. 32.5ms asm=  0.8ms gap=  62.2ms key=0 -> hold  29.3ms (D=59)
+  >> play pts=5.536s held= 29.3ms late_by= 0.5ms D=   59ms 
+  fid=166  got=8/8 lat= 28.4.. 28.6ms asm=  0.2ms gap=  30.8ms key=0 -> hold  32.5ms (D=59)
+  << fb#159 win=62ms bytes=16616 loss=0/1000 jit=31.1ms q=59ms -> 3 reports on the wire
+  fid=167  got=8/8 lat= 26.9.. 27.5ms asm=  0.6ms gap=  30.9ms key=0 -> hold  33.6ms (D=59)
+  >> play pts=5.570s held= 32.5ms late_by=14.4ms D=   59ms 
+  fid=168  got=8/8 lat=  9.1..  9.3ms asm=  0.2ms gap=  16.4ms key=0 -> hold  52.0ms (D=59)
+  >> play pts=5.602s held= 33.6ms late_by=13.4ms D=   59ms 
+  fid=169  got=8/8 lat=  7.6..  7.9ms asm=  0.3ms gap=  31.2ms key=0 -> hold  54.1ms (D=59)
+  >> play pts=5.636s held= 52.0ms late_by=10.0ms D=   59ms 
+  << fb#160 win=78ms bytes=26640 loss=0/1000 jit=31.1ms q=59ms -> 3 reports on the wire
+  fid=170  got=8/8 lat=  5.2..  5.8ms asm=  0.6ms gap=  30.9ms key=0 -> hold  56.0ms (D=59)
+  >> play pts=5.670s held= 54.1ms late_by= 8.0ms D=   59ms 
+  >> play pts=5.703s held= 56.0ms late_by= 5.8ms D=   59ms 
+  << fb#161 win=62ms bytes=14145 loss=0/1000 jit=31.1ms q=59ms -> 3 reports on the wire
+  fid=171  got=8/8 lat=  2.5.. 33.8ms asm= 31.3ms gap=  31.7ms key=0 -> hold  27.6ms (D=59)
+  fid=172  got=8/8 lat=  1.8.. 11.5ms asm=  9.7ms gap=  31.7ms key=0 -> hold  50.9ms (D=59)
+  >> play pts=5.736s held= 27.6ms late_by= 3.0ms D=   59ms 
+  >> play pts=5.770s held= 50.9ms late_by= 0.6ms D=   59ms 
+  << fb#162 win=62ms bytes=13756 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  fid=173  got=8/8 lat= 27.8.. 28.4ms asm=  0.5ms gap=  61.2ms key=0 -> hold  32.5ms (D=59)
+  fid=174  got=8/8 lat= 23.8.. 23.9ms asm=  0.2ms gap=  30.2ms key=0 -> hold  34.8ms (D=59)
+  >> play pts=5.803s held= 32.5ms late_by=12.7ms D=   59ms 
+  fid=175  got=8/8 lat=  8.5..  8.8ms asm=  0.3ms gap=  15.5ms key=0 -> hold  53.3ms (D=59)
+  >> play pts=5.835s held= 34.8ms late_by=11.6ms D=   59ms 
+  << fb#163 win=77ms bytes=26430 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  fid=176  got=8/8 lat=  4.0..  5.0ms asm=  1.0ms gap=  31.0ms key=0 -> hold  56.0ms (D=59)
+  >> play pts=5.870s held= 53.3ms late_by= 8.3ms D=   59ms 
+  fid=177  got=8/8 lat=  4.4..  4.6ms asm=  0.2ms gap=  31.0ms key=0 -> hold  57.1ms (D=59)
+  >> play pts=5.904s held= 56.0ms late_by= 4.7ms D=   59ms 
+  << fb#164 win=62ms bytes=15639 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  t=10.1s ok=178 lost=0 chunks=1327 dup=0 rx=1.18Mbps dec=0 lat p50=11/p95=33 gap=31.6ms | jb D=59ms held p50=36ms late=0 under=0
+  >> play pts=5.935s held= 57.1ms late_by= 4.8ms D=   59ms 
+  fid=178  got=7/7 lat= 28.2.. 28.4ms asm=  0.2ms gap=  62.2ms key=0 -> hold  29.0ms (D=59)
+  >> play pts=5.969s held= 29.0ms late_by= 2.2ms D=   59ms 
+  << fb#165 win=63ms bytes=8369 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#166 win=55ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#167 win=51ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#168 win=53ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#169 win=51ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#170 win=52ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#171 win=80ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#172 win=64ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#173 win=62ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#174 win=55ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#175 win=70ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#176 win=63ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#177 win=63ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+  << fb#178 win=58ms bytes=0 loss=0/1000 jit=31.5ms q=59ms -> 3 reports on the wire
+
+RESULT ok=179 lost=0 frame_loss=0.00% chunks=1334 dup=0 decoded=178 other=9011 bad=0 padded=2
+one-way latency ms: p50=12.1 p95=32.5 p99=37.0 max=62.1 (n=1334)
+frame assemble ms: p50=0.3 p95=30.9 | arrival gap ms: p50=31.6 p95=61.9
+jitter buffer: D=59ms late=0 underruns=0 | release interval ms: p50=33.3 p95=35.5 p99=41.4 | play loop lag ms: p50=4.8 p95=13.8
+feedback sent: 179 reports (534 frames on the wire)
+wrote recv_out.h264 (1503309 bytes)  +recv_fb.mp4

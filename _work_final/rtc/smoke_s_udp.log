@@ -1,0 +1,19 @@
+﻿sender: transport=udp | udp 192.168.240.2:49476 -> 192.168.240.147:9922 | 640x480@30 2500000 bps | mtu-chunk=1200
+audio: loopback 48000 Hz mono opus 64000 bps (dev=default  src=������ (Realtek(R) Audio) [Loopback] [loopback])
+  t= 1.0s frames=27 chunks=232 kf=1  tx=2.21 Mbps  fps=26.9
+    fb #70 n=19 dup=32 per=55ms rx=1.64Mbps loss=0/1000 jit=2.5ms q=40ms maxfid=25 ok=25 lost=0
+    audio 43 frames 1977B rms=0.2
+  t= 2.0s frames=57 chunks=519 kf=1  tx=2.50 Mbps  fps=28.5
+    fb #87 n=36 dup=66 per=50ms rx=1.85Mbps loss=0/1000 jit=3.0ms q=40ms maxfid=55 ok=55 lost=0
+    audio 93 frames 4267B rms=0.2
+  t= 3.0s frames=88 chunks=807 kf=2  tx=2.56 Mbps  fps=29.0
+    fb #105 n=54 dup=102 per=66ms rx=2.48Mbps loss=0/1000 jit=4.0ms q=40ms maxfid=87 ok=87 lost=0
+    audio 145 frames 6673B rms=0.2
+  t= 4.1s frames=119 chunks=1086 kf=2  tx=2.57 Mbps  fps=29.2
+    fb #122 n=71 dup=136 per=66ms rx=2.55Mbps loss=0/1000 jit=5.0ms q=40ms maxfid=117 ok=117 lost=0
+    audio 197 frames 9034B rms=0.2
+  t= 5.1s frames=150 chunks=1386 kf=3  tx=2.62 Mbps  fps=29.4
+    fb #140 n=89 dup=172 per=53ms rx=2.95Mbps loss=0/1000 jit=6.2ms q=40ms maxfid=148 ok=149 lost=0
+    audio 248 frames 11380B rms=0.2
+done: 177 frames, 1629 chunks, 3 keyframes, 2.62 Mbps avg, 29.5 fps
+audio: 293 frames, 13392 bytes payload, rms=0.2, starved=0

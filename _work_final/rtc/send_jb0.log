@@ -1,0 +1,7 @@
+﻿sender: 40-C2-BA-52-70-95 -> C0-35-32-19-CC-FB via Realtek PCIe GbE Family Controller | 640x480@30 2000000 bps | mtu-chunk=1200
+  t= 1.0s frames=29 chunks=205 kf=1  tx=1.87 Mbps  fps=28.7
+  t= 2.0s frames=60 chunks=432 kf=1  tx=1.97 Mbps  fps=29.3
+  t= 3.1s frames=91 chunks=664 kf=2  tx=2.02 Mbps  fps=29.6
+  t= 4.1s frames=122 chunks=916 kf=3  tx=2.08 Mbps  fps=29.7
+  t= 5.1s frames=153 chunks=1141 kf=3  tx=2.07 Mbps  fps=29.7
+done: 179 frames, 1331 chunks, 3 keyframes, 2.07 Mbps avg, 29.8 fps

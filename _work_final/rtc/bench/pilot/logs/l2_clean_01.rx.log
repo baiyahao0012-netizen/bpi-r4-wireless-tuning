@@ -1,0 +1,25 @@
+receiver transport=l2 on l2 capture on Realtek 8852CE WiFi 6E PCI-E NIC (open 28 ms)  jitter_buffer=on [40..200 ms]
+feedback -> C0-35-32-19-CC-FB every 50 ms x3
+audio out: dev=16 48000 Hz  ÑïÉùÆ÷ (Realtek(R) Audio)
+  t= 1.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 2.1s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 3.1s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 4.1s v=15/0 a=24 chunks=153 rx=0.29Mbps dec=14 lat p50=10/p95=26 | jb D=45ms av=+21ms
+  t= 5.1s v=46/0 a=75 chunks=488 rx=0.75Mbps dec=44 lat p50=11/p95=27 | jb D=50ms av=+20ms
+  t= 6.1s v=77/0 a=127 chunks=837 rx=1.07Mbps dec=74 lat p50=12/p95=28 | jb D=51ms av=+21ms
+  t= 7.1s v=108/0 a=178 chunks=1179 rx=1.29Mbps dec=105 lat p50=11/p95=29 | jb D=54ms av=+17ms
+  t= 8.1s v=137/0 a=227 chunks=1516 rx=1.45Mbps dec=136 lat p50=11/p95=31 | jb D=55ms av=+21ms
+  t= 9.1s v=168/0 a=278 chunks=1839 rx=1.56Mbps dec=165 lat p50=11/p95=30 | jb D=56ms av=+17ms
+  t=10.2s v=198/0 a=328 chunks=2174 rx=1.66Mbps dec=196 lat p50=11/p95=31 | jb D=56ms av=+20ms
+  t=11.2s v=229/0 a=380 chunks=2504 rx=1.74Mbps dec=226 lat p50=11/p95=31 | jb D=56ms av=+16ms
+
+RESULT video ok=254 lost=0 frame_loss=0.00% chunks=2786 dup=0 decoded=253 other=780 bad=0 padded=2 dropped=0 dec_err=0 q_left=0
+       audio ok=422 lost=0 bytes=19530 decoded_samples=402240 (8.38 s) decoded_rms=0.1
+one-way latency ms: p50=11.0 p95=31.1 p99=33.9 max=39.3 (n=2364)
+frame assemble ms: p50=0.3 p95=22.6 | arrival gap ms: p50=31.5 p95=47.9
+jitter buffer: D=56ms  video late=0 under=0  audio late=0 under=0
+release interval video ms: p50=33.0 p95=35.4 | audio ms: p50=20.0 p95=21.9
+capture clock: audio-video transit drift -7 ms over 12 s (-0.06% -- a capture device running slow shows up here)
+A/V sync skew ms: p50=17.3 p95=30.0 |max|=37.8 (n=251, + = audio leads)
+feedback sent: 190 reports (567 frames on the wire)
+wrote D:\Desktop\AI ¸¨Öú¶Ô»°\_work_final\rtc\bench\pilot\logs\l2_clean_01.h264 (2682501 bytes)

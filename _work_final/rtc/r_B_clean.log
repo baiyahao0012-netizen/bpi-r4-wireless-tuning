@@ -1,0 +1,19 @@
+﻿udp receiver on :9911 (rcvbuf=4194304)
+  t= 1.0s v=0/0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0
+  t= 2.0s v=0/0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0
+  t= 3.1s v=0/0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0
+  t= 4.1s v=0/0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0
+  t= 5.2s v=8/0 chunks=92 rx=0.16Mbps dec=7 lat p50=3/p95=7
+  t= 6.2s v=39/0 chunks=339 rx=0.50Mbps dec=38 lat p50=2/p95=6
+  t= 7.2s v=69/0 chunks=628 rx=0.79Mbps dec=68 lat p50=2/p95=10
+  t= 8.2s v=99/0 chunks=902 rx=0.99Mbps dec=98 lat p50=2/p95=9
+  t= 9.2s v=129/0 chunks=1195 rx=1.18Mbps dec=128 lat p50=2/p95=10
+  t=10.3s v=159/0 chunks=1463 rx=1.30Mbps dec=158 lat p50=2/p95=9
+  t=11.3s v=189/0 chunks=1744 rx=1.40Mbps dec=188 lat p50=2/p95=9
+  t=12.3s v=219/0 chunks=2005 rx=1.48Mbps dec=218 lat p50=2/p95=8
+  t=13.3s v=249/0 chunks=2279 rx=1.55Mbps dec=248 lat p50=2/p95=9
+
+RESULT udp ok=261 lost=0 frame_loss=0.00% chunks=2393 dup=0 decoded=260 bad=0 padded=0 dropped=0 dec_err=0
+one-way latency ms: p50=2.4 p95=8.8 p99=14.9 max=37.7 (n=2393)
+frame assemble ms: p50=2.6 p95=6.1 | arrival gap ms: p50=33.6 p95=39.9
+wrote r_B_clean.h264 (2712916 bytes)

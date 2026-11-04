@@ -1,0 +1,27 @@
+﻿receiver on Realtek 8852CE WiFi 6E PCI-E NIC (open 30 ms)  jitter_buffer=on [40..200 ms]
+feedback -> C0-35-32-19-CC-FB every 50 ms x3 via Realtek PCIe GbE Family Controller
+audio out: dev=16 48000 Hz  ������ (Realtek(R) Audio)
+  t= 1.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 2.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 3.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 4.0s v=9/1 a=20 chunks=135 rx=0.27Mbps dec=7 lat p50=12/p95=26 | jb D=48ms av=+15ms
+  t= 5.1s v=28/14 a=70 chunks=434 rx=0.67Mbps dec=26 lat p50=10/p95=24 | jb D=48ms av=+15ms
+  t= 6.1s v=47/24 a=118 chunks=765 rx=1.00Mbps dec=45 lat p50=10/p95=25 | jb D=48ms av=+14ms
+  t= 7.1s v=78/27 a=169 chunks=1107 rx=1.23Mbps dec=75 lat p50=10/p95=27 | jb D=52ms av=+16ms
+  t= 8.1s v=108/27 a=219 chunks=1443 rx=1.41Mbps dec=106 lat p50=11/p95=29 | jb D=55ms av=+16ms
+  t= 9.1s v=138/27 a=269 chunks=1763 rx=1.53Mbps dec=136 lat p50=11/p95=28 | jb D=54ms av=+20ms
+  t=10.1s v=169/27 a=321 chunks=2110 rx=1.65Mbps dec=166 lat p50=11/p95=29 | jb D=54ms av=+17ms
+  t=11.1s v=199/27 a=371 chunks=2430 rx=1.73Mbps dec=197 lat p50=10/p95=28 | jb D=54ms av=+15ms
+  t=12.1s v=229/27 a=421 chunks=2769 rx=1.80Mbps dec=226 lat p50=10/p95=28 | jb D=54ms av=+15ms
+  t=13.2s v=240/27 a=439 chunks=2886 rx=1.73Mbps dec=239 lat p50=11/p95=28 | jb D=54ms av=+16ms
+
+RESULT video ok=240 lost=27 frame_loss=10.11% chunks=2886 dup=0 decoded=239 other=5496 bad=0 padded=1 dropped=40 dec_err=0 q_left=0
+       audio ok=439 lost=0 bytes=76197 decoded_samples=421440 (8.78 s) decoded_rms=14479.2
+one-way latency ms: p50=10.6 p95=28.4 p99=34.2 max=39.0 (n=2447)
+frame assemble ms: p50=0.4 p95=21.8 | arrival gap ms: p50=31.7 p95=76.0
+jitter buffer: D=54ms  video late=0 under=17  audio late=0 under=5
+release interval video ms: p50=33.4 p95=67.1 | audio ms: p50=20.0 p95=21.8
+capture clock: audio-video transit drift -9 ms over 14 s (-0.06% -- a capture device running slow shows up here)
+A/V sync skew ms: p50=15.7 p95=29.6 |max|=48.9 (n=238, + = audio leads)
+feedback sent: 224 reports (669 frames on the wire)
+wrote r_A_lossy.h264 (2552986 bytes)

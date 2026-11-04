@@ -1,0 +1,2 @@
+﻿unicast 192.168.240.147        app_received=20/20  on_wifi=20  on_eth=20
+broadcast 192.168.240.255      app_received=59/20  on_wifi=19  on_eth=20

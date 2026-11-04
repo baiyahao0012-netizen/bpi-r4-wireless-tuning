@@ -1,0 +1,13 @@
+﻿sender: 40-C2-BA-52-70-95 -> C0-35-32-19-CC-FB via Realtek PCIe GbE Family Controller | 640x480@30 2000000 bps | mtu-chunk=1200
+  t= 1.0s frames=29 chunks=200 kf=1  tx=1.87 Mbps  fps=28.9
+    fb #85 n=20 dup=34 per=58ms rx=1.23Mbps loss=0/1000 jit=21.2ms q=46ms maxfid=26 ok=27 lost=0
+  t= 2.0s frames=60 chunks=440 kf=1  tx=2.02 Mbps  fps=29.5
+    fb #102 n=37 dup=68 per=54ms rx=2.44Mbps loss=0/1000 jit=29.2ms q=56ms maxfid=57 ok=58 lost=0
+  t= 3.0s frames=90 chunks=666 kf=2  tx=2.05 Mbps  fps=29.6
+    fb #117 n=52 dup=98 per=70ms rx=2.35Mbps loss=0/1000 jit=29.9ms q=57ms maxfid=86 ok=87 lost=0
+  t= 4.0s frames=120 chunks=891 kf=2  tx=2.06 Mbps  fps=29.7
+    fb #133 n=68 dup=130 per=69ms rx=2.01Mbps loss=0/1000 jit=29.3ms q=57ms maxfid=116 ok=117 lost=0
+  t= 5.1s frames=151 chunks=1126 kf=3  tx=2.07 Mbps  fps=29.8
+    fb #150 n=85 dup=164 per=0ms rx=1.04Mbps loss=0/1000 jit=30.3ms q=58ms maxfid=149 ok=149 lost=0
+done: 179 frames, 1334 chunks, 3 keyframes, 2.08 Mbps avg, 29.8 fps
+feedback: 98 reports, 190 duplicates dropped, 0 malformed, last rx=2.76 Mbps loss=0/1000 jitter=31.5 ms queue=59 ms peer_maxfid=176

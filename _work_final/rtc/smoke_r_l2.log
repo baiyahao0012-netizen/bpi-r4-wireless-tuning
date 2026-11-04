@@ -1,0 +1,22 @@
+﻿receiver transport=l2 on l2 capture on Realtek 8852CE WiFi 6E PCI-E NIC (open 28 ms)  jitter_buffer=on [40..200 ms]
+feedback -> C0-35-32-19-CC-FB every 50 ms x3
+audio out: dev=16 48000 Hz  ������ (Realtek(R) Audio)
+  t= 1.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 2.1s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 3.1s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 4.1s v=10/0 a=16 chunks=107 rx=0.20Mbps dec=8 lat p50=7/p95=24 | jb D=40ms av=+14ms
+  t= 5.1s v=40/0 a=65 chunks=426 rx=0.65Mbps dec=38 lat p50=11/p95=25 | jb D=48ms av=+20ms
+  t= 6.1s v=71/0 a=117 chunks=783 rx=1.00Mbps dec=69 lat p50=12/p95=26 | jb D=49ms av=+20ms
+  t= 7.1s v=102/0 a=168 chunks=1111 rx=1.22Mbps dec=99 lat p50=11/p95=26 | jb D=49ms av=+19ms
+  t= 8.1s v=132/0 a=218 chunks=1455 rx=1.39Mbps dec=130 lat p50=12/p95=27 | jb D=51ms av=+18ms
+
+RESULT video ok=158 lost=1 frame_loss=0.63% chunks=1746 dup=0 decoded=157 other=592 bad=0 padded=0 dropped=0 dec_err=0 q_left=0
+       audio ok=262 lost=0 bytes=12014 decoded_samples=249600 (5.20 s) decoded_rms=0.1
+one-way latency ms: p50=11.5 p95=26.6 p99=33.3 max=33.8 (n=1484)
+frame assemble ms: p50=0.4 p95=16.7 | arrival gap ms: p50=31.3 p95=48.5
+jitter buffer: D=54ms  video late=0 under=0  audio late=0 under=0
+release interval video ms: p50=32.3 p95=42.2 | audio ms: p50=20.1 p95=22.1
+capture clock: audio-video transit drift -9 ms over 9 s (-0.10% -- a capture device running slow shows up here)
+A/V sync skew ms: p50=18.6 p95=31.2 |max|=36.2 (n=156, + = audio leads)
+feedback sent: 143 reports (426 frames on the wire)
+wrote smoke_l2.h264 (1686511 bytes)

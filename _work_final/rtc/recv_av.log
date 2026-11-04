@@ -1,0 +1,27 @@
+﻿receiver on Realtek 8852CE WiFi 6E PCI-E NIC (open 29 ms)  jitter_buffer=on [40..200 ms]
+feedback -> C0-35-32-19-CC-FB every 50 ms x3 via Realtek PCIe GbE Family Controller
+audio out: dev=21 48000 Hz  ������ (Realtek(R) Audio)
+  t= 1.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 2.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 3.0s v=0/0 a=0 chunks=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 | jb D=40ms
+  t= 4.0s v=19/0 a=34 chunks=204 rx=0.39Mbps dec=14 lat p50=10/p95=65 | jb D=161ms av=+19ms
+  t= 5.0s v=49/0 a=85 chunks=522 rx=0.81Mbps dec=44 lat p50=10/p95=34 | jb D=74ms av=+19ms
+  t= 6.1s v=79/0 a=135 chunks=862 rx=1.12Mbps dec=75 lat p50=10/p95=31 | jb D=78ms av=+17ms
+  t= 7.1s v=110/0 a=186 chunks=1195 rx=1.33Mbps dec=105 lat p50=10/p95=28 | jb D=74ms av=+19ms
+  t= 8.1s v=140/0 a=237 chunks=1541 rx=1.51Mbps dec=135 lat p50=10/p95=31 | jb D=77ms av=+16ms
+  t= 9.1s v=170/0 a=287 chunks=1856 rx=1.62Mbps dec=165 lat p50=10/p95=31 | jb D=77ms av=+20ms
+  t=10.1s v=201/0 a=337 chunks=2200 rx=1.73Mbps dec=196 lat p50=10/p95=31 | jb D=78ms av=+16ms
+  t=11.1s v=230/0 a=387 chunks=2521 rx=1.80Mbps dec=226 lat p50=10/p95=31 | jb D=78ms av=+19ms
+  t=12.1s v=261/0 a=438 chunks=2862 rx=1.87Mbps dec=256 lat p50=10/p95=31 | jb D=79ms av=+16ms
+  t=13.1s v=269/0 a=451 chunks=2947 rx=1.78Mbps dec=266 lat p50=10/p95=31 | jb D=79ms av=+14ms
+
+RESULT video ok=269 lost=0 frame_loss=0.00% chunks=2947 dup=0 decoded=266 other=5739 bad=0 padded=6 dropped=0 dec_err=0 q_left=0
+       audio ok=451 lost=0 bytes=88846 decoded_samples=432960 (9.02 s)
+one-way latency ms: p50=10.2 p95=30.6 p99=40.0 max=96.1 (n=2496)
+frame assemble ms: p50=0.3 p95=27.2 | arrival gap ms: p50=31.6 p95=46.9
+jitter buffer: D=79ms  video late=0 under=1  audio late=0 under=1
+release interval video ms: p50=33.0 p95=37.3 | audio ms: p50=20.0 p95=20.0
+capture clock: audio-video transit drift -24 ms over 14 s (-0.17% -- a capture device running slow shows up here)
+A/V sync skew ms: p50=18.5 p95=32.0 |max|=140.8 (n=269, + = audio leads)
+feedback sent: 223 reports (666 frames on the wire)
+wrote recv_out.h264 (2827651 bytes)  +recv_av.mp4

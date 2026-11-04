@@ -1,0 +1,25 @@
+﻿=== modules ===
+pyaudiowpatch    MISSING  No module named 'pyaudiowpatch'
+soundcard        MISSING  No module named 'soundcard'
+mss              MISSING  No module named 'mss'
+dxcam            MISSING  No module named 'dxcam'
+PIL              OK   12.3.0
+PIL.ImageGrab    OK   
+cv2              OK   4.11.0
+numpy            OK   1.26.4
+sounddevice      OK   0.5.3
+
+=== WASAPI loopback endpoints (pyaudiowpatch) ===
+pyaudiowpatch unavailable: No module named 'pyaudiowpatch'
+
+=== loopback mics (soundcard) ===
+soundcard unavailable: No module named 'soundcard'
+
+=== screen capture timing (PIL) ===
+  full screen: 2560x1600 in 50.2 ms
+  grab+resize->640x480: 65.2 ms/frame  shape=(480, 640, 3) dtype=uint8
+  grab+resize->960x540: 67.8 ms/frame  shape=(540, 960, 3) dtype=uint8
+  grab+resize->1280x720: 71.6 ms/frame  shape=(720, 1280, 3) dtype=uint8
+
+=== screen capture timing (mss) ===
+  mss unavailable: No module named 'mss'

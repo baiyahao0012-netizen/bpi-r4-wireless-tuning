@@ -1,0 +1,17 @@
+﻿Looking in indexes: https://pypi.tuna.tsinghua.edu.cn/simple
+Collecting pyaudiowpatch
+  Downloading pyaudiowpatch-0.2.12.9-cp310-cp310-win_amd64.whl (99 kB)
+Collecting mss
+  Downloading mss-10.2.0-py3-none-any.whl (67 kB)
+Installing collected packages: pyaudiowpatch, mss
+
+Successfully installed mss-10.2.0 pyaudiowpatch-0.2.12.9
+python.exe : 
+所在位置 行:1 字符: 129
++ ... ew($false); & "D:\Bai_Yahao\Software\Python\python.exe" -m pip instal ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[notice] A new release of pip is available: 26.1 -> 26.3
+[notice] To update, run: python.exe -m pip install --upgrade pip

@@ -1,0 +1,17 @@
+﻿receiver on Realtek 8852CE WiFi 6E PCI-E NIC (open 30 ms)  jitter_buffer=on [40..200 ms]
+  t= 1.0s ok=0 lost=0 chunks=0 dup=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 gap=0.0ms | jb D=40ms held p50=0ms late=0 under=0
+  t= 2.0s ok=0 lost=0 chunks=0 dup=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 gap=0.0ms | jb D=40ms held p50=0ms late=0 under=0
+  t= 3.0s ok=0 lost=0 chunks=0 dup=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 gap=0.0ms | jb D=40ms held p50=0ms late=0 under=0
+  t= 4.0s ok=0 lost=0 chunks=0 dup=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 gap=0.0ms | jb D=40ms held p50=0ms late=0 under=0
+  t= 5.0s ok=20 lost=0 chunks=142 dup=0 rx=0.25Mbps dec=0 lat p50=18/p95=43 gap=30.9ms | jb D=48ms held p50=40ms late=0 under=0
+  t= 6.1s ok=51 lost=0 chunks=365 dup=0 rx=0.54Mbps dec=0 lat p50=16/p95=33 gap=31.5ms | jb D=57ms held p50=35ms late=0 under=0
+  t= 7.1s ok=81 lost=0 chunks=598 dup=0 rx=0.76Mbps dec=0 lat p50=14/p95=32 gap=31.5ms | jb D=57ms held p50=39ms late=0 under=0
+  t= 8.1s ok=111 lost=0 chunks=813 dup=0 rx=0.91Mbps dec=0 lat p50=15/p95=33 gap=31.8ms | jb D=58ms held p50=38ms late=0 under=0
+  t= 9.1s ok=141 lost=0 chunks=1044 dup=0 rx=1.04Mbps dec=0 lat p50=16/p95=33 gap=31.8ms | jb D=58ms held p50=37ms late=0 under=0
+  t=10.1s ok=172 lost=0 chunks=1262 dup=0 rx=1.13Mbps dec=0 lat p50=16/p95=33 gap=31.5ms | jb D=58ms held p50=37ms late=0 under=0
+
+RESULT ok=179 lost=0 frame_loss=0.00% chunks=1311 dup=0 decoded=178 other=11200 bad=0 padded=5
+one-way latency ms: p50=14.6 p95=33.2 p99=43.1 max=69.3 (n=1311)
+frame assemble ms: p50=0.2 p95=31.5 | arrival gap ms: p50=31.5 p95=61.9
+jitter buffer: D=60ms late=0 underruns=0 | release interval ms: p50=33.1 p95=36.1 p99=44.8 | play loop lag ms: p50=4.8 p95=14.2
+wrote recv_out.h264 (1491827 bytes)  +recv_jb1.mp4

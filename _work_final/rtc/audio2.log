@@ -1,0 +1,123 @@
+﻿=== hostapis ===
+0: MME            devices=9 default_in=1 default_out=5
+1: Windows DirectSound devices=9 default_in=9 default_out=13
+2: Windows WASAPI devices=7 default_in=23 default_out=18
+3: Windows WDM-KS devices=24 default_in=30 default_out=41
+
+=== devices ===
+ 0 MME          in=2 out=0 sr=44100  Microsoft 声音映射器 - Input
+ 1 MME          in=2 out=0 sr=44100  麦克风阵列 (Realtek(R) Audio)
+ 2 MME          in=1 out=0 sr=44100  耳机 (QCY H3)
+ 3 MME          in=2 out=0 sr=44100  立体声混音 (Realtek(R) Audio)
+ 4 MME          in=0 out=2 sr=44100  Microsoft 声音映射器 - Output
+ 5 MME          in=0 out=2 sr=44100  耳机 (QCY H3)
+ 6 MME          in=0 out=8 sr=44100  FxSound Speakers (FxSound Audio
+ 7 MME          in=0 out=8 sr=44100  扬声器 (Nahimic VAD)
+ 8 MME          in=0 out=2 sr=44100  扬声器 (Realtek(R) Audio)
+ 9 Windows Dire in=2 out=0 sr=44100  主声音捕获驱动程序
+10 Windows Dire in=2 out=0 sr=44100  麦克风阵列 (Realtek(R) Audio)
+11 Windows Dire in=1 out=0 sr=44100  耳机 (QCY H3)
+12 Windows Dire in=2 out=0 sr=44100  立体声混音 (Realtek(R) Audio)
+13 Windows Dire in=0 out=2 sr=44100  主声音驱动程序
+14 Windows Dire in=0 out=2 sr=44100  耳机 (QCY H3)
+15 Windows Dire in=0 out=8 sr=44100  FxSound Speakers (FxSound Audio Enhancer)
+16 Windows Dire in=0 out=8 sr=44100  扬声器 (Nahimic VAD)
+17 Windows Dire in=0 out=2 sr=44100  扬声器 (Realtek(R) Audio)
+18 Windows WASA in=0 out=2 sr=48000  耳机 (QCY H3)
+19 Windows WASA in=0 out=2 sr=48000  FxSound Speakers (FxSound Audio Enhancer)
+20 Windows WASA in=0 out=8 sr=48000  扬声器 (Nahimic VAD)
+21 Windows WASA in=0 out=2 sr=48000  扬声器 (Realtek(R) Audio)
+22 Windows WASA in=1 out=0 sr=16000  耳机 (QCY H3)
+23 Windows WASA in=2 out=0 sr=48000  麦克风阵列 (Realtek(R) Audio)
+24 Windows WASA in=2 out=0 sr=48000  立体声混音 (Realtek(R) Audio)
+25 Windows WDM- in=0 out=2 sr=48000  Speakers 1 (Realtek HD Audio output with SST)
+26 Windows WDM- in=0 out=2 sr=44100  Speakers 2 (Realtek HD Audio output with SST)
+27 Windows WDM- in=2 out=0 sr=48000  电脑扬声器 (Realtek HD Audio output with SST)
+28 Windows WDM- in=2 out=0 sr=44100  麦克风 (Realtek HD Audio Mic input)
+29 Windows WDM- in=2 out=0 sr=48000  立体声混音 (Realtek HD Audio Stereo input)
+30 Windows WDM- in=2 out=0 sr=44100  麦克风阵列 (Realtek HD Audio Mic Array input)
+31 Windows WDM- in=0 out=2 sr=44100  Headphones (Realtek HD Audio 2nd output)
+32 Windows WDM- in=0 out=2 sr=44100  耳机 ()
+33 Windows WDM- in=0 out=8 sr=48000  Speakers (Nahimic Wave Speaker)
+34 Windows WDM- in=0 out=1 sr=8000  耳机 (@System32\drivers\bthhfenum.sys,#2;%1 Hands-Free%0
+
+;(EDIFIER XS1))
+35 Windows WDM- in=1 out=0 sr=8000  耳机 (@System32\drivers\bthhfenum.sys,#2;%1 Hands-Free%0
+
+;(EDIFIER XS1))
+36 Windows WDM- in=0 out=2 sr=44100  耳机 ()
+37 Windows WDM- in=0 out=1 sr=8000  耳机 (@System32\drivers\bthhfenum.sys,#2;%1 Hands-Free%0
+
+;(K02S PRO))
+38 Windows WDM- in=1 out=0 sr=8000  耳机 (@System32\drivers\bthhfenum.sys,#2;%1 Hands-Free%0
+
+;(K02S PRO))
+39 Windows WDM- in=0 out=1 sr=16000  耳机 (@System32\drivers\bthhfenum.sys,#2;%1 Hands-Free%0
+
+;(QCY H3))
+40 Windows WDM- in=1 out=0 sr=16000  耳机 (@System32\drivers\bthhfenum.sys,#2;%1 Hands-Free%0
+
+;(QCY H3))
+41 Windows WDM- in=0 out=2 sr=48000  耳机 ()
+42 Windows WDM- in=0 out=2 sr=44100  Speakers (Nahimic mirroring Wave Speaker)
+43 Windows WDM- in=0 out=8 sr=48000  Speakers (Nahimic Easy Surround)
+44 Windows WDM- in=8 out=0 sr=44100  Input ()
+45 Windows WDM- in=0 out=8 sr=44100  Speakers ()
+46 Windows WDM- in=0 out=1 sr=8000  耳机 (@System32\drivers\bthhfenum.sys,#2;%1 Hands-Free%0
+
+;(Baseus Bass 1i Ring))
+47 Windows WDM- in=1 out=0 sr=8000  耳机 (@System32\drivers\bthhfenum.sys,#2;%1 Hands-Free%0
+
+;(Baseus Bass 1i Ring))
+48 Windows WDM- in=0 out=2 sr=44100  耳机 ()
+
+=== capture trials (Realtek mic) ===
+  dev=23  44100 Hz ch=2 FAILED: PortAudioError('Error opening InputStream: Invalid sample rate', -9997)
+  dev=23  48000 Hz ch=1 blk= 960 -> 0.764s for 0.500s audio (1.53x) lat=0.040s rms=   0.1 peak=    2
+  dev=1   44100 Hz ch=2 blk= 882 -> 0.786s for 0.500s audio (1.57x) lat=0.040s rms=   0.5 peak=    2
+  dev=1   48000 Hz ch=1 blk= 960 -> 0.773s for 0.500s audio (1.55x) lat=0.040s rms=   0.8 peak=    5
+  dev=10  44100 Hz ch=2 blk= 882 -> 0.000s for 0.500s audio (0.00x) lat=0.020s rms=   0.0 peak=    0
+  dev=10  48000 Hz ch=1 blk= 960 -> 0.000s for 0.500s audio (0.00x) lat=0.020s rms=   0.0 peak=    0
+  dev=28  44100 Hz ch=2 FAILED: PortAudioError('Error opening InputStream: Unanticipated host error', -9999, (3, -9999, 'Blocking API not supported yet'))
+  dev=28  48000 Hz ch=1 FAILED: PortAudioError('Error opening InputStream: Unanticipated host error', -9999, (3, -9999, 'Blocking API not supported yet'))
+  dev=30  44100 Hz ch=2 FAILED: PortAudioError('Error opening InputStream: Unanticipated host error', -9999, (3, -9999, 'Blocking API not supported yet'))
+  dev=30  48000 Hz ch=1 FAILED: PortAudioError('Error opening InputStream: Unanticipated host error', -9999, (3, -9999, 'Blocking API not supported yet'))
+
+=== output candidates (non-Bluetooth first) ===
+ 4 MME          ch=2 sr=44100  Microsoft 声音映射器 - Output
+ 5 MME          ch=2 sr=44100  耳机 (QCY H3)
+ 6 MME          ch=8 sr=44100  FxSound Speakers (FxSound Audio
+ 7 MME          ch=8 sr=44100  扬声器 (Nahimic VAD)
+ 8 MME          ch=2 sr=44100  扬声器 (Realtek(R) Audio)
+13 Windows Dire ch=2 sr=44100  主声音驱动程序
+14 Windows Dire ch=2 sr=44100  耳机 (QCY H3)
+15 Windows Dire ch=8 sr=44100  FxSound Speakers (FxSound Audio Enhancer)
+16 Windows Dire ch=8 sr=44100  扬声器 (Nahimic VAD)
+17 Windows Dire ch=2 sr=44100  扬声器 (Realtek(R) Audio)
+18 Windows WASA ch=2 sr=48000  耳机 (QCY H3)
+19 Windows WASA ch=2 sr=48000  FxSound Speakers (FxSound Audio Enhancer)
+20 Windows WASA ch=8 sr=48000  扬声器 (Nahimic VAD)
+21 Windows WASA ch=2 sr=48000  扬声器 (Realtek(R) Audio)
+25 Windows WDM- ch=2 sr=48000  Speakers 1 (Realtek HD Audio output with SST)
+26 Windows WDM- ch=2 sr=44100  Speakers 2 (Realtek HD Audio output with SST)
+31 Windows WDM- ch=2 sr=44100  Headphones (Realtek HD Audio 2nd output)
+32 Windows WDM- ch=2 sr=44100  耳机 ()
+33 Windows WDM- ch=8 sr=48000  Speakers (Nahimic Wave Speaker)
+34 Windows WDM- ch=1 sr=8000  耳机 (@System32\drivers\bthhfenum.sys,#2;%1 Hands-Free%0
+
+;(EDIFIER XS1))
+36 Windows WDM- ch=2 sr=44100  耳机 ()
+37 Windows WDM- ch=1 sr=8000  耳机 (@System32\drivers\bthhfenum.sys,#2;%1 Hands-Free%0
+
+;(K02S PRO))
+39 Windows WDM- ch=1 sr=16000  耳机 (@System32\drivers\bthhfenum.sys,#2;%1 Hands-Free%0
+
+;(QCY H3))
+41 Windows WDM- ch=2 sr=48000  耳机 ()
+42 Windows WDM- ch=2 sr=44100  Speakers (Nahimic mirroring Wave Speaker)
+43 Windows WDM- ch=8 sr=48000  Speakers (Nahimic Easy Surround)
+45 Windows WDM- ch=8 sr=44100  Speakers ()
+46 Windows WDM- ch=1 sr=8000  耳机 (@System32\drivers\bthhfenum.sys,#2;%1 Hands-Free%0
+
+;(Baseus Bass 1i Ring))
+48 Windows WDM- ch=2 sr=44100  耳机 ()

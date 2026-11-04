@@ -1,0 +1,19 @@
+﻿sender: transport=l2 | l2 raw -> C0-35-32-19-CC-FB via Realtek PCIe GbE Family Controller | 640x480@30 2500000 bps | mtu-chunk=1200
+audio: loopback 48000 Hz mono opus 64000 bps (dev=default  src=������ (Realtek(R) Audio) [Loopback] [loopback])
+  t= 1.0s frames=27 chunks=244 kf=1  tx=2.26 Mbps  fps=26.8
+    fb #-1 n=0 dup=0 per=0ms rx=0.00Mbps loss=0/1000 jit=0.0ms q=0ms maxfid=0 ok=0 lost=0
+    audio 43 frames 1977B rms=0.2
+  t= 2.0s frames=58 chunks=524 kf=1  tx=2.43 Mbps  fps=28.4
+    fb #-1 n=0 dup=0 per=0ms rx=0.00Mbps loss=0/1000 jit=0.0ms q=0ms maxfid=0 ok=0 lost=0
+    audio 95 frames 4342B rms=0.2
+  t= 3.0s frames=88 chunks=819 kf=2  tx=2.56 Mbps  fps=28.9
+    fb #-1 n=0 dup=0 per=0ms rx=0.00Mbps loss=0/1000 jit=0.0ms q=0ms maxfid=0 ok=0 lost=0
+    audio 145 frames 6673B rms=0.2
+  t= 4.1s frames=119 chunks=1096 kf=2  tx=2.54 Mbps  fps=29.2
+    fb #-1 n=0 dup=0 per=0ms rx=0.00Mbps loss=0/1000 jit=0.0ms q=0ms maxfid=0 ok=0 lost=0
+    audio 197 frames 9034B rms=0.2
+  t= 5.1s frames=150 chunks=1408 kf=3  tx=2.60 Mbps  fps=29.4
+    fb #-1 n=0 dup=0 per=0ms rx=0.00Mbps loss=0/1000 jit=0.0ms q=0ms maxfid=0 ok=0 lost=0
+    audio 248 frames 11380B rms=0.2
+done: 177 frames, 1654 chunks, 3 keyframes, 2.59 Mbps avg, 29.5 fps
+audio: 289 frames, 13239 bytes payload, rms=0.2, starved=0

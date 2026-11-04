@@ -1,0 +1,29 @@
+﻿sender: 40-C2-BA-52-70-95 -> C0-35-32-19-CC-FB via Realtek PCIe GbE Family Controller | 640x480@30 2500000 bps | mtu-chunk=1200
+audio: tone 48000 Hz mono opus 64000 bps (dev=default)
+  t= 1.0s frames=29 chunks=256 kf=1  tx=2.35 Mbps  fps=28.4
+    fb #66 n=18 dup=30 per=64ms rx=2.17Mbps loss=0/1000 jit=55.8ms q=90ms maxfid=26 ok=26 lost=0
+    audio 51 frames 9300B rms=2862.1
+  t= 2.0s frames=59 chunks=532 kf=1  tx=2.49 Mbps  fps=29.2
+    fb #82 n=34 dup=62 per=64ms rx=2.92Mbps loss=0/1000 jit=46.2ms q=78ms maxfid=57 ok=58 lost=0
+    audio 101 frames 18289B rms=2867.1
+  t= 3.1s frames=90 chunks=825 kf=2  tx=2.54 Mbps  fps=29.5
+    fb #98 n=50 dup=94 per=96ms rx=2.15Mbps loss=0/1000 jit=45.7ms q=77ms maxfid=87 ok=88 lost=0
+    audio 153 frames 27930B rms=2864.4
+  t= 4.1s frames=120 chunks=1100 kf=2  tx=2.55 Mbps  fps=29.6
+    fb #114 n=66 dup=126 per=70ms rx=3.04Mbps loss=0/1000 jit=45.7ms q=77ms maxfid=117 ok=117 lost=0
+    audio 203 frames 37862B rms=2866.3
+  t= 5.1s frames=151 chunks=1398 kf=3  tx=2.59 Mbps  fps=29.7
+    fb #131 n=83 dup=160 per=33ms rx=2.47Mbps loss=0/1000 jit=45.7ms q=77ms maxfid=147 ok=148 lost=0
+    audio 255 frames 48448B rms=2866.7
+  t= 6.1s frames=181 chunks=1687 kf=4  tx=2.61 Mbps  fps=29.7
+    fb #148 n=100 dup=194 per=77ms rx=1.85Mbps loss=0/1000 jit=45.8ms q=77ms maxfid=178 ok=179 lost=0
+    audio 305 frames 58718B rms=2867.6
+  t= 7.1s frames=212 chunks=1962 kf=4  tx=2.59 Mbps  fps=29.8
+    fb #165 n=117 dup=228 per=36ms rx=3.12Mbps loss=0/1000 jit=46.4ms q=78ms maxfid=210 ok=211 lost=0
+    audio 356 frames 69222B rms=2868.5
+  t= 8.2s frames=243 chunks=2262 kf=5  tx=2.61 Mbps  fps=29.8
+    fb #181 n=133 dup=260 per=29ms rx=1.71Mbps loss=0/1000 jit=46.5ms q=78ms maxfid=240 ok=240 lost=0
+    audio 408 frames 79948B rms=2870.4
+done: 269 frames, 2496 chunks, 5 keyframes, 2.60 Mbps avg, 29.8 fps
+audio: 451 frames, 88846 bytes payload, rms=2871.0, starved=0
+feedback: 147 reports, 288 duplicates dropped, 0 malformed, last rx=2.62 Mbps loss=0/1000 jitter=46.9 ms queue=79 ms peer_maxfid=266

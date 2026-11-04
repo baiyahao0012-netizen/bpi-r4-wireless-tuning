@@ -1,0 +1,29 @@
+﻿receiver on Realtek 8852CE WiFi 6E PCI-E NIC (open 35 ms)  jitter_buffer=on [40..200 ms]
+feedback -> C0-35-32-19-CC-FB every 50 ms x3 via Realtek PCIe GbE Family Controller
+  t= 1.0s ok=0 lost=0 chunks=0 dup=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 gap=0.0ms | jb D=40ms held p50=0ms late=0 under=0
+  t= 2.0s ok=0 lost=0 chunks=0 dup=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 gap=0.0ms | jb D=40ms held p50=0ms late=0 under=0
+  t= 3.0s ok=0 lost=0 chunks=0 dup=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 gap=0.0ms | jb D=40ms held p50=0ms late=0 under=0
+  t= 4.0s ok=0 lost=0 chunks=0 dup=0 rx=0.00Mbps dec=0 lat p50=0/p95=0 gap=0.0ms | jb D=40ms held p50=0ms late=0 under=0
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+WARN decode: InvalidDataError(1094995529, 'Invalid data found when processing input', 'avcodec_send_packet()')
+  t= 5.0s ok=12 lost=5 chunks=255 dup=0 rx=0.47Mbps dec=0 lat p50=11/p95=64 gap=46.1ms | jb D=101ms held p50=87ms late=0 under=5
+  t= 6.0s ok=33 lost=8 chunks=486 dup=0 rx=0.74Mbps dec=0 lat p50=11/p95=158 gap=39.9ms | jb D=200ms held p50=99ms late=0 under=10
+  t= 7.0s ok=44 lost=11 chunks=611 dup=0 rx=0.80Mbps dec=0 lat p50=12/p95=188 gap=36.1ms | jb D=101ms held p50=100ms late=0 under=11
+  t= 8.0s ok=74 lost=12 chunks=860 dup=0 rx=0.98Mbps dec=0 lat p50=12/p95=180 gap=34.1ms | jb D=65ms held p50=91ms late=0 under=12
+  t= 9.0s ok=104 lost=12 chunks=1177 dup=0 rx=1.19Mbps dec=0 lat p50=11/p95=153 gap=32.9ms | jb D=60ms held p50=74ms late=0 under=12
+  t=10.1s ok=134 lost=12 chunks=1554 dup=0 rx=1.42Mbps dec=0 lat p50=10/p95=114 gap=32.8ms | jb D=60ms held p50=58ms late=0 under=12
+  t=11.1s ok=165 lost=12 chunks=2047 dup=0 rx=1.70Mbps dec=0 lat p50=9/p95=40 gap=33.2ms | jb D=60ms held p50=56ms late=0 under=12
+  t=12.1s ok=196 lost=12 chunks=2671 dup=0 rx=2.04Mbps dec=0 lat p50=9/p95=37 gap=33.2ms | jb D=60ms held p50=54ms late=0 under=12
+  t=13.1s ok=225 lost=12 chunks=3332 dup=0 rx=2.36Mbps dec=0 lat p50=9/p95=37 gap=33.3ms | jb D=62ms held p50=53ms late=0 under=12
+  t=14.1s ok=256 lost=12 chunks=3968 dup=0 rx=2.61Mbps dec=0 lat p50=9/p95=35 gap=33.2ms | jb D=62ms held p50=52ms late=0 under=12
+  t=15.1s ok=285 lost=12 chunks=4615 dup=0 rx=2.84Mbps dec=0 lat p50=9/p95=35 gap=33.3ms | jb D=62ms held p50=52ms late=0 under=12
+  t=16.1s ok=316 lost=12 chunks=5250 dup=0 rx=3.03Mbps dec=0 lat p50=9/p95=34 gap=33.3ms | jb D=62ms held p50=52ms late=0 under=12
+  t=17.1s ok=346 lost=12 chunks=5920 dup=0 rx=3.22Mbps dec=0 lat p50=9/p95=34 gap=33.2ms | jb D=60ms held p50=51ms late=0 under=12
+
+RESULT ok=372 lost=13 frame_loss=3.38% chunks=6468 dup=0 decoded=354 other=19285 bad=0 padded=4 dropped=11
+one-way latency ms: p50=8.9 p95=34.8 p99=139.8 max=406.8 (n=6479)
+frame assemble ms: p50=9.1 p95=32.0 | arrival gap ms: p50=33.2 p95=54.5
+jitter buffer: D=58ms late=0 underruns=12 | release interval ms: p50=33.2 p95=39.4 p99=181.4 | play loop lag ms: p50=3.7 p95=11.9
+feedback sent: 301 reports (900 frames on the wire)
+wrote recv_out.h264 (7366916 bytes)  +recv_abr.mp4
