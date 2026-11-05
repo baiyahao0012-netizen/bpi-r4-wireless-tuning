@@ -573,6 +573,12 @@ def main():
                 q_us = float(v[0])
                 lim = 24000.0
                 rr = (d_ret / d_chunk) if d_chunk > 0 else 0.0
+                # airtime spent per kilobyte delivered: rises when the medium
+                # itself becomes expensive, unlike a plain queue backlog
+                d_tx = v[2] - pv[2]
+                d_bytes = d_chunk * args.chunk
+                cost = (d_tx / (d_bytes / 1024.0)) if d_bytes > 0 else 0.0
+                mac['cost'] = cost
                 cur = cur_rate
                 new = cur
                 why = ''
@@ -589,8 +595,9 @@ def main():
                     last_change[0] = now
                     with sw_lock:
                         switch_req[:] = [new, why]
-                    print("  MAC-CTL %.0f -> %.0f kbps (q=%.0fus rr=%.3f ret=%d)"
-                          % (cur / 1000.0, new / 1000.0, q_us, rr, d_ret),
+                    print("  MAC-CTL %.0f -> %.0f kbps (q=%.0fus rr=%.3f "
+                          "ret=%d cost=%.1fus/KB)"
+                          % (cur / 1000.0, new / 1000.0, q_us, rr, d_ret, cost),
                           flush=True)
 
         threading.Thread(target=_mac_ctrl, daemon=True).start()
