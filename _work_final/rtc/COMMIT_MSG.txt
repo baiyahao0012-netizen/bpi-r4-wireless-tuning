@@ -1,12 +1,16 @@
-feat(rtc): FEC/NACK/PLI + 音频与音视频同步 + MAC 埋点采样
+feat(mac): 板端 MAC 埋点代理 + 发送端报告通道
 
-- 协议: 新增 NACK 与 PLI 控制消息(0x88B7)、帧级 XOR FEC
-- 接收端: 缺口即时检测、请求去重、已完成帧抑制窗口、FEC 恢复
-- 发送端: 分片缓存(3s) + NACK 重传 + PLI 强制 IDR
-- 时间轴: 视频改帧序号、音频改样本数，漂移 -0.30% -> -0.02%
-- 音频: --audio file 读取音轨, Opus 64kbps, 与视频共用恢复机制
-- 采样: mac_probe.sh 读取 AQL/airtime/tx_stats 埋点
-- 报告: RTC_OVER_WIFI_REPORT_20261105.md
+新增:
+- mac_agent.sh: 每 100ms 采集 AQL 队列占用、per-STA 空口时间、
+  MAC 重传/失败计数，通过 TCP 上报发送端
+- sender.py --mac-ctl: 接收并缓存 MAC 报告
 
-实测: 干净链路 30fps 零丢帧、音频零丢失;
-      突发丢包下 FEC/NACK/PLI 全部生效，解码异常 0
+实测:
+- 15 秒收到 951 份报告
+- AQL 在 2.1 Mbps 下从 ~300us 升到 ~13ms，动态范围 40 倍
+
+说明:
+- 板端 busybox nc 仅支持 TCP，故控制通道用 TCP 短连接
+- 只有媒体面必须避开 UDP/IP，控制面走 IP 可接受
+
+版本: 0.5.0

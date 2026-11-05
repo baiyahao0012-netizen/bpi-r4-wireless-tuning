@@ -405,6 +405,9 @@ def main():
                     help='1 = emit one XOR parity chunk per video frame')
     ap.add_argument('--cache-ms', type=int, default=3000,
                     help='how long sent chunks are kept for NACK retransmission')
+    ap.add_argument('--mac-ctl', type=int, default=0,
+                    help='1 = receive MAC-layer reports from the AP agent')
+    ap.add_argument('--mac-port', type=int, default=9931)
     ap.add_argument('--sync-port', type=int, default=9930,
                     help='UDP port for the NTP-style clock-sync responder '
                          '(measurement only, identical for both A/B arms)')
@@ -500,6 +503,46 @@ def main():
     pkt_id = [0]
     force_idr = [False]
     pli_rx = [0]
+    mac = {'rx': 0, 'last': None, 'seq': 0}
+
+    if args.mac_ctl:
+        def _mac_listener():
+            # The AP's busybox nc is TCP-only, so the report channel is a
+            # short-lived TCP connection per sample rather than UDP.
+            srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            try:
+                srv.bind(('0.0.0.0', args.mac_port))
+                srv.listen(16)
+            except Exception as e:
+                print("ERROR mac listener: %r" % (e,), flush=True)
+                return
+            while True:
+                try:
+                    conn, _peer = srv.accept()
+                except Exception:
+                    continue
+                try:
+                    conn.settimeout(1.0)
+                    data = conn.recv(512)
+                except Exception:
+                    data = b''
+                finally:
+                    conn.close()
+                t = data.decode('ascii', 'replace').strip()
+                if not t.startswith('MACR,'):
+                    continue
+                p = t.split(',')
+                try:
+                    v = [int(x) for x in p[1:6]]
+                except Exception:
+                    continue
+                mac['last'] = v
+                mac['rx'] += 1
+                mac['seq'] = v[0]
+
+        threading.Thread(target=_mac_listener, daemon=True).start()
+        print("mac reports on udp/%d" % args.mac_port, flush=True)
 
     def _cache_put(sq, blob):
         fcache[sq] = (blob, time.perf_counter())
@@ -933,6 +976,9 @@ def main():
                  audio_stat['rms'], audio_stat['starved']), flush=True)
         asrc.close()
 
+    if args.mac_ctl:
+        print("mac: %d reports, last(aql_vo,aql_be,tx_us,rx_us,retries,failed)=%s"
+              % (mac['rx'], mac['last']), flush=True)
     if args.fec:
         print("pli: %d keyframe requests received" % pli_rx[0], flush=True)
         print("fec: %d parity chunks sent, %d resent on NACK, %d errors"
