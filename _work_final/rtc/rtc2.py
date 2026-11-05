@@ -118,7 +118,14 @@ def chunk_frame(payload, frame_id, pts, send_ts_us, seq_start,
 
 
 def pack_feedback(fb_seq, window_us, recv_bytes, q_us, loss_permille,
-                  jitter_us, frames_ok, frames_lost, max_frame_id, rsv=0, rsv2=0):
+                  jitter_us, frames_ok, frames_lost, max_frame_id, rsv=0, rsv2=0,
+                  echo_ts=None):
+    # The two reserved u16s carry an echoed sender timestamp, which is how the
+    # sender derives a round-trip time (RTCP-style).  Identical in both arms.
+    if echo_ts is not None:
+        echo_ts = int(echo_ts) & 0xFFFFFFFF
+        rsv = (echo_ts >> 16) & 0xFFFF
+        rsv2 = echo_ts & 0xFFFF
     for name, v in (("fb_seq", fb_seq), ("window_us", window_us),
                     ("recv_bytes", recv_bytes), ("q_us", q_us),
                     ("frames_ok", frames_ok), ("frames_lost", frames_lost),
@@ -144,7 +151,42 @@ def unpack_feedback(buf):
     return dict(fb_seq=fb_seq, window_us=window_us, recv_bytes=recv_bytes, q_us=q_us,
                 loss_permille=loss_permille, jitter_us=jitter_us,
                 frames_ok=frames_ok, frames_lost=frames_lost,
-                max_frame_id=max_frame_id, rsv=rsv, rsv2=rsv2)
+                max_frame_id=max_frame_id, rsv=rsv, rsv2=rsv2,
+                echo_ts=(rsv << 16) | rsv2)
+
+
+# ---- clock synchronisation (NTP-style, carried on ETH_CONTROL) ----------
+# Perf-counter clocks of two hosts have unrelated epochs, so one-way latency
+# cannot be computed until the offset between them is known.  The receiver
+# sends SYN1(t1); the sender stamps its receive time t2 and reply time t3 and
+# answers SYN2(t_echo=t1, t2, t3); the receiver stamps t4 and solves
+#   offset (sender - receiver) = ((t2 - t1) + (t3 - t4)) / 2
+#   round trip                 = (t4 - t1) - (t3 - t2)
+SYNC_LEN = 28
+SYNC_FMT = "!4sIIIIII"          # magic, t_echo(hi,lo), t2(hi,lo), t3(hi,lo)
+SYNC_REQ = b"SYN1"
+SYNC_RSP = b"SYN2"
+
+
+def pack_sync(magic, t_echo=0, t2=0, t3=0):
+    def _hi(v):
+        return (int(v) >> 32) & 0xFFFFFFFF
+
+    def _lo(v):
+        return int(v) & 0xFFFFFFFF
+
+    return struct.pack(SYNC_FMT, magic, _hi(t_echo), _lo(t_echo),
+                       _hi(t2), _lo(t2), _hi(t3), _lo(t3))
+
+
+def unpack_sync(buf):
+    if len(buf) < SYNC_LEN:
+        raise Rtc2Error("short sync: %d" % len(buf))
+    (magic, eh, el, a2h, a2l, a3h, a3l) = struct.unpack(SYNC_FMT, buf[:SYNC_LEN])
+    if magic not in (SYNC_REQ, SYNC_RSP):
+        raise Rtc2Error("bad sync magic %r" % magic)
+    return dict(magic=magic, t_echo=(eh << 32) | el,
+                t2=(a2h << 32) | a2l, t3=(a3h << 32) | a3l)
 
 
 def ethertype_of(wire):

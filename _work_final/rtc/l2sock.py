@@ -1,12 +1,29 @@
 # -*- coding: utf-8 -*-
 """Raw L2 socket over Npcap (Windows). Send + receive with direction filter."""
-import ctypes, time
+import ctypes, os, time
 
 PCAP_D_IN = 1
 PCAP_D_OUT = 0
 PCAP_D_INOUT = 2
 
-_dll = ctypes.WinDLL(r"C:\Windows\System32\Npcap\wpcap.dll")
+# Npcap installs its userland DLLs either into a Npcap subfolder (default
+# since 0.99) or straight into System32 (WinPcap-compatible layout / OEM).
+_CANDIDATES = [
+    r"C:\Windows\System32\Npcap\wpcap.dll",
+    r"C:\Windows\System32\wpcap.dll",
+    r"C:\Windows\SysWOW64\Npcap\wpcap.dll",
+    r"C:\Windows\SysWOW64\wpcap.dll",
+]
+_dll = None
+for _p in _CANDIDATES:
+    if os.path.exists(_p):
+        try:
+            _dll = ctypes.WinDLL(_p)
+            break
+        except OSError:
+            continue
+if _dll is None:
+    raise OSError("wpcap.dll not found. Install Npcap (npcap.com) and retry.")
 
 
 class _pcap_if_t(ctypes.Structure):

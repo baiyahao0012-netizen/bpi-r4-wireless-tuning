@@ -9,7 +9,7 @@ Usage:
     python receiver.py --seconds 16 --verbose
     python receiver.py --seconds 16 --jb 0 --no-audio-play
 """
-import argparse, time, sys, os, heapq, collections, queue, threading, random
+import argparse, socket, time, sys, os, heapq, collections, queue, threading, random
 import av
 import rtc2, l2sock, txport
 
@@ -148,8 +148,11 @@ def main():
     ap.add_argument('--bind-ip', default='')
     ap.add_argument('--fb-dst-ip', default='192.168.240.2')
     ap.add_argument('--fb-port', type=int, default=9923)
+    ap.add_argument('--sync-port', type=int, default=9930)
     ap.add_argument('--out', default='recv_out.h264')
     ap.add_argument('--mp4', default='')
+    ap.add_argument('--show', type=int, default=0,
+                    help='1 = display decoded video in a live window (video-call view)')
     ap.add_argument('--fps', type=int, default=30)
     ap.add_argument('--expire', type=float, default=0.2)
     ap.add_argument('--jb', type=int, default=1)
@@ -198,6 +201,56 @@ def main():
         print("feedback -> %s every %.0f ms x%d"
               % (fb_desc, args.fb_period * 1000, args.fb_red), flush=True)
 
+    # ---- clock sync -------------------------------------------------------
+    # The sender and receiver run on different hosts, so their perf_counter
+    # epochs differ by an unknown constant.  Without it the one-way latency is
+    # meaningless.  NTP-style exchange: SYN1(t1) -> SYN2(t_echo, t2, t3) -> t4.
+    sync_state = {'offset': None, 'rtt': 0, 'n': 0, 'dbg': 0}
+    # Only our own arm gets the synchronised one-way measurement; the UDP/IP
+    # arm is measured by its conventional RTT instead.
+    if args.fb and args.transport == 'l2':
+        def _sync_worker():
+            try:
+                stx = txport.FbTx('l2', eth_dev=args.fb_iface,
+                                  dst_mac=args.fb_dst, src_mac=args.fb_src,
+                                  ethertype=rtc2.ETH_CONTROL)
+                srx = txport.CtrlRx('l2', iface=args.fb_iface)
+            except Exception as e:
+                print("WARN clock sync unavailable: %r" % (e,), flush=True)
+                return
+            best = None
+            while True:
+                t1 = int(time.perf_counter() * 1e6)
+                try:
+                    stx.send(rtc2.pack_sync(rtc2.SYNC_REQ, t1, 0, 0))
+                except Exception:
+                    pass
+                t_end = time.perf_counter() + 1.0
+                while time.perf_counter() < t_end:
+                    p = srx.recv(0.05)
+                    if not p:
+                        continue
+                    try:
+                        sy = rtc2.unpack_sync(p)
+                    except Exception:
+                        continue
+                    if sy['magic'] != rtc2.SYNC_RSP or sy['t_echo'] != t1:
+                        continue
+                    t4 = int(time.perf_counter() * 1e6)
+                    t2, t3 = sy['t2'], sy['t3']
+                    rtt = (t4 - t1) - (t3 - t2)
+                    if rtt < 0:
+                        continue
+                    off = ((t2 - t1) + (t3 - t4)) // 2
+                    # keep the sample with the smallest round trip: least
+                    # asymmetry error, so the offset estimate is tightest
+                    if best is None or rtt < best:
+                        best = rtt
+                        sync_state['offset'] = off
+                        sync_state['rtt'] = rtt
+                        sync_state['n'] += 1
+        threading.Thread(target=_sync_worker, daemon=True).start()
+
     import cv2
     import numpy as np
 
@@ -242,6 +295,7 @@ def main():
     pcm_fh = open(args.out_pcm, 'wb') if args.out_pcm else None
     dq = queue.Queue()
     dstat = {'n': 0}
+    disp_q = queue.Queue(maxsize=2)     # decoded frames waiting to be shown
 
     def decoder_worker():
         while True:
@@ -253,8 +307,16 @@ def main():
                 for pkt in vdec.parse(data):
                     for fr in vdec.decode(pkt):
                         n += 1
-                        if args.mp4:
+                        if args.mp4 or args.show:
                             img = fr.to_ndarray(format='bgr24')
+                        if args.show:
+                            try:
+                                if disp_q.full():
+                                    disp_q.get_nowait()
+                                disp_q.put_nowait(img.copy())
+                            except Exception:
+                                pass
+                        if args.mp4:
                             if writer[0] is None:
                                 writer[0] = cv2.VideoWriter(
                                     args.mp4, cv2.VideoWriter_fourcc(*'mp4v'),
@@ -285,6 +347,7 @@ def main():
     fb_seq = fb_sent = 0
     last_fb = time.perf_counter()
     fb_hist = collections.deque(maxlen=max(1, args.fb_red))
+    last_send_ts = [0]            # echoed back so the sender can compute RTT
     lat, asm, gaps = [], [], []
     play_lat = []
     av_skew = []
@@ -339,9 +402,25 @@ def main():
                                 and random.randrange(1000) < args.drop_permille):
                             dropped += 1
                             continue
-                        d = (int(now * 1e6) - h['send_ts_us']) & 0xFFFFFFFF
-                        if not is_audio and d < 5000000:
+                        a64 = int(now * 1e6)
+                        _off = sync_state['offset']
+                        if _off is None:
+                            # same-host fallback: both clocks are the same epoch
+                            d = (a64 - h['send_ts_us']) & 0xFFFFFFFF
+                        else:
+                            # lift the 32-bit sender stamp into our clock, then
+                            # subtract the measured sender-receiver offset
+                            # arrival expressed in the sender's clock
+                            ref = a64 + _off
+                            s_full = (ref & ~0xFFFFFFFF) | h['send_ts_us']
+                            while s_full - ref > 0x80000000:
+                                s_full -= 0x100000000
+                            while ref - s_full > 0x80000000:
+                                s_full += 0x100000000
+                            d = a64 - s_full + _off
+                        if not is_audio and 0 <= d < 5000000:
                             lat.append(d / 1000.0)
+                        last_send_ts[0] = h['send_ts_us']
                         chunks_rx += 1
                         bytes_rx += len(body)
                         win_bytes += len(body)
@@ -461,7 +540,8 @@ def main():
             q_us = int(clock.D * 1000) if clock else 0
             payload = rtc2.pack_feedback(fb_seq, wu, win_bytes, q_us,
                                          min(loss_pm, 0xFFFF), min(jit_us, 0xFFFF),
-                                         frames_ok, frames_lost, max(max_fid, 0))
+                                         frames_ok, frames_lost, max(max_fid, 0),
+                                         echo_ts=last_send_ts[0])
             fb_hist.append(payload)
             for p in fb_hist:
                 try:
@@ -487,6 +567,26 @@ def main():
                      bytes_rx * 8 / max(el, .001) / 1e6, dstat['n'],
                      pct(lat, 50), pct(lat, 95), extra), flush=True)
             last_report = now
+
+        if args.show:
+            img = None
+            try:
+                while True:
+                    img = disp_q.get_nowait()
+            except queue.Empty:
+                pass
+            if img is not None:
+                try:
+                    cv2.imshow('RTC over WiFi', img)
+                    cv2.waitKey(1)
+                except Exception:
+                    pass
+
+    if args.show:
+        try:
+            cv2.destroyAllWindows()
+        except Exception:
+            pass
 
     if vq:
         for play, _n, pts_s, payload, arrival in vq.due(time.perf_counter() + 1.0):
@@ -524,6 +624,13 @@ def main():
           "decoded_rms=%.1f"
           % (a_frames, a_lost, a_bytes, a_decoded, a_decoded / 48000.0,
              (a_sum / max(a_cnt, 1)) ** 0.5))
+    if sync_state['offset'] is not None:
+        print("clock sync: offset=%+.3f ms  rtt=%.3f ms  samples=%d"
+              % (sync_state['offset'] / 1000.0, sync_state['rtt'] / 1000.0,
+                 sync_state['n']), flush=True)
+    else:
+        print("clock sync: NOT available (one-way latency unreliable)",
+              flush=True)
     print("one-way latency ms: p50=%.1f p95=%.1f p99=%.1f max=%.1f (n=%d)"
           % (pct(lat, 50), pct(lat, 95), pct(lat, 99), max(lat) if lat else 0.0, len(lat)))
     print("frame assemble ms: p50=%.1f p95=%.1f | arrival gap ms: p50=%.1f p95=%.1f"

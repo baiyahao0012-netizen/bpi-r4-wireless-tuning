@@ -8,7 +8,7 @@ Usage:
 Diagnostics are deliberately chatty so that a stall can be attributed to one
 stage (camera / convert / encode / chunk / send / pace) instead of guessed at.
 """
-import argparse, time, sys, threading, collections, queue
+import argparse, socket, time, sys, threading, collections, queue
 from fractions import Fraction
 import cv2, av
 import rtc2, l2sock, txport
@@ -355,6 +355,9 @@ def main():
     ap.add_argument('--dst-port', type=int, default=9922)
     ap.add_argument('--src-ip', default='192.168.240.2')
     ap.add_argument('--fb-port', type=int, default=9923)
+    ap.add_argument('--sync-port', type=int, default=9930,
+                    help='UDP port for the NTP-style clock-sync responder '
+                         '(measurement only, identical for both A/B arms)')
     ap.add_argument('--chunk', type=int, default=rtc2.DEFAULT_CHUNK)
     ap.add_argument('--fb', type=int, default=1, help='1=listen for feedback')
     ap.add_argument('--fb-iface', default='8852',
@@ -425,32 +428,47 @@ def main():
                         src_ip=args.src_ip)
     dbg("transport open %.0f ms  %s" % ((time.perf_counter() - ts0) * 1000, txp.desc))
 
+    # Npcap handles are not thread safe: the data path and the clock-sync
+    # responder both transmit on the same adapter.
+    send_lk = threading.Lock()
+
     # Feedback arrives on the radio (the board reflects it out the Wi-Fi port),
     # so it needs its own capture handle.  A thread keeps it off the send path:
     # polling inside the frame loop would cost ~1 ms of pacing accuracy.
     fbrx = None
+    rtt_hist = []                   # RTCP-style round-trip samples (ms)
     fb_state = {'n': 0, 'dup': 0, 'bad': 0, 'period': 0.0, 'rx_bps': 0.0,
                 'loss_pm': 0, 'jit_us': 0, 'q_us': 0, 'maxfid': 0,
                 'ok': 0, 'lost': 0, 'seq': -1}
     if args.fb:
         fbrx = txport.FbRx(args.transport, iface=args.fb_iface,
                            port=args.fb_port)
+        # Clock-sync responder: the receiver asks for our clock so it can
+        # convert its own arrival stamps into real one-way latency.
 
         def _fb_worker():
             seen, order = set(), collections.deque()
             prev = None
             while True:
                 try:
-                    payload = fbrx.recv(0.2)
+                    item = fbrx.recv_any(0.2)
                 except Exception:
                     break
-                if payload is None:
+                if item is None:
                     continue
+                et, payload, src_mac = item
+                if et == rtc2.ETH_CONTROL:
+                    continue          # handled by the dedicated sync thread
                 try:
                     fb = rtc2.unpack_feedback(payload)
                 except Exception:
                     fb_state['bad'] += 1
                     continue
+                _ec = fb.get('echo_ts') or 0
+                if _ec:
+                    _r = ((int(time.perf_counter() * 1e6) & 0xFFFFFFFF) - _ec) & 0xFFFFFFFF
+                    if 0 < _r < 1000000:
+                        rtt_hist.append(_r / 1000.0)
                 s = fb['fb_seq']
                 if s in seen:                 # 3x redundancy -> 2 dup per report
                     fb_state['dup'] += 1
@@ -477,13 +495,50 @@ def main():
         threading.Thread(target=_fb_worker, daemon=True).start()
         dbg("feedback listener on %s" % fbrx.desc)
 
+        # Clock-sync responder -- OUR measurement method, and therefore only
+        # active on the L2 arm.  The UDP/IP arm stays a plain UDP application:
+        # it is not modified, and its latency is measured the conventional way
+        # (round-trip time), not with this side channel.
+        if args.transport == 'l2':
+            sync_tx = txport.FbTx('l2', eth_dev=args.iface,
+                                  dst_mac=args.dst, src_mac=args.src,
+                                  ethertype=rtc2.ETH_CONTROL)
+
+            def _sync_worker():
+                try:
+                    crx = txport.CtrlRx('l2', iface=args.fb_iface)
+                except Exception as e:
+                    dbg("sync responder unavailable: %r" % (e,))
+                    return
+                while True:
+                    item = crx.recv_any(0.2)
+                    if item is None:
+                        continue
+                    payload, src_mac = item
+                    try:
+                        sy = rtc2.unpack_sync(payload)
+                    except Exception:
+                        continue
+                    if sy['magic'] != rtc2.SYNC_REQ:
+                        continue
+                    t2 = int(time.perf_counter() * 1e6)
+                    try:
+                        with send_lk:
+                            sync_tx.send_to_mac(
+                                src_mac,
+                                rtc2.pack_sync(rtc2.SYNC_RSP, sy['t_echo'],
+                                               t2, t2))
+                    except Exception:
+                        pass
+            threading.Thread(target=_sync_worker, daemon=True).start()
+
     pacer = Pacer(args.bitrate)
     print("sender: transport=%s | %s | %dx%d@%d %d bps | mtu-chunk=%d"
           % (args.transport, txp.desc, args.width, args.height,
              args.fps, args.bitrate, args.chunk), flush=True)
 
     seqgen = SeqGen()
-    send_lk = threading.Lock()      # one pcap handle cannot be used concurrently
+
     frame_id = 0
     t0 = time.perf_counter()
     t_end = t0 + args.seconds
@@ -748,6 +803,15 @@ def main():
                  fb_state['rx_bps'] / 1e6, fb_state['loss_pm'],
                  fb_state['jit_us'] / 1000.0, fb_state['q_us'] / 1000.0,
                  fb_state['maxfid']), flush=True)
+        if rtt_hist:
+            _s = sorted(rtt_hist)
+
+            def _p(v, p):
+                return v[min(len(v) - 1, int(len(v) * p / 100.0))]
+
+            print("rtt (RTCP-style, same for both arms): p50=%.1f p95=%.1f "
+                  "min=%.1f max=%.1f ms (n=%d)"
+                  % (_p(_s, 50), _p(_s, 95), _s[0], _s[-1], len(_s)), flush=True)
         fbrx.close()
 
     if args.abr:
