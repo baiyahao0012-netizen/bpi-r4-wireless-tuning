@@ -504,6 +504,7 @@ def main():
     force_idr = [False]
     pli_rx = [0]
     mac = {'rx': 0, 'last': None, 'seq': 0}
+    last_change = [0.0]
 
     if args.mac_ctl:
         def _mac_listener():
@@ -542,7 +543,57 @@ def main():
                 mac['seq'] = v[0]
 
         threading.Thread(target=_mac_listener, daemon=True).start()
-        print("mac reports on udp/%d" % args.mac_port, flush=True)
+        print("mac reports on tcp/%d (%.0f ms)" % (args.mac_port, 100.0),
+              flush=True)
+
+        def _mac_ctrl():
+            """Rate control driven by MAC-layer state.
+
+            AQL measures what our own queueing costs in airtime.  Retries
+            measure what the medium costs.  A backlog with few retries means
+            we are sending too fast; a backlog with many retries means the
+            channel is contested and dropping our rate would only make the
+            picture worse while not freeing any airtime.
+            """
+            prev = None
+            while True:
+                time.sleep(0.1)
+                v = mac['last']
+                if v is None:
+                    continue
+                now = time.perf_counter()
+                if prev is None:
+                    prev = (v, now, sent_chunks)
+                    continue
+                pv, pt, pc = prev
+                dt = max(1e-3, now - pt)
+                d_ret = (v[3] - pv[3]) + (v[4] - pv[4])
+                d_chunk = max(0, sent_chunks - pc)
+                prev = (v, now, sent_chunks)
+                q_us = float(v[0])
+                lim = 24000.0
+                rr = (d_ret / d_chunk) if d_chunk > 0 else 0.0
+                cur = cur_rate
+                new = cur
+                why = ''
+                if now - last_change[0] < 0.5:
+                    continue
+                if q_us > 0.5 * lim and rr < 0.10:
+                    new = int(cur * 0.85)
+                    why = 'MAC self-congestion q=%.0fus rr=%.3f' % (q_us, rr)
+                elif q_us < 0.20 * lim and rr < 0.05:
+                    new = int(cur * 1.10)
+                    why = 'MAC headroom q=%.0fus rr=%.3f' % (q_us, rr)
+                new = max(args.min_rate, min(args.max_rate, new))
+                if new != cur and abs(new - cur) > 0.08 * cur:
+                    last_change[0] = now
+                    with sw_lock:
+                        switch_req[:] = [new, why]
+                    print("  MAC-CTL %.0f -> %.0f kbps (q=%.0fus rr=%.3f ret=%d)"
+                          % (cur / 1000.0, new / 1000.0, q_us, rr, d_ret),
+                          flush=True)
+
+        threading.Thread(target=_mac_ctrl, daemon=True).start()
 
     def _cache_put(sq, blob):
         fcache[sq] = (blob, time.perf_counter())

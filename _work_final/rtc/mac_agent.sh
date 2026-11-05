@@ -17,5 +17,5 @@ while true; do
   [ -z "$R" ] && R=0
   [ -z "$F" ] && F=0
   echo "MACR,$TOT,$BE,$TX,$R,$F" | nc $DST $PORT 2>/dev/null
-  sleep 0.1
+  usleep 100000 2>/dev/null || sleep 1
 done
