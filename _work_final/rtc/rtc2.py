@@ -189,6 +189,52 @@ def unpack_sync(buf):
                 t2=(a2h << 32) | a2l, t3=(a3h << 32) | a3l)
 
 
+# ---- NACK: retransmission request, carried on ETH_CONTROL -------------
+# This is the mechanism the RTC1 reference implementation already used
+# (l2nack_send.c waits for "NACK:<seq>" and resends from its cache); here it
+# rides in our control frame so it can list several missing chunks at once.
+NACK_MAGIC = b'NAC1'
+PLI_MAGIC = b'PLI1'          # picture loss: "send me a keyframe now"
+NACK_MAX = 64
+
+
+def pack_nack(seqs):
+    seqs = [int(s) & 0xFFFF for s in seqs][:NACK_MAX]
+    return struct.pack("!4s", NACK_MAGIC) + b"".join(
+        struct.pack("!H", s) for s in seqs)
+
+
+def pack_pli():
+    return PLI_MAGIC
+
+
+def unpack_nack(buf):
+    if len(buf) < 4 or buf[:4] != NACK_MAGIC:
+        raise Rtc2Error("bad nack magic")
+    n = min((len(buf) - 4) // 2, NACK_MAX)
+    return list(struct.unpack("!" + "H" * n, buf[4:4 + 2 * n]))
+
+
+def make_parity(chunks, frame_id, pts, ts_us, seq, stream_id=S_VIDEO,
+                chunk_cnt=None):
+    """XOR parity over every chunk of one frame (1 lost chunk recoverable).
+
+    The RTC1 reference used one parity per 8 chunks of the whole stream; doing
+    it per frame keeps recovery frame-local, which is what the decoder needs,
+    at the same ~12.5% overhead for a typical 8-chunk frame.
+    """
+    payloads = [c[HDR_LEN:] for c in chunks]
+    n = max(len(p) for p in payloads)
+    acc = bytearray(n)
+    for p in payloads:
+        for i, b in enumerate(p):
+            acc[i] ^= b
+    hdr = pack_header(T_VIDEO, F_PARITY, stream_id, seq, 0xFFFE,
+                      len(chunks) if chunk_cnt is None else chunk_cnt,
+                      n, frame_id, pts, ts_us)
+    return hdr + bytes(acc)
+
+
 def ethertype_of(wire):
     """Read EtherType from a full ethernet frame."""
     if len(wire) < 14:

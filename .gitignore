@@ -74,3 +74,17 @@ __pycache__/
 
 # ---- RTC: 通过本机 HTTP 服务器分发的大文件（Npcap 安装包等）----
 _work_final/rtc/serve/
+
+# ---- RTC 实验产物（体积大或可再生成）----
+_work_final/rtc/media/
+_work_final/rtc/serve/
+_work_final/rtc/bench/
+_work_final/rtc/bench2/
+_work_final/rtc/bench3/
+_work_final/rtc/*.log
+_work_final/rtc/*.csv
+_work_final/rtc/*.zip
+_work_final/rtc/doc_dump.txt
+_work_final/rtc/*.mp4
+_work_final/rtc/*.h264
+_work_final/rtc/*.pcm

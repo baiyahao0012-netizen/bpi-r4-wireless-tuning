@@ -183,7 +183,10 @@ class AudioSource(object):
         self._t0 = None
         self._sd = None
         self._stream = None
-        if mode == 'tone':
+        if mode.startswith('file:'):
+            self._file = mode[5:]
+            threading.Thread(target=self._file_loop, daemon=True).start()
+        elif mode == 'tone':
             self._thread = threading.Thread(target=self._tone_loop, daemon=True)
             self._thread.start()
         elif mode == 'loopback':
@@ -230,6 +233,47 @@ class AudioSource(object):
 
     def _probe_ch(self, dev):
         return int(self._sd.query_devices(dev)['max_input_channels'])
+
+    def _file_loop(self):
+        """Use the media file's own audio track, paced in real time."""
+        import numpy as np
+        import av as _av
+        blk = self.sr // 50                     # 20 ms
+        while True:
+            try:
+                cont = _av.open(self._file)
+                st = cont.streams.audio[0]
+                res = _av.AudioResampler(format='s16', layout='mono', rate=self.sr)
+            except Exception as e:
+                print("ERROR file audio source: %r" % (e,), flush=True)
+                return
+            acc = np.zeros(0, dtype=np.int16)
+            t_next = time.perf_counter()
+            for fr in cont.decode(st):
+                try:
+                    outs = res.resample(fr)
+                except Exception:
+                    continue
+                for rf in outs:
+                    a = rf.to_ndarray().reshape(-1).astype(np.int16)
+                    acc = np.concatenate([acc, a])
+                    while len(acc) >= blk:
+                        chunk, acc = acc[:blk], acc[blk:]
+                        if self._t0 is None:
+                            self._t0 = time.perf_counter()
+                            t_next = self._t0
+                        self.n_samples += blk
+                        if self.gain != 1.0:
+                            chunk = (chunk.astype('float32') * self.gain).astype('int16')
+                        try:
+                            self.q.put_nowait(chunk.copy())
+                        except queue.Full:
+                            pass
+                        t_next += 0.020
+                        d = t_next - time.perf_counter()
+                        if d > 0:
+                            time.sleep(d)
+            cont.close()                        # loop to match the video
 
     def _loopback_loop(self):
         import numpy as np
@@ -343,6 +387,8 @@ def main():
     ap.add_argument('--seconds', type=float, default=10)
     ap.add_argument('--bitrate', type=int, default=2000000)
     ap.add_argument('--fps', type=int, default=30)
+    ap.add_argument('--video', default='',
+                    help='use this file as the video source instead of the camera')
     ap.add_argument('--width', type=int, default=640)
     ap.add_argument('--height', type=int, default=480)
     ap.add_argument('--dst', default='C0-35-32-19-CC-FB')
@@ -355,6 +401,10 @@ def main():
     ap.add_argument('--dst-port', type=int, default=9922)
     ap.add_argument('--src-ip', default='192.168.240.2')
     ap.add_argument('--fb-port', type=int, default=9923)
+    ap.add_argument('--fec', type=int, default=0,
+                    help='1 = emit one XOR parity chunk per video frame')
+    ap.add_argument('--cache-ms', type=int, default=3000,
+                    help='how long sent chunks are kept for NACK retransmission')
     ap.add_argument('--sync-port', type=int, default=9930,
                     help='UDP port for the NTP-style clock-sync responder '
                          '(measurement only, identical for both A/B arms)')
@@ -368,9 +418,11 @@ def main():
                          'which is only worth paying for when it is wanted')
     ap.add_argument('--min-rate', type=int, default=1200000)
     ap.add_argument('--audio', default='mic',
-                    choices=['mic', 'loopback', 'tone', 'off'],
+                    choices=['mic', 'loopback', 'tone', 'off', 'file'],
                     help='loopback = WASAPI capture of what this machine is '
                          'playing (system sound); tone = synthetic 440 Hz')
+    ap.add_argument('--audio-file', default='',
+                    help='audio track source when --audio file (defaults to --video)')
     ap.add_argument('--audio-dev', type=int, default=-1)
     ap.add_argument('--audio-rate', type=int, default=48000)
     ap.add_argument('--audio-bitrate', type=int, default=64000)
@@ -391,9 +443,14 @@ def main():
 
     # ---- camera -----------------------------------------------------------
     tc = time.perf_counter()
-    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-    if not cap.isOpened():
-        print("ERROR: camera open failed (CAP_DSHOW, index 0)"); return 2
+    if args.video:
+        cap = cv2.VideoCapture(args.video)
+        if not cap.isOpened():
+            print("ERROR: cannot open video file %r" % args.video); return 2
+    else:
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        if not cap.isOpened():
+            print("ERROR: camera open failed (CAP_DSHOW, index 0)"); return 2
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, args.width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, args.height)
     cap.set(cv2.CAP_PROP_FPS, args.fps)
@@ -436,6 +493,21 @@ def main():
     # so it needs its own capture handle.  A thread keeps it off the send path:
     # polling inside the frame loop would cost ~1 ms of pacing accuracy.
     fbrx = None
+    fcache = {}                     # seq -> (chunk bytes, send time) for NACK
+    resent = [0]
+    fec_sent = [0]
+    fec_err = [0]
+    pkt_id = [0]
+    force_idr = [False]
+    pli_rx = [0]
+
+    def _cache_put(sq, blob):
+        fcache[sq] = (blob, time.perf_counter())
+        if len(fcache) > 4096:
+            cutoff = time.perf_counter() - args.cache_ms / 1000.0
+            for k in [k for k, v in fcache.items() if v[1] < cutoff]:
+                fcache.pop(k, None)
+
     rtt_hist = []                   # RTCP-style round-trip samples (ms)
     fb_state = {'n': 0, 'dup': 0, 'bad': 0, 'period': 0.0, 'rx_bps': 0.0,
                 'loss_pm': 0, 'jit_us': 0, 'q_us': 0, 'maxfid': 0,
@@ -515,6 +587,31 @@ def main():
                     if item is None:
                         continue
                     payload, src_mac = item
+                    # NACK must be tested BEFORE unpack_sync: a NACK payload
+                    # has a different magic and would otherwise be dropped.
+                    if payload[:4] == rtc2.PLI_MAGIC:
+                        force_idr[0] = True
+                        pli_rx[0] += 1
+                        continue
+                    if payload[:4] == rtc2.NACK_MAGIC:
+                        try:
+                            want = rtc2.unpack_nack(payload)
+                        except Exception:
+                            continue
+                        nowc = time.perf_counter()
+                        for s in want:
+                            ent = fcache.get(s)
+                            if ent is None:
+                                continue
+                            if nowc - ent[1] > args.cache_ms / 1000.0:
+                                continue
+                            try:
+                                with send_lk:
+                                    txp.send(ent[0])
+                                resent[0] += 1
+                            except Exception:
+                                pass
+                        continue
                     try:
                         sy = rtc2.unpack_sync(payload)
                     except Exception:
@@ -549,7 +646,8 @@ def main():
     asrc = None
     audio_stat = {'frames': 0, 'bytes': 0, 'starved': 0, 'rms': 0.0}
     if args.audio != 'off':
-        asrc = AudioSource(args.audio,
+        _amode = ('file:' + (args.audio_file or args.video)) if args.audio == 'file' else args.audio
+        asrc = AudioSource(_amode,
                            args.audio_rate,
                            dev=(args.audio_dev if args.audio_dev >= 0 else None),
                            gain=args.audio_gain)
@@ -638,16 +736,26 @@ def main():
         ok, img = cap.read()
         tb = time.perf_counter()
         if not ok:
-            read_fail += 1
-            if read_fail <= 5 or read_fail % 50 == 0:
-                print("WARN read failed (#%d) after %.1f s"
-                      % (read_fail, time.perf_counter() - t0), flush=True)
-            time.sleep(0.005)
-            meter.add('read', tb - ta)
-            continue
+            if args.video:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)      # loop the clip
+                ok, img = cap.read()
+                tb = time.perf_counter()
+            if not ok:
+                read_fail += 1
+                if read_fail <= 5 or read_fail % 50 == 0:
+                    print("WARN read failed (#%d) after %.1f s"
+                          % (read_fail, time.perf_counter() - t0), flush=True)
+                time.sleep(0.005)
+                meter.add('read', tb - ta)
+                continue
 
         now = time.perf_counter()
-        pts = int((now - t0) * 90000)
+        # Frame timeline, not wall clock: with the audio stream anchored to
+        # its sample count, a wall-clock video timeline drifts away from it
+        # whenever a frame takes longer than 1/fps.  Deriving pts from the
+        # frame index keeps both timelines tied to the file, so the A/V
+        # relationship is exact by construction.
+        pts = int(frame_id * 90000.0 / max(args.fps, 1))
         try:
             vf = av.VideoFrame.from_ndarray(img, format='bgr24').reformat(format='yuv420p')
         except Exception as e:
@@ -676,6 +784,15 @@ def main():
         vf.pts = frame_id
         vf.time_base = Fraction(1, args.fps)
         try:
+            if force_idr[0]:
+                # PLI: the peer lost a whole frame, so the reference chain is
+                # broken -- encode this one as an IDR instead of waiting for
+                # the periodic one.
+                try:
+                    vf.pict_type = 'I'
+                    force_idr[0] = False
+                except Exception:
+                    pass
             packets = enc.encode(vf)
         except Exception as e:
             enc_err += 1
@@ -700,11 +817,15 @@ def main():
             if seq_first < 0:
                 seq_first = seq
             last_kf = last_kf or kf
-            chunks, _nx = rtc2.chunk_frame(data, frame_id, pts, ts_us, seq,
+            # one encoded packet == one RTC frame, so the id must be unique
+            # per packet: a video frame can emit several packets and reusing
+            # frame_id made the receiver merge them into bogus frames
+            pkt_id[0] += 1
+            chunks, _nx = rtc2.chunk_frame(data, pkt_id[0], pts, ts_us, seq,
                                            stream_id=rtc2.S_VIDEO, keyframe=kf,
                                            chunk_size=args.chunk)
             tck = time.perf_counter()
-            for c in chunks:
+            for ci, c in enumerate(chunks):
                 tsn = time.perf_counter()
                 try:
                     with send_lk:
@@ -720,9 +841,25 @@ def main():
                 sent_chunks += 1
                 frame_bytes += len(c)
                 frame_chunks += 1
+                _cache_put(seq + ci, c)
                 meter.add('send', tpn - tsn)
                 pacer.wait(len(c) + txp.overhead)
                 meter.add('pace', time.perf_counter() - tpn)
+
+            if args.fec and frame_chunks == len(chunks) and chunks:
+                try:
+                    par = rtc2.make_parity(chunks, pkt_id[0], pts, ts_us,
+                                           seq + len(chunks))
+                    with send_lk:
+                        txp.send(par)
+                    _cache_put(seq + len(chunks), par)
+                    sent_bytes += len(par) + txp.overhead
+                    sent_chunks += 1
+                    fec_sent[0] += 1
+                except Exception as e:
+                    if fec_err[0] < 3:
+                        fec_err[0] += 1
+                        print("WARN parity: %r" % (e,), flush=True)
             meter.add('chunk', tck - td)
             sent_frames += 1
 
@@ -796,6 +933,10 @@ def main():
                  audio_stat['rms'], audio_stat['starved']), flush=True)
         asrc.close()
 
+    if args.fec:
+        print("pli: %d keyframe requests received" % pli_rx[0], flush=True)
+        print("fec: %d parity chunks sent, %d resent on NACK, %d errors"
+              % (fec_sent[0], resent[0], fec_err[0]), flush=True)
     if fbrx:
         print("feedback: %d reports, %d duplicates dropped, %d malformed, last rx=%.2f Mbps "
               "loss=%d/1000 jitter=%.1f ms queue=%.0f ms peer_maxfid=%d"

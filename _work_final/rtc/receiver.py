@@ -63,7 +63,12 @@ class PlayoutClock(object):
 
 
 class PlayQueue(object):
-    def __init__(self, clock, name, nom=None):
+    def __init__(self, clock, name, nom=None, hold_cap=None):
+        # hold_cap: this stream refuses to be held longer than this, even if
+        # the shared clock asks for more.  Audio must not inherit the video's
+        # deep buffer: 200 ms of lip-sync headroom is 200 ms of added audio
+        # latency, which is far more noticeable than a few dropped frames.
+        self.hold_cap = hold_cap
         self.clock = clock
         self.name = name
         self.nom = nom
@@ -88,6 +93,9 @@ class PlayQueue(object):
             if play is None:
                 play = self.clock.stamp(pts_s, arrival)
         self.own.append(arrival - pts_s)          # seconds
+        if self.hold_cap is not None and play - arrival > self.hold_cap:
+            self.capped = getattr(self, 'capped', 0) + 1
+            play = arrival + self.hold_cap
         if play <= arrival:
             self.late += 1
             play = arrival + 0.001
@@ -158,6 +166,8 @@ def main():
     ap.add_argument('--jb', type=int, default=1)
     ap.add_argument('--jb-min', type=float, default=40.0)
     ap.add_argument('--jb-max', type=float, default=200.0)
+    ap.add_argument('--jb-audio', type=float, default=0.0,
+                    help='max audio hold in ms; 0 = same as --jb-max')
     ap.add_argument('--fb', type=int, default=1)
     ap.add_argument('--fb-period', type=float, default=0.05)
     ap.add_argument('--fb-red', type=int, default=3)
@@ -166,6 +176,8 @@ def main():
     ap.add_argument('--fb-src', default='40-C2-BA-52-70-95')
     ap.add_argument('--drop-permille', type=int, default=0)
     ap.add_argument('--drop-seconds', type=float, default=1e9)
+    ap.add_argument('--burst', type=int, default=0,
+                    help='1/N chance per frame of starting a 2-5 chunk burst loss')
     ap.add_argument('--drop-every', type=int, default=0,
                     help='deterministically drop every Nth video chunk '
                          '(same impairment for every group under test)')
@@ -205,6 +217,63 @@ def main():
     # The sender and receiver run on different hosts, so their perf_counter
     # epochs differ by an unknown constant.  Without it the one-way latency is
     # meaningless.  NTP-style exchange: SYN1(t1) -> SYN2(t_echo, t2, t3) -> t4.
+    drop_seen = set()
+    pli_sent = [0]
+    last_pli = [0.0]
+    burst_left = [0]
+    rnd = random.Random(20261105)
+    done_fids = set()
+    max_done = [0]
+    late_dup = 0
+    fec_recovered = [0]
+    nack_sent = [0]
+    nack_tx = None
+    if args.fb and args.transport == 'l2':
+        try:
+            nack_tx = txport.FbTx('l2', eth_dev=args.fb_iface,
+                                  dst_mac=args.fb_dst, src_mac=args.fb_src,
+                                  ethertype=rtc2.ETH_CONTROL)
+        except Exception:
+            nack_tx = None
+
+    def _try_fec(ent):
+        """Recover the single missing chunk as soon as it is provably missing."""
+        miss = [i for i in range(ent['n']) if i not in ent['c']]
+        if len(miss) != 1 or not ent['par'] or miss[0] == ent['n'] - 1:
+            return False
+        acc = bytearray(ent['par'])
+        for _i, p in ent['c'].items():
+            if len(p) > len(acc):
+                acc.extend(b'\x00' * (len(p) - len(acc)))
+            for j in range(len(p)):
+                acc[j] ^= p[j]
+        ent['c'][miss[0]] = bytes(acc)
+        fec_recovered[0] += 1
+        return True
+
+    def _try_nack(ent, now):
+        """Ask for the gap the moment it is visible, not after the timeout."""
+        if nack_tx is None:
+            return
+        hi = max([i for i in ent['c'] if i != 0xFFFE], default=-1)
+        # only ask for gaps we have not already asked for: re-requesting the
+        # same chunk on every arriving neighbour is what caused the resend storm
+        miss = [i for i in range(hi)
+                if i not in ent['c'] and i not in ent['req']]
+        if not miss or ent['nack_n'] >= 2:
+            return
+        if now - ent['last_nack'] < 0.015:
+            return
+        try:
+            nack_tx.send(rtc2.pack_nack(
+                [(ent['seq0'] + i) & 0xFFFF for i in miss]))
+            nack_sent[0] += 1
+            ent['nack_n'] += 1
+            ent['last_nack'] = now
+            ent['req'].update(miss)
+        except Exception:
+            pass
+
     sync_state = {'offset': None, 'rtt': 0, 'n': 0, 'dbg': 0}
     # Only our own arm gets the synchronised one-way measurement; the UDP/IP
     # arm is measured by its conventional RTT instead.
@@ -291,7 +360,8 @@ def main():
         threading.Thread(target=audio_out_worker, daemon=True).start()
 
     writer = [None]
-    dec_err = [0]
+    dec_err = [0]          # video decoder errors
+    dec_err_a = [0]        # audio decoder errors
     pcm_fh = open(args.out_pcm, 'wb') if args.out_pcm else None
     dq = queue.Queue()
     dstat = {'n': 0}
@@ -333,7 +403,10 @@ def main():
 
     clock = PlayoutClock(args.jb_min, args.jb_max) if args.jb else None
     vq = PlayQueue(clock, 'video', nom=1.0 / args.fps) if clock else None
-    aq = PlayQueue(clock, 'audio', nom=0.020) if (clock and args.audio) else None
+    aq = (PlayQueue(clock, 'audio', nom=0.020,
+                    hold_cap=(args.jb_audio / 1000.0
+                              if args.jb_audio > 0 else None))
+          if (clock and args.audio) else None)
 
     fh = open(args.out, 'wb')
     pending = {}
@@ -393,8 +466,25 @@ def main():
                             pad += 1
                         body = body[:want]
                         is_audio = (h['stream_id'] == rtc2.S_AUDIO)
+                        if (not is_audio and args.burst > 0
+                                and h['seq'] not in drop_seen):
+                            if burst_left[0] > 0:
+                                burst_left[0] -= 1
+                                drop_seen.add(h['seq'])
+                                dropped += 1
+                                continue
+                            if rnd.random() < 1.0 / args.burst:
+                                burst_left[0] = rnd.randint(1, 4)
+                                drop_seen.add(h['seq'])
+                                dropped += 1
+                                continue
                         if (not is_audio and args.drop_every > 0
-                                and h['seq'] % args.drop_every == 0):
+                                and h['seq'] % args.drop_every == 0
+                                and h['seq'] not in drop_seen):
+                            # impair each sequence number only once, otherwise
+                            # the retransmission is dropped again and NACK
+                            # never converges
+                            drop_seen.add(h['seq'])
                             dropped += 1
                             continue
                         if (not is_audio and args.drop_permille
@@ -426,21 +516,43 @@ def main():
                         win_bytes += len(body)
                         fid = h['frame_id']
                         store = apending if is_audio else pending
+                        # a retransmitted chunk of an already delivered frame
+                        # used to resurrect it as a new, "incomplete" frame --
+                        # which then triggered more NACKs.  Ignore those.
+                        if not is_audio and (fid in done_fids
+                                             or fid < max_done[0] - 64):
+                            late_dup += 1
+                            continue
                         if not is_audio and fid > max_fid:
                             max_fid = fid
                         ent = store.get(fid)
                         if ent is None:
                             ent = {'c': {}, 'n': h['chunk_cnt'], 't': now,
                                    'key': bool(h['flags'] & rtc2.F_KEYFRAME),
-                                   'pts': h['pts'], 'lat': []}
+                                   'pts': h['pts'], 'lat': [], 'par': None,
+                                   'seq0': (h['seq'] - h['chunk_idx']) & 0xFFFF,
+                                   'nacked': False, 'nack_n': 0,
+                                   'last_nack': 0.0, 'req': set()}
                             store[fid] = ent
                         if h['chunk_idx'] in ent['c']:
                             dup += 1
                         ent['c'][h['chunk_idx']] = body
+                        if h['flags'] & rtc2.F_PARITY:
+                            ent['par'] = ent['c'].pop(h['chunk_idx'])
                         ent['lat'].append(d / 1000.0)
+                        if not (h['flags'] & rtc2.F_PARITY) and len(ent['c']) < ent['n']:
+                            _try_fec(ent)
+                            # the last chunk marks the point where every other
+                            # chunk is either here or definitely lost, so this
+                            # is when a request is both correct and cheap
+                            if h['chunk_idx'] == ent['n'] - 1:
+                                _try_nack(ent, now)
                         if len(ent['c']) == ent['n']:
                             data = b''.join(ent['c'][i] for i in range(ent['n']))
                             del store[fid]
+                            if not is_audio:
+                                done_fids.add(fid)
+                                max_done[0] = max(max_done[0], fid)
                             pts_s = h['pts'] / 90000.0
                             if is_audio:
                                 a_frames += 1
@@ -478,10 +590,70 @@ def main():
             else:
                 other += 1
 
+        for _st in (pending, apending):
+            for _k, _v in list(_st.items()):
+                if len(_v['c']) < _v['n'] and now - _v['t'] > 0.015:
+                    _try_nack(_v, now)
+
         for (store, is_a) in ((pending, False), (apending, True)):
             for k in [k for k, v in store.items() if now - v['t'] > args.expire]:
-                v = store.pop(k)
+                v = store[k]
                 miss = [i for i in range(v['n']) if i not in v['c']]
+                # (a) FEC: one missing chunk is XOR-recoverable, but only when
+                # it is not the last one (the last chunk may be short and its
+                # true length is not recoverable from the parity).
+                if len(miss) == 1 and v.get('par') and miss[0] != v['n'] - 1:
+                    acc = bytearray(v['par'])
+                    for i, p in v['c'].items():
+                        if len(p) > len(acc):
+                            acc.extend(b'\x00' * (len(p) - len(acc)))
+                        for j in range(len(p)):
+                            acc[j] ^= p[j]
+                    v['c'][miss[0]] = bytes(acc)
+                    fec_recovered[0] += 1
+                    miss = []
+                # (b) NACK: ask once, then give the retransmit one more window
+                if miss and not v.get('nacked') and nack_tx is not None and not is_a:
+                    try:
+                        nack_tx.send(rtc2.pack_nack(
+                            [(v['seq0'] + i) & 0xFFFF for i in miss]))
+                        nack_sent[0] += 1
+                    except Exception:
+                        pass
+                    v['nacked'] = True
+                    v['t'] = now
+                    continue
+                if not miss:
+                    # completed by FEC recovery or by retransmission
+                    data = b''.join(v['c'][i] for i in range(v['n']))
+                    del store[k]
+                    if not is_a:
+                        done_fids.add(k)
+                        max_done[0] = max(max_done[0], k)
+                    pts_s = v['pts'] / 90000.0
+                    if is_a:
+                        a_frames += 1
+                        a_bytes += len(data)
+                        if aq:
+                            aq.push(pts_s, now, data, update=False)
+                    else:
+                        frames_ok += 1
+                        win_ok += 1
+                        if vq:
+                            vq.push(pts_s, now, data)
+                        else:
+                            dq.put(data)
+                    continue
+                store.pop(k)
+                # whole frame gone: FEC/NACK cannot help any more, the
+                # reference chain is broken, so ask for a keyframe
+                if not is_a and nack_tx is not None and now - last_pli[0] > 0.100:
+                    try:
+                        nack_tx.send(rtc2.pack_pli())
+                        pli_sent[0] += 1
+                        last_pli[0] = now
+                    except Exception:
+                        pass
                 if is_a:
                     a_lost += 1
                 else:
@@ -528,8 +700,8 @@ def main():
                             except queue.Full:
                                 pass
                 except Exception as e:
-                    dec_err[0] += 1
-                    if dec_err[0] <= 3:
+                    dec_err_a[0] += 1
+                    if dec_err_a[0] <= 3:
                         print("WARN audio decode: %r" % (e,), flush=True)
 
         if fb_sock and now - last_fb >= args.fb_period:
@@ -620,9 +792,9 @@ def main():
           % (frames_ok, frames_lost, 100.0 * frames_lost / max(tot, 1),
              chunks_rx, dup, decoded, other, bad, pad, dropped,
              dec_err[0], dq.qsize()))
-    print("       audio ok=%d lost=%d bytes=%d decoded_samples=%d (%.2f s) "
+    print("       audio ok=%d lost=%d bytes=%d decoded_samples=%d (%.2f s) dec_err_a=%d "
           "decoded_rms=%.1f"
-          % (a_frames, a_lost, a_bytes, a_decoded, a_decoded / 48000.0,
+          % (a_frames, a_lost, a_bytes, a_decoded, a_decoded / 48000.0, dec_err_a[0],
              (a_sum / max(a_cnt, 1)) ** 0.5))
     if sync_state['offset'] is not None:
         print("clock sync: offset=%+.3f ms  rtt=%.3f ms  samples=%d"
@@ -631,6 +803,9 @@ def main():
     else:
         print("clock sync: NOT available (one-way latency unreliable)",
               flush=True)
+    if fec_recovered[0] or nack_sent[0] or pli_sent[0]:
+        print("recovery: fec_recovered=%d nack_sent=%d pli_sent=%d"
+              % (fec_recovered[0], nack_sent[0], pli_sent[0]), flush=True)
     print("one-way latency ms: p50=%.1f p95=%.1f p99=%.1f max=%.1f (n=%d)"
           % (pct(lat, 50), pct(lat, 95), pct(lat, 99), max(lat) if lat else 0.0, len(lat)))
     print("frame assemble ms: p50=%.1f p95=%.1f | arrival gap ms: p50=%.1f p95=%.1f"
