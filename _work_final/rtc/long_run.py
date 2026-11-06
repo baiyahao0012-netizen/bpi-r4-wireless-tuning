@@ -39,10 +39,11 @@ print(json.dumps(marks), flush=True)
 lines = open(LOGS, encoding="utf-8", errors="replace").read().splitlines()
 dbg = []
 for ln in lines:
-    m = re.search(r"MACDBG q=(\d+)us rr=([\d.]+) share=([\d.]+) pkt=(\d+)", ln)
+    m = re.search(r"MACDBG q=(\d+)us rr=([\d.]+) share=([\d.]+) attr=([\d.]+) pkt=(\d+)", ln)
     if m:
         dbg.append({"q": int(m.group(1)), "rr": float(m.group(2)),
-                    "share": float(m.group(3)), "pkt": int(m.group(4))})
+                    "share": float(m.group(3)), "attr": float(m.group(4)),
+                    "pkt": int(m.group(5))})
 ctl = [ln.strip() for ln in lines if "MAC-CTL" in ln]
 
 def med(v):
