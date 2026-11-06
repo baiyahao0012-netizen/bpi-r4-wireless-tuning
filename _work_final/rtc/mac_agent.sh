@@ -3,7 +3,7 @@
 # Sampling is 800 ms on purpose: iw station dump blocks for seconds when the
 # medium is saturated, so a higher rate only queues up.
 D=/sys/kernel/debug/ieee80211/phy0
-IF=phy0.1-ap0
+IF=phy0.0-ap0
 STA=40:a5:ef:26:e3:47
 DST=$1
 PORT=$2
