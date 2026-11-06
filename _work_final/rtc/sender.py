@@ -535,10 +535,10 @@ def main():
                     continue
                 p = t.split(',')
                 try:
-                    v = [int(x) for x in p[1:8]]
+                    v = [int(x) for x in p[1:9]]
                 except Exception:
                     continue
-                if len(v) < 7:
+                if len(v) < 8:
                     continue
                 mac['last'] = v
                 mac['rx'] += 1
@@ -586,13 +586,25 @@ def main():
                 cost = (d_dur / (d_bytes / 1024.0)) if d_bytes > 0 else 0.0
                 d_total = max(0, v[6] - pv[6])
                 share = (d_dur / d_total) if d_total > 0 else 0.0
+                # attribution: how much of the station's airtime can be
+                # explained by our own video flow at the current PHY rate.
+                # A low value means the backlog is caused by something else
+                # sharing the same station, and cutting our rate would not
+                # free any airtime.
+                d_our = max(0, sent_chunks - pc) * args.chunk
+                phy_mbps = v[7] / 10.0
+                pred_us = (d_our * 8.0 / phy_mbps) if phy_mbps > 1.0 else 0.0
+                attr = (pred_us / d_dur) if d_dur > 0 else 0.0
                 mac['cost'] = cost
                 mac['share'] = share
+                mac['attr'] = attr
                 mac['dbg'] = (q_us, rr, share, d_pkts)
                 if int(time.time()) != mac.get('dbg_t', -1):
                     mac['dbg_t'] = int(time.time())
-                    print("  MACDBG q=%.0fus rr=%.3f share=%.2f pkt=%d hold=%d"
-                          % (q_us, rr, share, d_pkts, mac.get('hold', 0)),
+                    print("  MACDBG q=%.0fus rr=%.3f share=%.2f attr=%.2f pkt=%d "
+                          "hold=%d/%d"
+                          % (q_us, rr, share, attr, d_pkts,
+                             mac.get('hold', 0), mac.get('hold2', 0)),
                           flush=True)
                 cur = tgt[0] if tgt[0] is not None else cur_rate
                 new = cur
@@ -608,6 +620,11 @@ def main():
                         # would only hurt the picture, the queue is not the
                         # cause.  Keep sending and let FEC/NACK repair.
                         mac['hold'] = mac.get('hold', 0) + 1
+                    elif attr < 0.30:
+                        # the airtime is charged to our station, but our own
+                        # video explains only a small part of it: the backlog
+                        # comes from another flow sharing the station.
+                        mac['hold2'] = mac.get('hold2', 0) + 1
                     else:
                         new = int(cur * 0.85)
                         why = 'self-congestion q=%.0fus share=%.2f' % (q_us, share)
