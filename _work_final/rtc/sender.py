@@ -599,7 +599,10 @@ def main():
                 if now - last_change[0] < 0.5:
                     continue
                 if q_us > 0.5 * lim:
-                    if share < 0.02:
+                    # calibrated 2026-11-06: external contention sits at
+                    # share 0.01-0.05, self-congestion at 0.33-0.48, so the
+                    # threshold goes in the middle of that gap
+                    if share < 0.10:
                         # the air is busy but it is not ours: cutting our rate
                         # would only hurt the picture, the queue is not the
                         # cause.  Keep sending and let FEC/NACK repair.
