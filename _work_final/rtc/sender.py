@@ -436,6 +436,8 @@ def main():
     ap.add_argument('--audio-rate', type=int, default=48000)
     ap.add_argument('--audio-bitrate', type=int, default=64000)
     ap.add_argument('--audio-gain', type=float, default=1.0)
+    ap.add_argument('--video-pts', default='frame', choices=['frame', 'wall'],
+                    help='frame = content timeline (default); wall = wall-clock control arm')
     ap.add_argument('--audio-pts', default='wall', choices=['wall', 'samples'],
                     help='wall = stamp audio with the same wall clock as video '
                          '(robust when a capture device does not run at exactly '
@@ -907,7 +909,10 @@ def main():
         # whenever a frame takes longer than 1/fps.  Deriving pts from the
         # frame index keeps both timelines tied to the file, so the A/V
         # relationship is exact by construction.
-        pts = int(frame_id * 90000.0 / max(args.fps, 1))
+        if args.video_pts == 'wall':
+            pts = int((time.perf_counter() - t0) * 90000) & 0x0FFFFFFF
+        else:
+            pts = int(frame_id * 90000.0 / max(args.fps, 1))
         try:
             vf = av.VideoFrame.from_ndarray(img, format='bgr24').reformat(format='yuv420p')
         except Exception as e:
