@@ -558,6 +558,7 @@ def main():
             picture worse while not freeing any airtime.
             """
             prev = None
+            tgt = [None]        # last rate we asked for; cur_rate lags by a frame
             while True:
                 time.sleep(0.1)
                 v = mac['last']
@@ -593,7 +594,7 @@ def main():
                     print("  MACDBG q=%.0fus rr=%.3f share=%.2f pkt=%d hold=%d"
                           % (q_us, rr, share, d_pkts, mac.get('hold', 0)),
                           flush=True)
-                cur = cur_rate
+                cur = tgt[0] if tgt[0] is not None else cur_rate
                 new = cur
                 why = ''
                 if now - last_change[0] < 0.5:
@@ -616,6 +617,7 @@ def main():
                 new = max(args.min_rate, min(args.max_rate, new))
                 if new != cur and abs(new - cur) > 0.08 * cur:
                     last_change[0] = now
+                    tgt[0] = new
                     with sw_lock:
                         switch_req[:] = [new, why]
                     print("  MAC-CTL %.0f -> %.0f kbps (q=%.0fus rr=%.3f "
