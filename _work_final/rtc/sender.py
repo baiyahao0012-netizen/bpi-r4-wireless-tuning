@@ -535,8 +535,10 @@ def main():
                     continue
                 p = t.split(',')
                 try:
-                    v = [int(x) for x in p[1:6]]
+                    v = [int(x) for x in p[1:8]]
                 except Exception:
+                    continue
+                if len(v) < 7:
                     continue
                 mac['last'] = v
                 mac['rx'] += 1
@@ -567,37 +569,55 @@ def main():
                     continue
                 pv, pt, pc = prev
                 dt = max(1e-3, now - pt)
-                d_ret = (v[3] - pv[3]) + (v[4] - pv[4])
-                d_chunk = max(0, sent_chunks - pc)
+                # v = [aql_total, tx_pkts, tx_bytes, tx_duration, retries, failed]
+                d_pkts = max(0, v[1] - pv[1])
+                if d_pkts <= 0:
+                    continue
+                d_bytes = max(0, v[2] - pv[2])
+                d_dur = max(0, v[3] - pv[3])
+                d_ret = max(0, (v[4] - pv[4]) + (v[5] - pv[5]))
                 prev = (v, now, sent_chunks)
                 q_us = float(v[0])
                 lim = 24000.0
-                rr = (d_ret / d_chunk) if d_chunk > 0 else 0.0
-                # airtime spent per kilobyte delivered: rises when the medium
-                # itself becomes expensive, unlike a plain queue backlog
-                d_tx = v[2] - pv[2]
-                d_bytes = d_chunk * args.chunk
-                cost = (d_tx / (d_bytes / 1024.0)) if d_bytes > 0 else 0.0
+                rr = (d_ret / d_pkts) if d_pkts > 0 else 0.0
+                # airtime per kilobyte actually delivered: rises when the
+                # medium itself is expensive, unlike a plain queue backlog
+                cost = (d_dur / (d_bytes / 1024.0)) if d_bytes > 0 else 0.0
+                d_total = max(0, v[6] - pv[6])
+                share = (d_dur / d_total) if d_total > 0 else 0.0
                 mac['cost'] = cost
+                mac['share'] = share
+                mac['dbg'] = (q_us, rr, share, d_pkts)
+                if int(time.time()) != mac.get('dbg_t', -1):
+                    mac['dbg_t'] = int(time.time())
+                    print("  MACDBG q=%.0fus rr=%.3f share=%.2f pkt=%d hold=%d"
+                          % (q_us, rr, share, d_pkts, mac.get('hold', 0)),
+                          flush=True)
                 cur = cur_rate
                 new = cur
                 why = ''
                 if now - last_change[0] < 0.5:
                     continue
-                if q_us > 0.5 * lim and rr < 0.10:
-                    new = int(cur * 0.85)
-                    why = 'MAC self-congestion q=%.0fus rr=%.3f' % (q_us, rr)
+                if q_us > 0.5 * lim:
+                    if share < 0.02:
+                        # the air is busy but it is not ours: cutting our rate
+                        # would only hurt the picture, the queue is not the
+                        # cause.  Keep sending and let FEC/NACK repair.
+                        mac['hold'] = mac.get('hold', 0) + 1
+                    else:
+                        new = int(cur * 0.85)
+                        why = 'self-congestion q=%.0fus share=%.2f' % (q_us, share)
                 elif q_us < 0.20 * lim and rr < 0.05:
                     new = int(cur * 1.10)
-                    why = 'MAC headroom q=%.0fus rr=%.3f' % (q_us, rr)
+                    why = 'headroom q=%.0fus share=%.2f' % (q_us, share)
                 new = max(args.min_rate, min(args.max_rate, new))
                 if new != cur and abs(new - cur) > 0.08 * cur:
                     last_change[0] = now
                     with sw_lock:
                         switch_req[:] = [new, why]
                     print("  MAC-CTL %.0f -> %.0f kbps (q=%.0fus rr=%.3f "
-                          "ret=%d cost=%.1fus/KB)"
-                          % (cur / 1000.0, new / 1000.0, q_us, rr, d_ret, cost),
+                          "pkt=%d cost=%.1f share=%.2f)"
+                          % (cur / 1000.0, new / 1000.0, q_us, rr, d_pkts, cost, share),
                           flush=True)
 
         threading.Thread(target=_mac_ctrl, daemon=True).start()
