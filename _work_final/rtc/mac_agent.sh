@@ -1,7 +1,7 @@
 #!/bin/sh
 # MAC instrumentation agent: ONE iw call + ONE awk pass per sample (10 Hz).
 D=/sys/kernel/debug/ieee80211/phy0
-IF=phy0.1-ap0
+IF=phy0.0-ap0
 STA=40:a5:ef:26:e3:47
 DST=$1
 PORT=$2

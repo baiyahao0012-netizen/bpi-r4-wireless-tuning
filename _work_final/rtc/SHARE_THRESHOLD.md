@@ -1,12 +1,25 @@
-# Threshold calibration, 2026-11-06
-# 3 conditions x 3 reps, congestion samples only (AQL > 10 ms)
+# share 门限标定记录
 
-none      : no congestion samples (link never saturated at 3 Mbps video)
+判据: share = Δ(我方站点 tx duration) / Δ(所有站点 tx duration)
 
-self      : no congestion samples in the sweep; earlier single run gave 0.33-0.48
+## 数据
 
-external  : n=3 medians 0.010/0.010/0.010, range 0.01-0.05  (26 samples)
+| 场景 | 链路 | 拥塞样本 | share | 备注 |
+|---|---|---|---|---|
+| 无负载 | 5G 585Mbps | 无拥塞 | 0.34–0.99 | 其余站点空闲, 我方几乎占满 |
+| **外部争用** | 5G 585Mbps | 26 | **0.01–0.05** | 80Mbps 背景流打到另一站点 |
+| **自致拥塞** | 2.4G 72Mbps | 3 轮 | **0.42–1.00** | 80Mbps 背景流打到本站, 链路饱和 |
 
+## 门限
 
-# Baseline (no congestion) share: 0.34-0.99 (other stations idle)
-# Chosen threshold: 0.10  -- mid-gap, margin on both sides
+间隙区间 0.05 ~ 0.42, 取对数中点约 0.14, 取整 **0.10**。
+
+- 下侧余量: 0.10 / 0.05 = 2x
+- 上侧余量: 0.42 / 0.10 = 4.2x
+
+原门限 0.02 距外部簇上限仅 0.03, 已废弃。
+
+## 注意
+
+- 自致拥塞必须在**饱和链路**上测: 5G 585Mbps 下 80Mbps 负载不饱和, 需要 2.4G 72Mbps
+- share=0 的样本多为采样间隙(该周期我方无发送), 分析时应结合 pkt 判断
