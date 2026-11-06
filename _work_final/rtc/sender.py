@@ -634,7 +634,10 @@ def main():
                     else:
                         new = int(cur * 0.85)
                         why = 'self-congestion q=%.0fus share=%.2f' % (q_us, share)
-                elif q_us < 0.20 * lim and rr < 0.05:
+                elif q_us < 0.20 * lim:
+                    # An empty queue means headroom regardless of the retry
+                    # rate: on 2.4 GHz the band is busy with neighbours, so
+                    # rr sits near 15 even when nothing of ours is queued.
                     new = int(cur * 1.10)
                     why = 'headroom q=%.0fus share=%.2f' % (q_us, share)
                 new = max(args.min_rate, min(args.max_rate, new))
