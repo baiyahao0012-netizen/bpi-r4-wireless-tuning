@@ -158,7 +158,13 @@ class SeqGen(object):
         self._lk = threading.Lock()
 
     def reserve(self, k):
+        # Never let one reservation straddle the 16-bit wrap: a frame whose
+        # chunks run 65534,65535,0,1 would break the header's u16 seq field.
+        # Leave a small hole instead; gaps are harmless because reassembly is
+        # driven by frame_id and chunk_idx, and NACK uses seq0 arithmetic.
         with self._lk:
+            if k <= 0xFFFF and self._n + k > 0xFFFF:
+                self._n = 0
             s = self._n
             self._n = (self._n + k) & 0xFFFF
             return s

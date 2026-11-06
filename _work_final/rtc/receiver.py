@@ -362,6 +362,8 @@ def main():
     writer = [None]
     dec_err = [0]          # video decoder errors
     dec_err_a = [0]        # audio decoder errors
+    a_len_bad = [0]        # frames whose written length disagreed with fr.samples
+    a_dbg = [0]
     pcm_fh = open(args.out_pcm, 'wb') if args.out_pcm else None
     dq = queue.Queue()
     dstat = {'n': 0}
@@ -682,14 +684,27 @@ def main():
                 try:
                     for pkt in adec.parse(payload):
                         for fr in adec.decode(pkt):
-                            pcm = fr.to_ndarray()
-                            if pcm.ndim > 1:
-                                pcm = pcm[0]
-                            pcm_i = np.clip(pcm.astype('int32'), -32768, 32767)
-                            if pcm.dtype.kind == 'f':
-                                pcm_i = (np.clip(pcm, -1.0, 1.0) * 32767).astype('int16')
-                            else:
-                                pcm_i = pcm.astype('int16')
+                            # libopus can return interleaved stereo shaped
+                            # (1, 2*N).  Taking row 0 of that used to write
+                            # 2*N samples for an N-sample mono frame, which
+                            # stretched the audio to half speed (an octave
+                            # down and progressively late).  Let PyAV do the
+                            # channel and rate conversion, then flatten.
+                            # libopus hands back interleaved stereo even
+                            # for a mono stream: shape (1, samples*2).
+                            # Writing that as mono stretched the audio to
+                            # half speed -- an octave down and increasingly
+                            # late.  De-interleave and downmix explicitly.
+                            arr = fr.to_ndarray().reshape(-1)
+                            ch = len(fr.layout.channels)
+                            if ch > 1:
+                                arr = arr.reshape(-1, ch).mean(axis=1)
+                            pcm_i = np.clip(arr, -32768, 32767).astype('int16')
+                            if pcm_fh is not None and pcm_i.shape[0] != fr.samples:
+                                if a_len_bad[0] < 3:
+                                    a_len_bad[0] += 1
+                                    print("WARN audio frame %d samples written as %d"
+                                          % (fr.samples, pcm_i.shape[0]), flush=True)
                             a_decoded += fr.samples
                             a_sum += float((pcm_i.astype(np.float64) ** 2).sum())
                             a_cnt += pcm_i.shape[0]
