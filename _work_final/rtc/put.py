@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os, sys, codecs, paramiko
-HOST, USER, PW = "192.168.240.221", "labuser", "[REDACTED-PWD]"
+from remote_config import HOST, USER, PW
 here = os.path.dirname(os.path.abspath(__file__))
 cli = paramiko.SSHClient()
 cli.set_missing_host_key_policy(paramiko.AutoAddPolicy())

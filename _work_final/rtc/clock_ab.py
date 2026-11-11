@@ -3,7 +3,7 @@
 import subprocess, sys, time, re, json
 
 PY = sys.executable
-HOST, USER, PWD = "192.168.240.221", "labuser", "[REDACTED-PWD]"
+from remote_config import HOST, USER, PWD
 VIDEO = r"D:\Desktop\AI 辅助对话\test03_music.mp4"
 ARMS = [("A", "wall", "wall"), ("B", "frame", "samples")]
 SECS = 60

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import paramiko
 
-HOST = "192.168.240.221"
-PW = "[REDACTED-PWD]"
-for u in ["labuser", "wf\\labuser"]:
+from remote_config import HOST, PWD as PW, USER
+for u in [USER]:
     cli = paramiko.SSHClient()
     cli.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:

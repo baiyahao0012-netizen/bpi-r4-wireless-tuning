@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import paramiko, sys
-host, user, pwd = "192.168.240.221", "labuser", "[REDACTED-PWD]"
+from remote_config import HOST as host, USER as user, PWD as pwd
 t = paramiko.Transport((host, 22))
 t.connect(username=user, password=pwd)
 sftp = paramiko.SFTPClient.from_transport(t)

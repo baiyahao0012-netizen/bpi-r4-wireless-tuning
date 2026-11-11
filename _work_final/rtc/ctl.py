@@ -10,8 +10,7 @@ except Exception:
     pass
 import paramiko
 
-HOST_USER = "labuser"
-HOST_PW = "[REDACTED-PWD]"
+from remote_config import HOST_USER, HOST_PW
 
 
 def run(host, cmd, user=HOST_USER, pwd=HOST_PW, timeout=180):

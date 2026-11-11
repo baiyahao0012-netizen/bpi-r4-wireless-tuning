@@ -16,7 +16,7 @@ import time
 
 import ctl
 
-REMOTE, RUSER, RPW = "192.168.240.221", "labuser", "[REDACTED-PWD]"
+from remote_config import REMOTE, RUSER, RPW
 PY = r"D:\Bai_Yahao\Software\Python\python.exe"
 HERE = os.path.dirname(os.path.abspath(__file__))
 RX_SECS = 20

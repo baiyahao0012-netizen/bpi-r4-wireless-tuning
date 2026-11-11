@@ -4,7 +4,7 @@ import os
 import sys
 import paramiko
 
-HOST, USER, PW = "192.168.240.221", "labuser", "[REDACTED-PWD]"
+from remote_config import HOST, USER, PW
 REMOTE_DIR = r"C:\rtc"
 FILES = ["receiver.py", "rtc2.py", "l2sock.py", "txport.py", "list_nics.py",
          "README.txt"]

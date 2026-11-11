@@ -2,8 +2,10 @@
 """Fetch the received A/V, verify lengths, and mux into one playable file."""
 import paramiko, av, numpy as np, fractions
 
-t = paramiko.Transport(("192.168.240.221", 22))
-t.connect(username="labuser", password="[REDACTED-PWD]")
+from remote_config import HOST, USER, PWD
+
+t = paramiko.Transport((HOST, 22))
+t.connect(username=USER, password=PWD)
 sftp = paramiko.SFTPClient.from_transport(t)
 for n in ["rcv05.mp4", "rcv05.pcm"]:
     sftp.get("C:/rtc/" + n, n)

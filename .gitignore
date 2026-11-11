@@ -88,3 +88,6 @@ _work_final/rtc/doc_dump.txt
 _work_final/rtc/*.mp4
 _work_final/rtc/*.h264
 _work_final/rtc/*.pcm
+
+# ---- 本机远程实验机凭据（不入库）----
+_work_final/rtc/remote_secrets.json
