@@ -4,6 +4,31 @@
 交接对象：下一个执行 Agent  
 仓库路径：`_work_final/rtc_over_mac/`
 
+## 0. 仓库与阅读入口
+
+- **远程仓库**：<https://github.com/baiyahao0012-netizen/bpi-r4-wireless-tuning.git>
+- **本地路径**：`D:\Desktop\AI 辅助对话`
+- **分支**：`main`
+- **本交接提交**：`c2acca1 docs: add RTC over MAC handoff and baseline evidence`
+- **本项目主目录**：`_work_final/rtc_over_mac/`
+- **测试素材目录**：`_work_final/rtc/media/testset_1080p/`（六条 1080p 原始视频与 MANIFEST）
+
+仓库整体内容：该仓库用于 BPI-R4 无线调优与 RTC over MAC 研究。  
+`rtc_over_mac/` 下包含本项目的方案、L0/UDP baseline 报告、L2 原型、测试脚本、诊断记录和本交接文档；  
+`rtc_over_wifi/` 是更早的 RTC 功能审计材料；  
+`rtc/media/testset_1080p/` 是六条 1080p 测试视频及元数据。
+
+阅读顺序建议：
+
+```text
+HANDOFF_RTC_OVER_MAC_20261113.md   ← 先读本文件
+REVISED_PLAN_20261112.md           ← 方案与阶段划分
+L1_BASELINE_SIX_20261112.md        ← 六片 UDP baseline
+L2_PROTOTYPE_20261112.md           ← L2 原型与可靠性实验
+L1_RECEIVER_DIAG_20261112.md       ← 接收端诊断与修正
+t7_sender.sh / t7_receiver.sh      ← T7 反馈实验脚本
+```
+
 ## 1. 项目目标
 
 本项目只做 **RTC 媒体面**，不做完整 WebRTC。目标是：
