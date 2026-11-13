@@ -1,0 +1,9 @@
+﻿file,fps_group,role,resolution,fps,duration_s,video_codec,video_kbps,audio_codec,audio_layout,audio_hz,audio_kbps,size_mb,sha256,planned_derived,note
+1080p24_1_sintel_trailer_52s.mp4,24fps,smoke-fallback,1920x1080,24,52.21,h264,2108,aac,stereo,48000,126,14.6,34bbd52a4b89fdf63c8ace50b268da26653a59508288100cd3c23de276db7931,10M/15M/20M CBR + Opus 48k,
+1080p24_2_caminandes_90s.mp4,24fps,content,1920x1080,24,90.04,h264,6999,aac,stereo,48000,125,80.3,6928f44f42d41e39444759fe2ff6b4eefde73b5c219fb78e5b70bc41d4d0bfeb,10M/15M/20M CBR + Opus 48k,
+1080p25_3_bbb_trailer_33s.mp4,25fps,fps-matrix,1920x1080,25,32.99,h264,7162,aac,5.1,48000,428,30.9,59625854dab532953c8c141a9ba3b035b0518429bcb0b4d1117abaebcd8d1304,10M/15M/20M CBR + Opus 48k,AAC 5.1 -> stereo
+1080p30_1_artemis_origins_85s.mp4,30fps,smoke-primary,1920x1080,30,85.33,h264,4999,aac,stereo,48000,159,55.1,27130d698e9ba69b5675ab22784ae3a171d53eb6502ac763514f0b7c026972cf,10M/15M/20M CBR + Opus 48k,
+1080p30_2_artemis_avatar_76s.mp4,30fps,content,1920x1080,30,75.77,h264,4997,aac,stereo,48000,159,48.9,e5ef69225148636d35cf3003ae5757daf3f59d0076b07747affb62095890892c,10M/15M/20M CBR + Opus 48k,
+1080p30_3_artemis_recap_90s.mp4,30fps,content,1920x1080,30,90.07,h264,5021,aac,stereo,48000,160,58.4,6c0ee685eadc6ad464987566390dcb3999187f0077c6db36a321fce9963719ad,10M/15M/20M CBR + Opus 48k,
+
+anchor_1080p30_clapper_10s.mkv,30fps,a-v-anchor,1920x1080,30,10.00,h264,21,opus,stereo,48000,128,0.17,ff09289c8850dc5f66875216bfa7e4bc06dffb7cd9bc036e54dec0252516de25,none,每秒一帧纯白+50ms 1kHz短音做音画锚点;无B帧;GOP=30;用于测A/V同步偏差

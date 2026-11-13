@@ -1,0 +1,6 @@
+_work_final/rtc_over_mac/**/*.h264 filter=lfs diff=lfs merge=lfs -text
+_work_final/rtc_over_mac/**/*.pcap filter=lfs diff=lfs merge=lfs -text
+_work_final/rtc_over_mac/**/*.yuv filter=lfs diff=lfs merge=lfs -text
+_work_final/rtc/media/**/*.mp4 filter=lfs diff=lfs merge=lfs -text
+_work_final/rtc/media/**/*.mkv filter=lfs diff=lfs merge=lfs -text
+_work_final/rtc/media/**/*.yuv filter=lfs diff=lfs merge=lfs -text
