@@ -45,6 +45,7 @@ def main():
     order = []
     bad = 0
     dup = 0
+    ext_state = {"last": None}
 
     def cb(pkt):
         nonlocal bad, dup
@@ -68,16 +69,27 @@ def main():
         if not r:
             return
         _, _, seq, _, _ = r
-        if seq in packets:
+        # Unwrap the 16-bit RTP sequence so runs > 65535 packets stay ordered.
+        ext = seq
+        last = ext_state["last"]
+        if last is not None:
+            cand = (last & ~0xFFFF) | seq
+            if cand - last > 0x8000:
+                cand -= 0x10000
+            elif last - cand > 0x8000:
+                cand += 0x10000
+            ext = cand
+        ext_state["last"] = ext
+        if ext in packets:
             dup += 1
             return
-        packets[seq] = rtp
-        order.append(seq)
+        packets[ext] = rtp
+        order.append(ext)
 
     sniff(iface=IFACE, filter="ether proto 0x88b5", timeout=args.seconds, store=False, prn=cb)
 
     base = order[0] if order else 0
-    ordered = [packets[k] for k in sorted(packets, key=lambda s: (s - base) & 0xFFFF)]
+    ordered = [packets[k] for k in sorted(packets)]
     out = bytearray()
     seqs = []
     ssrcs = Counter()
