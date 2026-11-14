@@ -120,21 +120,22 @@ def main():
                     out.extend(b"\x00\x00\x00\x01" + bytes(fu))
                     fu = None
 
-    open(args.out, "wb").write(out)
     gaps = sum(1 for a, b in zip(seqs, seqs[1:]) if ((b - a) & 0xFFFF) not in (0, 1))
     frames = 0
     decode_error = None
+    # Decode from memory first: a failed dump must not lose the stats.
     try:
+        import io
         import av
         ctx = av.CodecContext.create("h264", "r")
-        with open(args.out, "rb") as fh:
-            while True:
-                chunk = fh.read(1 << 20)
-                if not chunk:
-                    break
-                for packet in ctx.parse(chunk):
-                    for _ in ctx.decode(packet):
-                        frames += 1
+        bio = io.BytesIO(bytes(out))
+        while True:
+            chunk = bio.read(1 << 20)
+            if not chunk:
+                break
+            for packet in ctx.parse(chunk):
+                for _ in ctx.decode(packet):
+                    frames += 1
         for _ in ctx.decode(None):
             frames += 1
     except Exception as e:
@@ -143,6 +144,11 @@ def main():
     print("packets", len(ordered), "dup", dup, "bad", bad, "seq_gaps", gaps,
           "timestamps", len(timestamps), "ssrcs", dict(ssrcs),
           "h264_bytes", len(out), "frames", frames, "decode_error", decode_error, flush=True)
+    try:
+        with open(args.out, "wb") as f:
+            f.write(out)
+    except Exception as e:
+        print("write_error", repr(e), flush=True)
 
 
 if __name__ == "__main__":
