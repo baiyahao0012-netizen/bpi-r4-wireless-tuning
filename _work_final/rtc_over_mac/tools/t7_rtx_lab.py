@@ -219,6 +219,10 @@ def build_receiver(a, stats):
     )
     sess = make("rtpsession", "sess")
     sess.set_property("rtp-profile", 3)  # AVPF（枚举：1=avp, 3=avpf）
+    if a.rtcp_min_interval:
+        # Feedback (NACK) is scheduled against the RTCP interval; the default is
+        # far longer than a 500 ms jitterbuffer deadline.
+        sess.set_property("rtcp-min-interval", a.rtcp_min_interval)
 
     def ptmap_cb(_sess, _pt):
         return Gst.Caps.from_string(
@@ -233,10 +237,21 @@ def build_receiver(a, stats):
     jb.set_property("latency", a.latency)
     jb.set_property("do-lost", True)
     jb.set_property("do-retransmission", not a.no_rtx)
-    if not a.no_rtx:
+    # Keep rtx-delay / rtx-retry-timeout / rtx-max-retries at their defaults
+    # (-1 = automatic). GStreamer derives them from the measured RTT
+    # (DEFAULT_AUTO_RTX_DELAY 20ms, DEFAULT_AUTO_RTX_TIMEOUT 40ms); hard-coding
+    # 0 disables that logic and starves the retransmission scheduling.
+    if a.rtx_manual and not a.no_rtx:
         jb.set_property("rtx-max-retries", 8)
         jb.set_property("rtx-delay", 0)
         jb.set_property("rtx-min-delay", 0)
+    if a.rtx_retry_period > 0:
+        # How long the jitterbuffer keeps asking for a missing packet. This is
+        # the max_delay handed to rtpsession: if it is shorter than the RTCP
+        # interval, the NACK expires before a packet can be sent.
+        jb.set_property("rtx-retry-period", a.rtx_retry_period)
+    if a.rtx_retry_timeout > 0:
+        jb.set_property("rtx-retry-timeout", a.rtx_retry_timeout)
     try:
         jb.set_property("send-keyframe-request", True)
     except Exception:
@@ -309,6 +324,14 @@ def main():
     ap.add_argument("--dummy-recv", action="store_true")
     ap.add_argument("--no-rtxrecv", action="store_true")
     ap.add_argument("--seconds", type=float, default=20.0)
+    ap.add_argument("--rtcp-min-interval", type=int, default=0,
+                    help="min regular RTCP interval in ns; 0 keeps the default")
+    ap.add_argument("--rtx-manual", action="store_true",
+                    help="reproduce the old hard-coded rtx-delay=0 / max-retries=8")
+    ap.add_argument("--rtx-retry-period", type=int, default=0,
+                    help="jitterbuffer rtx-retry-period in ms (0 keeps default)")
+    ap.add_argument("--rtx-retry-timeout", type=int, default=0,
+                    help="jitterbuffer rtx-retry-timeout in ms (0 keeps default)")
     a = ap.parse_args()
 
     stats = {}

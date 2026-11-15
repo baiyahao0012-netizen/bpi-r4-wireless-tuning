@@ -106,6 +106,36 @@ receiver udpsrc 5004 (H264 pt=96 caps, **buffer-size=8MB**)
 
 **结论：T7 不能判"通过"。** 上一份交接里的"B=165 vs C=8 证明 RTX 有效"是接收端缓冲缺口的假象（C 臂被缓冲丢包打到 3,685 包），补上 8 MB 后 C 恢复到 138 帧，差距消失。
 
+### 4.5 参数扫描（2026-11-15 追加）：RTX 为什么"没效果"
+
+按 GStreamer 官方示例（`tests/examples/rtp/{server,client}-rtpaux.c`）和 `rtpsession.c` 源码复核后，确认两条约束：
+
+1. **RTX 参数必须留默认（-1 自动）**。硬设 `rtx-delay=0 / rtx-max-retries=8` 会关掉基于 RTT 的自动调度。
+2. **NACK 能否发出取决于它能否活过一个 RTCP 周期**。`rtpsession.c:4930` 的 `T_rr` 取 RFC 3550 带宽公式算出的周期（约 1 s），而 jitterbuffer 默认只给 ~120 ms 的 `max_delay`；`rtp_session_request_nack` 的早发失败后，NACK 会在下一个 RTCP 周期前过期（`session_nack` 里清理 deadline 过期的请求）。
+
+由此做 4×3 扫描（5% 丢包，`rtcp-min-interval=100ms`，`rtx-retry-timeout=200ms`）：
+
+| 抖动缓冲 | p300 | p600 | p1000 |
+|---|---:|---:|---:|
+| 500 ms | 144 | **179** | 148 |
+| 800 ms | 155 | 140⚠ | 144 |
+| 1200 ms | 140⚠ | 142 | 141 |
+| 1500 ms | 161 | 140⚠ | 148 |
+
+无 RTX 的 C 臂在四个延迟下恒为 **138**（延迟本身救不回丢包）。⚠ 表示该次完全没有 RTX 包（`net_pt97=1`），同时伴随 **RTCP 风暴**（`out_RR` 700–1000、`out_NACK` 600+）。
+
+**最好点（500 ms + p600）重复 5 次**：149 / 140 / 152 / 140 / 138，中位数 **140**——与无 RTX 的 138 无实质差别；179 是离群值。5 次中有 1 次进入 RTCP 风暴且 RTX 全灭。
+
+### 4.6 对 T7 的最终判定
+
+| 结论 | 证据 |
+|---|---|
+| RTX **机制**可用 | 运行中 `rtprtxreceive.num-rtx-assoc-packets` 最高 131、`rtx-success-count` 最高 66、PT97 到达与关联一致 |
+| RTX **帧级收益**不成立 | 5% 随机丢包下，500–1500 ms 延迟、300–1000 ms 重传窗口，中位数均为 140 vs C 臂 138 |
+| 存在**反馈风暴**失效模式 | `out_RR` 700–1000 时 RTX 全灭，需要限速 NACK（`rtx-max-retries` 或发送端 RTCP 预算） |
+
+原因：1080p、约 14 包/帧，5% 随机丢包下每帧至少丢 1 包的概率约 50%；RTX 只能追回其中一部分，参考链仍然断裂，帧数几乎不变。**要让 T7 有可验收的帧级收益，应改用能全部追回的丢包模型（突发丢包 + 足够窗口），或在实时编码器链路上做 PLI 刷新。**
+
 ---
 
 ## 5. 与旧交接的差异（更正清单）
@@ -150,4 +180,4 @@ python3 tools/t7_rtx_lab.py receiver --seconds 16 --latency 500
 python3 tools/t7_rtx_lab.py sender --file /home/bai/rtc_test/clip10.mp4 --seconds 11
 ```
 
-数据：`t7_v1_matrix_20261115.csv`；脚本：`tools/t7_rtx_lab.py`、`tools/run_t7_matrix.sh`、`tools/run_t7_lowloss.sh`。
+数据：`t7_v1_matrix_20261115.csv`、`t7_sweep_20261115.csv`；脚本：`tools/t7_rtx_lab.py`、`tools/run_t7_matrix.sh`、`tools/run_t7_lowloss.sh`、`tools/run_t7_sweep.sh`、`tools/rtp_media_lab.py`（rtpbin 版，已按官方 aux 示例对齐）。

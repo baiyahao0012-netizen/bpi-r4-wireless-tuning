@@ -151,7 +151,15 @@ def build_sender(a, stats):
     parse.link(pay)
 
     def aux_sender(bin_, session):
-        return rtxsend if session == 0 else None
+        if session != 0:
+            return None
+        # Canonical form (server-rtpaux.c): wrap rtprtxsend in a bin exposing
+        # ghost pads named src_%u / sink_%u; rtpbin expects that, not a raw element.
+        b = Gst.Bin.new("rtxsend-bin")
+        b.add(rtxsend)
+        b.add_pad(Gst.GhostPad.new("src_0", rtxsend.get_static_pad("src")))
+        b.add_pad(Gst.GhostPad.new("sink_0", rtxsend.get_static_pad("sink")))
+        return b
     rtpbin.connect("request-aux-sender", aux_sender)
 
     def pad_added(bin_, pad):
@@ -195,6 +203,7 @@ def build_receiver(a, stats):
         print("WARN rtp-profile: %s" % exc, flush=True)
     rtp_src = make("udpsrc", "rtp_src")
     rtp_src.set_property("port", a.rtp_port)
+    rtp_src.set_property("buffer-size", 8 * 1024 * 1024)
     rtp_src.set_property(
         "caps",
         Gst.Caps.from_string(
@@ -224,23 +233,42 @@ def build_receiver(a, stats):
     holder = {"rtxrecv": rtxrecv, "jb": None}
 
     def aux_receiver(bin_, session):
-        return rtxrecv if session == 0 else None
+        if session != 0:
+            return None
+        # Canonical form (client-rtpaux.c): a bin with ghost pads, not the raw element.
+        b = Gst.Bin.new("rtxrecv-bin")
+        b.add(rtxrecv)
+        b.add_pad(Gst.GhostPad.new("src_0", rtxrecv.get_static_pad("src")))
+        b.add_pad(Gst.GhostPad.new("sink_0", rtxrecv.get_static_pad("sink")))
+        return b
 
     def request_jb(bin_, session):
         # rtpbin owns the jitterbuffer: create it here, do NOT add it to the pipeline.
+        # Leave rtx-* at their automatic defaults (the C example sets nothing).
         jb = make("rtpjitterbuffer", "jb")
         jb.set_property("latency", a.latency)
         jb.set_property("do-lost", True)
         jb.set_property("do-retransmission", not a.no_rtx)
-        if not a.no_rtx:
-            jb.set_property("rtx-max-retries", 8)
-            jb.set_property("rtx-delay", 0)
-            jb.set_property("rtx-min-delay", 0)
         holder["jb"] = jb
         return jb
 
+    def pt_map(bin_, session, pt):
+        # Required: rtpbin must be able to resolve the RTX payload type, and the
+        # media caps must advertise NACK/PLI support for feedback to be scheduled.
+        if session != 0:
+            return None
+        if pt == 96:
+            return Gst.Caps.from_string(
+                "application/x-rtp,media=video,encoding-name=H264,payload=96,clock-rate=90000,"
+                "rtcp-fb-nack=(boolean)true,rtcp-fb-nack-pli=(boolean)true")
+        if pt == 97:
+            return Gst.Caps.from_string(
+                "application/x-rtp,media=video,encoding-name=rtx,payload=97,clock-rate=90000")
+        return None
+
     rtpbin.connect("request-aux-receiver", aux_receiver)
     rtpbin.connect("request-jitterbuffer", request_jb)
+    rtpbin.connect("request-pt-map", pt_map)
 
     def pad_added(bin_, pad):
         name = pad.get_name()
