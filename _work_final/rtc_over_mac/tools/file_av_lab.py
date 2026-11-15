@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """File-based dual-stream RTP/RTX/SRTP/PLI retest on GStreamer/rtpbin.
 
 Designed for the six Pi MP4 test clips. The sender demuxes H264 + AAC; audio
@@ -344,6 +344,10 @@ def build_sender(a, stats):
     for s in (v_sink, a_sink, v_rtcp, a_rtcp):
         s.set_property("sync", bool(a.pace and s in (v_sink, a_sink))); s.set_property("async", False)
 
+    if a.bind_address:
+        for _s in (v_sink, a_sink, v_rtcp, a_rtcp):
+            _s.set_property("bind-address", a.bind_address)
+
     srtp_enc = {}
     srtp_sink_pads = {}
     if a.srtp:
@@ -551,6 +555,8 @@ def main():
     ap.add_argument("role", choices=["sender", "receiver"])
     ap.add_argument("--file", required=True)
     ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--bind-address", default="",
+                    help="sender: local source address (forces media interface)")
     ap.add_argument("--video-rtp-port", type=int, default=5004)
     ap.add_argument("--video-rtcp-port", type=int, default=5006)
     ap.add_argument("--video-feedback-port", type=int, default=5005)
@@ -636,6 +642,7 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
 
 
 
