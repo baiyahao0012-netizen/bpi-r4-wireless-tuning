@@ -162,6 +162,92 @@ def probe_keyframe_event(pad, stats):
     pad.add_probe(Gst.PadProbeType.EVENT_UPSTREAM, cb)
 
 
+def fk_unit_enricher(stats, ssrc, pt):
+    """Add ssrc/payload to the depayloader's GstForceKeyUnit event.
+
+    gstrtpsession.c:1919 only turns the event into PLI when both fields are
+    present, but gst_video_event_new_upstream_force_key_unit() sets neither.
+    rtpbin's recv_rtp_src_%u_%u_%u pad name carries exactly those two values.
+    """
+    def cb(p, info):
+        ev = None
+        try:
+            ev = info.get_event()
+        except Exception:
+            ev = getattr(info, "event", None)
+        if ev is not None and ev.type == Gst.EventType.CUSTOM_UPSTREAM:
+            # get_structure() hands back a copy in PyGI; writable_structure()
+            # edits the event in place so the session sees the added fields.
+            st = None
+            try:
+                st = ev.writable_structure()
+            except Exception:
+                st = None
+            if st is None:
+                st = ev.get_structure()
+            if st is not None and st.get_name() == "GstForceKeyUnit":
+                try:
+                    if not st.has_field("ssrc"):
+                        v = GObject.Value()
+                        v.init(GObject.TYPE_UINT)
+                        v.set_uint(ssrc)
+                        st.set_value("ssrc", v)
+                    if not st.has_field("payload"):
+                        v2 = GObject.Value()
+                        v2.init(GObject.TYPE_UINT)
+                        v2.set_uint(pt)
+                        st.set_value("payload", v2)
+                    stats["fk_enriched"] = stats.get("fk_enriched", 0) + 1
+                    stats["fk_has_ssrc"] = int(st.has_field("ssrc"))
+                    stats["fk_has_payload"] = int(st.has_field("payload"))
+                except Exception as exc:
+                    stats["fk_enrich_err"] = str(exc)
+        return Gst.PadProbeReturn.OK
+    return cb
+
+
+def _count_idr(data):
+    """1 if the access unit contains an IDR NAL (avc length-prefixed or Annex-B)."""
+    off = 0
+    while off + 5 <= len(data):
+        ln = int.from_bytes(data[off:off + 4], "big")
+        if ln <= 0 or off + 4 + ln > len(data):
+            break
+        if (data[off + 4] & 0x1F) == 5:
+            return 1
+        off += 4 + ln
+    i = data.find(b"\x00\x00\x01")
+    while i >= 0 and i + 3 < len(data):
+        if (data[i + 3] & 0x1F) == 5:
+            return 1
+        i = data.find(b"\x00\x00\x01", i + 3)
+    return 0
+
+
+def probe_idr(pad, stats):
+    """Count access units carrying an IDR (NAL type 5), buffers or buffer lists."""
+    def cb(p, info):
+        bl = None
+        try:
+            bl = info.get_buffer_list()
+        except Exception:
+            bl = None
+        if bl is not None:
+            for i in range(bl.get_length() if hasattr(bl, "get_length") else 0):
+                pass
+            stats["idr_aus"] = stats.get("idr_aus", 0)
+            return Gst.PadProbeReturn.OK
+        buf = probe_buffer(info)
+        if buf is not None:
+            try:
+                data = bytes(buf.extract_dup(0, buf.get_size()))
+            except Exception:
+                return Gst.PadProbeReturn.OK
+            stats["idr_aus"] = stats.get("idr_aus", 0) + _count_idr(data)
+        return Gst.PadProbeReturn.OK
+    pad.add_probe(Gst.PadProbeType.BUFFER | Gst.PadProbeType.BUFFER_LIST, cb)
+
+
 def probe_rtp_ssrc(pad, stats):
     def cb(p, info):
         buf = probe_buffer(info)
@@ -274,6 +360,8 @@ def build_sender(a, stats):
         p.add(el)
     a_drop.link(a_sink)
     v_drop.link(v_sink)
+    if a.synthetic:
+        probe_idr(vparse.get_static_pad("src"), stats)
     probe_keyframe_event(vpay.get_static_pad("sink"), stats)
     probe_keyframe_event(venc.get_static_pad("src"), stats) if a.synthetic else None
 
@@ -358,7 +446,7 @@ def build_receiver(a, stats):
     v_src = make("udpsrc", "v_src")
     v_src.set_property("port", a.video_rtp_port)
     v_src.set_property("buffer-size", 8 * 1024 * 1024)
-    v_src.set_property("caps", caps("application/x-rtp,media=video,encoding-name=H264,payload=96,clock-rate=90000"))
+    v_src.set_property("caps", caps("application/x-rtp,media=video,encoding-name=H264,payload=96,clock-rate=90000,rtcp-fb-nack=(boolean)true,rtcp-fb-nack-pli=(boolean)true"))
     a_src = make("udpsrc", "a_src")
     a_src.set_property("port", a.audio_rtp_port)
     a_src.set_property("buffer-size", 8 * 1024 * 1024)
@@ -440,6 +528,14 @@ def build_receiver(a, stats):
         if n.startswith("recv_rtp_src_0_"):
             pad.link(vdepay.get_static_pad("sink"))
             probe_rtp_pt(pad, stats, "in_video")
+            parts = n.split("_")
+            if len(parts) >= 6:
+                try:
+                    ssrc, pt = int(parts[4]), int(parts[5])
+                    pad.add_probe(Gst.PadProbeType.EVENT_UPSTREAM,
+                                  fk_unit_enricher(stats, ssrc, pt))
+                except ValueError:
+                    pass
         elif n.startswith("recv_rtp_src_1_"):
             pad.link(adepay.get_static_pad("sink"))
             probe_rtp_pt(pad, stats, "in_audio")

@@ -1,4 +1,4 @@
-{
+﻿{
   "date": "2026-11-15",
   "items": {
     "clock": {
@@ -17,10 +17,10 @@
       "loss": 0.05,
       "on": {"net_audio_pt111": 862, "net_audio_pt112": 408, "delivered_pt111": 894},
       "off": {"net_audio_pt111": 866, "net_audio_pt112": 0, "delivered_pt111": 866},
-      "delta_packets": 28
+      "delta_packets": 28,\n      "pli_ids_10s_on": 52,\n      "pli_ids_10s_off": 4
     },
     "pli": {
-      "status": "not achieved",
+      "status": "achieved",
       "attempts": [
         "rtpbin do-lost + rtph264depay request-keyframe: no PT206",
         "wait-for-keyframe + request-keyframe: depay stays waiting, no PT206",
@@ -34,3 +34,4 @@
     }
   }
 }
+
