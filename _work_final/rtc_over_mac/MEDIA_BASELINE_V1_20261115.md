@@ -14,12 +14,12 @@
 | T3 严格 302/302 | ✅ 闭环 | `t3_eos_receiver.py` |
 | T4 SRTP 302/302、0 drop | ✅ 闭环 | `srtp_loopback_eos.py` |
 | **视频路径无丢包基线（A 臂）** | ✅ **302/302，3/3 复现** | 本文 §3 |
-| **T7 NACK/RTX 机制** | 🟡 **存在但不可靠触发** | assoc>0 仅 4/15 次；见 §4 |
-| **T7 帧级收益** | ❌ **未证明** | 5% 与 0.1% 丢包下 B≈C / D≈E |
+| **T7 NACK/RTX 机制** | ✅ **通过** | 运行中 `assoc` 最高 319、`rtx-success-count` > 0；见 §4.6 |
+| **T7 帧级收益** | ✅ **通过（500 ms）** | 5% 丢包：中位 **248** vs 无 RTX **138**；见 §4.6 |
 | **T7 PLI(PT206)** | ❌ 未闭环 | 需实时编码器，v2 |
 | **T8 音频/双流/A-V** | ❌ 未开始 | v2 |
 
-**一句话**：视频路径可以冻结为 V1；T7 不能写成"通过"，只能写"机制已接线、验收未通过、根因已定位到 NACK 投递不可靠"。
+**一句话**：视频路径 + T7（NACK/RTX）可以冻结为 V1；T7 的 PLI 与 T8 归 v2。T7 曾经"看起来无效"，根因是 RTCP 带宽默认值让 `T_rr≈1 s` 而 NACK 的存活期只有 ~120 ms——调到 `bandwidth=1MB/s` 后早反馈生效，收益回到 +80%。
 
 ---
 
@@ -65,7 +65,7 @@ receiver udpsrc 5004 (H264 pt=96 caps, **buffer-size=8MB**)
 
 ---
 
-## 4. T7：机制存在，但验收未通过
+## 4. T7：NACK/RTX 通过（500 ms），PLI 未闭环
 
 ### 4.1 5% 丢包（B = RTX 开，C = RTX 关）
 
@@ -126,15 +126,35 @@ receiver udpsrc 5004 (H264 pt=96 caps, **buffer-size=8MB**)
 
 **最好点（500 ms + p600）重复 5 次**：149 / 140 / 152 / 140 / 138，中位数 **140**——与无 RTX 的 138 无实质差别；179 是离群值。5 次中有 1 次进入 RTCP 风暴且 RTX 全灭。
 
-### 4.6 对 T7 的最终判定
+### 4.6 bandwidth → 早反馈：T7 帧级收益成立（2026-11-15 追加）
 
-| 结论 | 证据 |
+上一节的结论只对**默认 RTCP 带宽**成立。`rtpsession.bandwidth`（字节/秒）直接决定 `T_rr`：把它从默认值提到 **1 MB/s**，RTCP 周期降到约 100–250 ms，`rtp_session_request_nack` 的早反馈开始被接受，NACK 得以在重传截止时间前发出。
+
+配置：`--bandwidth 1000000 --rtcp-min-interval 100000000 --rtx-retry-period 600 --rtx-retry-timeout 200 --latency 500`（5% 丢包）。
+
+| 配置 | out_NACK | out_RR | PT97/assoc | 解码帧 |
+|---|---:|---:|---:|---:|
+| 默认带宽 + 最优 RTX 参数 | 4–7 | 20–44 | 112–131 | 140（中位） |
+| **bandwidth 1 MB/s + min 100 ms** | **53–98** | 205–248 | **214–319** | **254 / 268 / 248 / 182，中位 248** |
+| bandwidth 10 MB/s + min 20 ms | 411 | 1157 | 268 | 222（风暴） |
+| bandwidth 10 MB/s + min 10 ms | 347 | 1866 | 232 | 194（风暴） |
+
+**5% 丢包、500 ms 抖动缓冲下：中位 248 vs 无 RTX 138，+80%。** 无 RTX 的 C 臂在四个延迟下恒为 138。
+
+判定：
+
+| 项 | 状态 |
 |---|---|
-| RTX **机制**可用 | 运行中 `rtprtxreceive.num-rtx-assoc-packets` 最高 131、`rtx-success-count` 最高 66、PT97 到达与关联一致 |
-| RTX **帧级收益**不成立 | 5% 随机丢包下，500–1500 ms 延迟、300–1000 ms 重传窗口，中位数均为 140 vs C 臂 138 |
-| 存在**反馈风暴**失效模式 | `out_RR` 700–1000 时 RTX 全灭，需要限速 NACK（`rtx-max-retries` 或发送端 RTCP 预算） |
+| T7 NACK/RTX 机制 | ✅ 通过（`num-rtx-assoc-packets` 最高 319，`rtx-success-count` 非零） |
+| T7 帧级收益 | ✅ 通过（500 ms 延迟，中位 248 vs 138） |
+| T7 PLI(PT206) | ❌ 仍需实时编码器 |
+| 稳定性 | ⚠️ 4 次中 1 次掉到 182；需要限速 NACK 防风暴 |
 
-原因：1080p、约 14 包/帧，5% 随机丢包下每帧至少丢 1 包的概率约 50%；RTX 只能追回其中一部分，参考链仍然断裂，帧数几乎不变。**要让 T7 有可验收的帧级收益，应改用能全部追回的丢包模型（突发丢包 + 足够窗口），或在实时编码器链路上做 PLI 刷新。**
+关键参数（缺一不可）：**`bandwidth` 决定 T_rr，`rtcp-min-interval` 只是下限，`rtx-retry-period` 决定 NACK 存活时间，`latency` 必须 ≥ 重传往返。**
+
+
+
+> 附：**默认带宽下**的旧判定（已被 4.6 取代）——RTX 机制可用，但帧级收益不成立（中位 140 vs 138），且存在 RTCP 风暴失效模式（`out_RR` 700–1000 时 RTX 全灭）。原因是 5% 随机丢包下 NACK 的 `max_delay`（~120 ms）短于默认 `T_rr`（~1 s），请求在发出前就过期。
 
 ---
 
@@ -156,11 +176,12 @@ receiver udpsrc 5004 (H264 pt=96 caps, **buffer-size=8MB**)
 - 视频媒体路径（T1、T2、T5、T6、T9）；
 - 严格帧数闭环脚本（T3、T4）；
 - A 臂 302/302 基线；
-- 本实验口径（8 MB 缓冲、运行中采样、AVPF、ssrcdemux）。
+- **T7 NACK/RTX：机制 + 帧级收益（500 ms，中位 248 vs 138）**；
+- 本实验口径（8 MB 缓冲、运行中采样、AVPF、ssrcdemux、`bandwidth=1MB/s`、`rtcp-min-interval=100ms`、`rtx-retry-period=600ms`）。
 
 **不冻结、归 v2**：
 
-1. T7 的 NACK 投递可靠性（唯一阻塞 T7 验收的问题）；
+1. T7 稳定性：4 次中 1 次掉到 182，需要给 NACK 限速（`rtx-max-retries` / RTCP 预算）以消除反馈风暴；
 2. PLI(PT206) 往返 + 关键帧刷新（需 `x264enc` 实时链路）；
 3. T8：双流、音频 jb、RTCP SR NTP↔RTP、跨机时钟、A/V 锚点；
 4. 真实链路（非回环）上的 T7/T8 复测。

@@ -219,9 +219,11 @@ def build_receiver(a, stats):
     )
     sess = make("rtpsession", "sess")
     sess.set_property("rtp-profile", 3)  # AVPF（枚举：1=avp, 3=avpf）
+    if a.bandwidth > 0:
+        # bytes/s; RTCP gets 5% of it. Larger -> shorter computed T_rr, which is
+        # what gates early feedback (rtcp-min-interval alone is only a floor).
+        sess.set_property("bandwidth", a.bandwidth)
     if a.rtcp_min_interval:
-        # Feedback (NACK) is scheduled against the RTCP interval; the default is
-        # far longer than a 500 ms jitterbuffer deadline.
         sess.set_property("rtcp-min-interval", a.rtcp_min_interval)
 
     def ptmap_cb(_sess, _pt):
@@ -332,6 +334,8 @@ def main():
                     help="jitterbuffer rtx-retry-period in ms (0 keeps default)")
     ap.add_argument("--rtx-retry-timeout", type=int, default=0,
                     help="jitterbuffer rtx-retry-timeout in ms (0 keeps default)")
+    ap.add_argument("--bandwidth", type=float, default=0,
+                    help="session bandwidth in bytes/s (0 keeps the default)")
     a = ap.parse_args()
 
     stats = {}
