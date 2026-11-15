@@ -14,8 +14,8 @@
 | T3 严格 302/302 | ✅ 闭环 | `t3_eos_receiver.py` |
 | T4 SRTP 302/302、0 drop | ✅ 闭环 | `srtp_loopback_eos.py` |
 | **视频路径无丢包基线（A 臂）** | ✅ **302/302，3/3 复现** | 本文 §3 |
-| **T7 NACK/RTX 机制** | ✅ **通过** | 运行中 `assoc` 最高 319、`rtx-success-count` > 0；见 §4.6 |
-| **T7 帧级收益** | ✅ **通过（500 ms）** | 5% 丢包：中位 **248** vs 无 RTX **138**；见 §4.6 |
+| **T7 NACK/RTX 机制** | ✅ **通过** | 6 次重复：PT97/assoc 221–331，`rtx-success` 140–258；见 §4.7 |
+| **T7 帧级收益** | ✅ **通过（500 ms）** | 6 次：193–275，**中位 246.5** vs 无 RTX 138（+78%）；见 §4.7 |
 | **T7 PLI(PT206)** | ❌ 未闭环 | 需实时编码器，v2 |
 | **T8 音频/双流/A-V** | ❌ 未开始 | v2 |
 
@@ -34,13 +34,24 @@ sender   filesrc -> qtdemux -> h264parse -> rtph264pay(pt=96)
          udpsrc 5005 -> queue -> rtpsession.recv_rtcp_sink
 
 receiver udpsrc 5004 (H264 pt=96 caps, **buffer-size=8MB**)
-         -> rtpsession(rtp-profile=3/AVPF)
+         -> rtpsession(rtp-profile=3/AVPF, **bandwidth=1e6 B/s**, **rtcp-min-interval=100ms**)
          -> recv_rtp_src -> rtprtxreceive(96->97) -> rtpssrcdemux
-         -> rtpjitterbuffer(latency=500, do-retransmission, rtx-delay=0, rtx-max-retries=8)
+         -> rtpjitterbuffer(latency=500, do-retransmission,
+                            **rtx-retry-period=600ms, rtx-retry-timeout=200ms**, 不限重试)
          -> rtph264depay -> h264parse -> avdec_h264 -> fakesink
          rtpsession.send_rtcp_src -> udpsink 5005
          udpsrc 5006 -> rtpsession.recv_rtcp_sink
 ```
+
+**单位口径**（易错，已核对源码）：
+
+| 属性 | 单位 | 说明 |
+|---|---|---|
+| `rtpsession.bandwidth` | **字节/秒** | `gstrtpsession.c:675`；0=自动。RTCP 拿 5%，1e6 B/s → RTCP ≈ 50 KB/s |
+| `rtcp-rr-bandwidth` / `rtcp-rs-bandwidth` | 字节/秒 | 可直接指定 RTCP 收/发预算，绕过 5% 分摊 |
+| `rtcp-min-interval` | **纳秒** | 只是周期**下限**，不能单独把 T_rr 压下来 |
+| `rtx-retry-period` / `rtx-retry-timeout` | 毫秒 | NACK 存活期 / 重试间隔 |
+| `latency` | 毫秒 | 抖动缓冲深度，必须 ≥ 重传往返 |
 
 关键约束（缺一条数值就不可信）：
 
@@ -152,6 +163,37 @@ receiver udpsrc 5004 (H264 pt=96 caps, **buffer-size=8MB**)
 
 关键参数（缺一不可）：**`bandwidth` 决定 T_rr，`rtcp-min-interval` 只是下限，`rtx-retry-period` 决定 NACK 存活时间，`latency` 必须 ≥ 重传往返。**
 
+### 4.7 冻结证据：同一配置 6 次重复（2026-11-15）
+
+配置：`--bandwidth 1000000 --rtcp-min-interval 100000000 --rtx-retry-period 600 --rtx-retry-timeout 200 --latency 500`，5% 丢包。
+
+| run | net PT97 | assoc | rtx-success | NACK 包 | RR 包 | 残留丢包 | 解码帧 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| base1 | 300 | 300 | 231 | 49 | 204 | 62 | 257 |
+| base2 | 265 | 265 | 186 | 47 | 188 | 104 | 236 |
+| base3 | 221 | 221 | 152 | 91 | 241 | 137 | 198 |
+| base4 | 331 | 331 | 250 | 57 | 212 | 38 | 260 |
+| base5 | 228 | 228 | 140 | 61 | 206 | 149 | 193 |
+| base6 | 326 | 326 | 258 | 46 | 196 | 35 | 275 |
+
+- 解码帧升序：193 / 198 / 236 / 257 / 260 / 275
+- **中位数 = (236 + 257) / 2 = 246.5**（偶数样本取中间两个的均值）；最小值 193，最大值 275
+- 对照：无 RTX 的 C 臂在 500/800/1200/1500 ms 下恒为 **138**
+- 中位增益：**+108 帧（+78%）**
+
+**方差来源**已定位：`jb num-lost`（重传后仍缺的包）在 35–149 之间波动，与随机丢包的落点直接相关（丢得少 → 残留少 → 帧多），不是流水线抖动。要让基线严格可复现，应把 `identity drop-probability`（随机）换成本地 `loss_proxy.py` 的确定性丢包模式——列为 v2 的复现改进项。
+
+### 4.8 NACK 限速实验：否决
+
+| 组 | 解码帧 | 中位 | 残留丢包 |
+|---|---|---:|---:|
+| baseline（不限重试） | 257 / 236 / 198 / 260 / 193 / 275 | **246.5** | 35–149 |
+| `rtx-max-retries=3` | 187 / 203 / 215 / 172 / 199 / 183 | **193** | 123–173 |
+
+**限速让结果变差**（中位 246.5 → 193）：它压掉了本该成功的重传。此前 182 的"离群值"不是 RTCP 风暴，而是随机丢包的低尾；真正的风暴只出现在 `bandwidth=10MB/s + min 10–20ms` 这种过激配置下（`out_RR` 1100–1900）。**冻结配置保持不限速。**
+
+原始 RESULT JSON：`evidence/t7_freeze_20261115/t7freeze_*.json`；汇总：`t7_freeze_20261115.csv`。
+
 
 
 > 附：**默认带宽下**的旧判定（已被 4.6 取代）——RTX 机制可用，但帧级收益不成立（中位 140 vs 138），且存在 RTCP 风暴失效模式（`out_RR` 700–1000 时 RTX 全灭）。原因是 5% 随机丢包下 NACK 的 `max_delay`（~120 ms）短于默认 `T_rr`（~1 s），请求在发出前就过期。
@@ -176,12 +218,12 @@ receiver udpsrc 5004 (H264 pt=96 caps, **buffer-size=8MB**)
 - 视频媒体路径（T1、T2、T5、T6、T9）；
 - 严格帧数闭环脚本（T3、T4）；
 - A 臂 302/302 基线；
-- **T7 NACK/RTX：机制 + 帧级收益（500 ms，中位 248 vs 138）**；
-- 本实验口径（8 MB 缓冲、运行中采样、AVPF、ssrcdemux、`bandwidth=1MB/s`、`rtcp-min-interval=100ms`、`rtx-retry-period=600ms`）。
+- **T7 NACK/RTX：机制 + 帧级收益（500 ms，6 次中位 246.5 vs 138）**；
+- 本实验口径（8 MB 缓冲、运行中采样、AVPF、ssrcdemux、`bandwidth=1MB/s`、`rtcp-min-interval=100ms`、`rtx-retry-period=600ms`、不限重试）。
 
 **不冻结、归 v2**：
 
-1. T7 稳定性：4 次中 1 次掉到 182，需要给 NACK 限速（`rtx-max-retries` / RTCP 预算）以消除反馈风暴；
+1. T7 复现性：随机丢包导致 193–275 的自然分布；改用确定性 `loss_proxy` 并加大样本量（NACK 限速已实验否决，见 §4.8）；
 2. PLI(PT206) 往返 + 关键帧刷新（需 `x264enc` 实时链路）；
 3. T8：双流、音频 jb、RTCP SR NTP↔RTP、跨机时钟、A/V 锚点；
 4. 真实链路（非回环）上的 T7/T8 复测。

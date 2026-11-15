@@ -254,6 +254,10 @@ def build_receiver(a, stats):
         jb.set_property("rtx-retry-period", a.rtx_retry_period)
     if a.rtx_retry_timeout > 0:
         jb.set_property("rtx-retry-timeout", a.rtx_retry_timeout)
+    if a.rtx_max_retries >= 0:
+        # Cap how many times the same packet may be re-requested; this bounds
+        # the NACK volume that can turn into an RTCP storm.
+        jb.set_property("rtx-max-retries", a.rtx_max_retries)
     try:
         jb.set_property("send-keyframe-request", True)
     except Exception:
@@ -334,6 +338,8 @@ def main():
                     help="jitterbuffer rtx-retry-period in ms (0 keeps default)")
     ap.add_argument("--rtx-retry-timeout", type=int, default=0,
                     help="jitterbuffer rtx-retry-timeout in ms (0 keeps default)")
+    ap.add_argument("--rtx-max-retries", type=int, default=-1,
+                    help="max retransmission requests per packet (-1 unlimited)")
     ap.add_argument("--bandwidth", type=float, default=0,
                     help="session bandwidth in bytes/s (0 keeps the default)")
     a = ap.parse_args()
