@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-15",
+  "link": "Pi wlan1 192.168.240.126 -> BPI-R4 AP bridge -> laptop 192.168.240.2",
+  "receiver": "Windows gst-launch 1.26.11, two single-session rtpbin processes",
+  "relay": "python udp_relay 5004->6004, 5008->6008 (firewall workaround)",
+  "video_bytes": 25920000,
+  "video_frames": 300,
+  "audio_bytes": 940800,
+  "audio_seconds": 9.8,
+  "av_skew": {
+    "flash_frames": 10, "tone_bursts": 10, "pairs": 10,
+    "skew_ms": [0.0, 0.0, 0.0, 0.0, 20.0, 20.0, 20.0, 20.0, 0.0, 0.0],
+    "skew_p50_ms": 0.0, "skew_p95_ms": 20.0, "skew_max_ms": 20.0, "aligned": true
+  },
+  "loopback_control": {"frames": 60, "bytes": 5184000, "note": "same receiver pipeline, no firewall path"},
+  "clock_offset": {"method": "ssh bracket", "rtt_ms": 195.0,
+                   "offset_pi_minus_host_ms": 111.2,
+                   "uncertainty_ms": 97.5, "usable": false,
+                   "note": "w32time could not be started without admin"}
+}

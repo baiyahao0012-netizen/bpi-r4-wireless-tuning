@@ -161,6 +161,11 @@ def build_sender(a, stats):
     a_rtcp_sink.set_property("port", a.audio_rtcp_port)
     a_rtcp_sink.set_property("sync", False)
     a_rtcp_sink.set_property("async", False)
+    if a.bind_address:
+        # Force the media source address so the source-based policy route keeps
+        # the traffic on the wireless interface instead of the management one.
+        for s in (v_sink, a_sink, v_rtcp_sink, a_rtcp_sink):
+            s.set_property("bind-address", a.bind_address)
     v_fb = make("udpsrc", "v_fb")
     v_fb.set_property("port", a.video_feedback_port)
     v_fb.set_property("caps", caps("application/x-rtcp"))
@@ -347,6 +352,8 @@ def main():
     ap.add_argument("--audio-out", default="/tmp/t8_audio.pcm")
     ap.add_argument("--synthetic", action="store_true",
                     help="sender: use videotestsrc/audiotestsrc (for long SR runs)")
+    ap.add_argument("--bind-address", default="",
+                    help="sender: local source address (forces the media interface)")
     ap.add_argument("--width", type=int, default=320)
     ap.add_argument("--height", type=int, default=180)
     a = ap.parse_args()
