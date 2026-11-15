@@ -1,4 +1,4 @@
-﻿{
+{
   "date": "2026-11-15",
   "items": {
     "clock": {
@@ -17,21 +17,19 @@
       "loss": 0.05,
       "on": {"net_audio_pt111": 862, "net_audio_pt112": 408, "delivered_pt111": 894},
       "off": {"net_audio_pt111": 866, "net_audio_pt112": 0, "delivered_pt111": 866},
-      "delta_packets": 28,\n      "pli_ids_10s_on": 52,\n      "pli_ids_10s_off": 4
+      "delta_packets": 28
     },
     "pli": {
       "status": "achieved",
-      "attempts": [
-        "rtpbin do-lost + rtph264depay request-keyframe: no PT206",
-        "wait-for-keyframe + request-keyframe: depay stays waiting, no PT206",
-        "manual GstForceKeyUnit with ssrc/payload: push_event=0, send_event=0"
+      "loss": 0.05,
+      "on": {"plis_received_by_sender": 51, "keyframe_events": 102, "idr_aus_10s": 52},
+      "off": {"plis_received_by_sender": 0, "keyframe_events": 0, "idr_aus_10s": 4},
+      "required_fixes": [
+        "receiver udpsrc caps must carry rtcp-fb-nack-pli (gstrtpsession.c:1877-1897)",
+        "GstForceKeyUnit event must carry ssrc+payload; enrich it in an upstream-event probe on rtpbin recv_rtp_src_%u_%u_%u, editing via writable_structure()"
       ],
-      "source": [
-        "gstrtpsession.c:1919-1921 requires GstForceKeyUnit with ssrc+payload",
-        "gstrtph264depay.c:1126 requires waiting_for_keyframe; line 1104 clears it on first IDR",
-        "gstrtpbin.c has no ForceKeyUnit handling"
-      ]
+      "official_reference": "tests/check/elements/rtpsession.c:299-320 session_harness_force_key_unit",
+      "trigger_path": "gstrtph264depay.c:1419-1424 (discont FU without start bit)"
     }
   }
 }
-
