@@ -26,9 +26,19 @@ import sys
 import gi
 
 gi.require_version("Gst", "1.0")
-from gi.repository import Gst, GLib  # noqa: E402
+from gi.repository import Gst, GLib, GObject  # noqa: E402
 
 Gst.init(None)
+
+HOLDER = {}
+
+
+def pt_map_struct(pt, rtx_pt):
+    res = Gst.Structure.from_string("application/x-rtp-pt-map,%d=(uint)%d" % (pt, rtx_pt))
+    for item in res:
+        if isinstance(item, Gst.Structure):
+            return item
+    raise RuntimeError("bad pt map")
 
 
 def make(factory, name):
@@ -102,6 +112,86 @@ def probe_count(pad, stats, key):
     pad.add_probe(Gst.PadProbeType.BUFFER, cb)
 
 
+RTCP_PT_NAMES = {200: "SR", 201: "RR", 205: "NACK", 206: "PLI"}
+
+
+def probe_rtcp_pt(pad, stats, prefix):
+    def cb(p, info):
+        buf = probe_buffer(info)
+        if buf is None:
+            return Gst.PadProbeReturn.OK
+        try:
+            data = bytes(buf.extract_dup(0, buf.get_size()))
+        except Exception:
+            return Gst.PadProbeReturn.OK
+        i = 0
+        while i + 4 <= len(data):
+            if (data[i] >> 6) != 2:
+                break
+            pt = data[i + 1]
+            ln = ((data[i + 2] << 8) | data[i + 3]) * 4 + 4
+            key = "%s_%s" % (prefix, RTCP_PT_NAMES.get(pt, str(pt)))
+            stats[key] = stats.get(key, 0) + 1
+            if ln <= 0:
+                break
+            i += ln
+        return Gst.PadProbeReturn.OK
+    pad.add_probe(Gst.PadProbeType.BUFFER, cb)
+
+
+def probe_keyframe_event(pad, stats):
+    def cb(p, info):
+        ev = None
+        for name in ("get_event",):
+            fn = getattr(info, name, None)
+            if fn is not None:
+                try:
+                    ev = fn()
+                except Exception:
+                    ev = None
+        if ev is None:
+            ev = getattr(info, "event", None)
+        if ev is not None:
+            try:
+                st = ev.get_structure()
+            except Exception:
+                st = None
+            if st is not None and st.get_name() == "GstForceKeyUnit":
+                stats["keyframe_events"] = stats.get("keyframe_events", 0) + 1
+        return Gst.PadProbeReturn.OK
+    pad.add_probe(Gst.PadProbeType.EVENT_UPSTREAM, cb)
+
+
+def probe_rtp_ssrc(pad, stats):
+    def cb(p, info):
+        buf = probe_buffer(info)
+        if buf is not None and "video_ssrc" not in stats:
+            try:
+                data = bytes(buf.extract_dup(0, 12))
+                if len(data) >= 12 and (data[0] >> 6) == 2:
+                    stats["video_ssrc"] = struct.unpack("!I", data[8:12])[0]
+            except Exception:
+                pass
+        return Gst.PadProbeReturn.OK
+    pad.add_probe(Gst.PadProbeType.BUFFER, cb)
+
+
+def probe_rtp_pt(pad, stats, prefix):
+    def cb(p, info):
+        buf = probe_buffer(info)
+        if buf is not None:
+            try:
+                data = bytes(buf.extract_dup(0, min(buf.get_size(), 16)))
+            except Exception:
+                return Gst.PadProbeReturn.OK
+            if len(data) >= 2 and (data[0] >> 6) == 2:
+                pt = data[1] & 0x7F
+                key = "%s_pt%d" % (prefix, pt)
+                stats[key] = stats.get(key, 0) + 1
+        return Gst.PadProbeReturn.OK
+    pad.add_probe(Gst.PadProbeType.BUFFER, cb)
+
+
 VIDEO_CAPS = ("application/x-rtp,media=video,encoding-name=H264,payload=96,"
               "clock-rate=90000,rtcp-fb-nack=(boolean)true,rtcp-fb-nack-pli=(boolean)true")
 AUDIO_CAPS = ("application/x-rtp,media=audio,encoding-name=OPUS,payload=111,"
@@ -146,11 +236,15 @@ def build_sender(a, stats):
     v_sink.set_property("port", a.video_rtp_port)
     v_sink.set_property("sync", False)
     v_sink.set_property("async", False)
+    v_drop = make("identity", "v_drop")
+    v_drop.set_property("drop-probability", a.video_loss)
     a_sink = make("udpsink", "a_sink")
     a_sink.set_property("host", a.host)
     a_sink.set_property("port", a.audio_rtp_port)
     a_sink.set_property("sync", False)
     a_sink.set_property("async", False)
+    a_drop = make("identity", "a_drop")
+    a_drop.set_property("drop-probability", a.audio_loss)
     v_rtcp_sink = make("udpsink", "v_rtcp_sink")
     v_rtcp_sink.set_property("host", a.host)
     v_rtcp_sink.set_property("port", a.video_rtcp_port)
@@ -174,10 +268,14 @@ def build_sender(a, stats):
     a_fb.set_property("caps", caps("application/x-rtcp"))
 
     for el in (vparse, vpay, aparse, apay, rtpbin,
-               v_sink, a_sink, v_rtcp_sink, a_rtcp_sink, v_fb, a_fb):
+               v_sink, v_drop, a_sink, a_drop, v_rtcp_sink, a_rtcp_sink, v_fb, a_fb):
         p.add(el)
     for el in src_elems:
         p.add(el)
+    a_drop.link(a_sink)
+    v_drop.link(v_sink)
+    probe_keyframe_event(vpay.get_static_pad("sink"), stats)
+    probe_keyframe_event(venc.get_static_pad("src"), stats) if a.synthetic else None
 
     if a.synthetic:
         vsrc.link(vcap)
@@ -203,16 +301,31 @@ def build_sender(a, stats):
             return caps(VIDEO_CAPS)
         if session == 1 and pt == 111:
             return caps(AUDIO_CAPS)
+        if session == 1 and pt == 112:
+            return caps("application/x-rtp,media=audio,encoding-name=rtx,"
+                        "payload=112,clock-rate=48000")
         return None
     rtpbin.connect("request-pt-map", pt_map)
+
+    def aux_sender(b, session):
+        if session != 1:
+            return None
+        box = Gst.Bin.new("audio-rtxsend")
+        rtx = make("rtprtxsend", "artxsend")
+        rtx.set_property("payload-type-map", pt_map_struct(111, 112))
+        box.add(rtx)
+        box.add_pad(Gst.GhostPad.new("sink_1", rtx.get_static_pad("sink")))
+        box.add_pad(Gst.GhostPad.new("src_1", rtx.get_static_pad("src")))
+        return box
+    rtpbin.connect("request-aux-sender", aux_sender)
 
     def pad_added(b, pad):
         n = pad.get_name()
         stats.setdefault("pad_added", []).append(n)
         if n.startswith("send_rtp_src_0"):
-            pad.link(v_sink.get_static_pad("sink"))
+            pad.link(v_drop.get_static_pad("sink"))
         elif n.startswith("send_rtp_src_1"):
-            pad.link(a_sink.get_static_pad("sink"))
+            pad.link(a_drop.get_static_pad("sink"))
         elif n.startswith("send_rtcp_src_0"):
             pass  # linked explicitly below
         elif n.startswith("send_rtcp_src_1"):
@@ -223,6 +336,7 @@ def build_sender(a, stats):
     apay.get_static_pad("src").link(rtpbin.request_pad_simple("send_rtp_sink_1"))
     v_fb.get_static_pad("src").link(rtpbin.request_pad_simple("recv_rtcp_sink_0"))
     a_fb.get_static_pad("src").link(rtpbin.request_pad_simple("recv_rtcp_sink_1"))
+    probe_rtcp_pt(rtpbin.request_pad_simple("recv_rtcp_sink_0"), stats, "rtcp_in")
     for sess, sink, key in ((0, v_rtcp_sink, "sr_video"), (1, a_rtcp_sink, "sr_audio")):
         pad = rtpbin.request_pad_simple("send_rtcp_src_%u" % sess)
         if pad is not None:
@@ -235,7 +349,11 @@ def build_receiver(a, stats):
     p = Gst.Pipeline.new("t8-receiver")
     rtpbin = make("rtpbin", "rtpbin")
     rtpbin.set_property("latency", a.latency)
-    rtpbin.set_property("do-retransmission", True)
+    rtpbin.set_property("do-retransmission", not a.no_audio_rtx)
+    if a.force_keyframe:
+        # Let the jitterbuffers report losses downstream; rtph264depay turns
+        # those into GstForceKeyUnit, which the session converts to PLI.
+        rtpbin.set_property("do-lost", True)
     rtpbin.set_property("rtp-profile", 3)
     v_src = make("udpsrc", "v_src")
     v_src.set_property("port", a.video_rtp_port)
@@ -262,6 +380,14 @@ def build_receiver(a, stats):
     a_rtcp_sink.set_property("sync", False)
     a_rtcp_sink.set_property("async", False)
     vdepay = make("rtph264depay", "vdepay")
+    if a.force_keyframe:
+        try:
+            vdepay.set_property("request-keyframe", True)
+            # gstrtph264depay.c:237 seeds waiting_for_keyframe from this one;
+            # without it the request-keyframe branch (line 1126) never runs.
+            vdepay.set_property("wait-for-keyframe", True)
+        except Exception:
+            pass
     vparse = make("h264parse", "vparse")
     vdec = make("avdec_h264", "vdec")
     vconv = make("videoconvert", "vconv")
@@ -289,8 +415,23 @@ def build_receiver(a, stats):
             return caps(VIDEO_CAPS)
         if session == 1 and pt == 111:
             return caps(AUDIO_CAPS)
+        if session == 1 and pt == 112:
+            return caps("application/x-rtp,media=audio,encoding-name=rtx,"
+                        "payload=112,clock-rate=48000")
         return None
     rtpbin.connect("request-pt-map", pt_map)
+
+    def aux_receiver(b, session):
+        if session != 1 or a.no_audio_rtx:
+            return None
+        box = Gst.Bin.new("audio-rtxrecv")
+        rx = make("rtprtxreceive", "artxrecv")
+        rx.set_property("payload-type-map", pt_map_struct(111, 112))
+        box.add(rx)
+        box.add_pad(Gst.GhostPad.new("sink_1", rx.get_static_pad("sink")))
+        box.add_pad(Gst.GhostPad.new("src_1", rx.get_static_pad("src")))
+        return box
+    rtpbin.connect("request-aux-receiver", aux_receiver)
 
     def pad_added(b, pad):
         n = pad.get_name()
@@ -298,8 +439,10 @@ def build_receiver(a, stats):
         # rtpbin templates: send_rtp_src_%u and recv_rtp_src_%u_%u_%u
         if n.startswith("recv_rtp_src_0_"):
             pad.link(vdepay.get_static_pad("sink"))
+            probe_rtp_pt(pad, stats, "in_video")
         elif n.startswith("recv_rtp_src_1_"):
             pad.link(adepay.get_static_pad("sink"))
+            probe_rtp_pt(pad, stats, "in_audio")
         elif n.startswith("send_rtcp_src_0"):
             pass
         elif n.startswith("send_rtcp_src_1"):
@@ -319,6 +462,7 @@ def build_receiver(a, stats):
         pad = rtpbin.request_pad_simple("send_rtcp_src_%u" % sess)
         if pad is not None:
             pad.link(sink.get_static_pad("sink"))
+            probe_rtcp_pt(pad, stats, "rtcp_out%d" % sess)
     vdepay.link(vparse)
     vparse.link(vdec)
     vdec.link(vconv)
@@ -332,6 +476,9 @@ def build_receiver(a, stats):
     acap.link(asink)
     probe_count(vcap.get_static_pad("src"), stats, "video_frames")
     probe_count(acap.get_static_pad("src"), stats, "audio_buffers")
+    probe_rtp_pt(a_src.get_static_pad("src"), stats, "net_audio")
+    probe_rtp_ssrc(v_src.get_static_pad("src"), stats)
+    HOLDER["vdepay"] = vdepay
     return p
 
 
@@ -352,6 +499,16 @@ def main():
     ap.add_argument("--audio-out", default="/tmp/t8_audio.pcm")
     ap.add_argument("--synthetic", action="store_true",
                     help="sender: use videotestsrc/audiotestsrc (for long SR runs)")
+    ap.add_argument("--audio-loss", type=float, default=0.0,
+                    help="sender: drop probability on the audio RTP path")
+    ap.add_argument("--no-audio-rtx", action="store_true",
+                    help="receiver: disable retransmission handling for audio")
+    ap.add_argument("--video-loss", type=float, default=0.0,
+                    help="sender: drop probability on the video RTP path")
+    ap.add_argument("--force-keyframe", action="store_true",
+                    help="receiver: ask the depayloader to request keyframes on loss")
+    ap.add_argument("--inject-pli", action="store_true",
+                    help="receiver: inject a GstForceKeyUnit upstream event at 5s")
     ap.add_argument("--bind-address", default="",
                     help="sender: local source address (forces the media interface)")
     ap.add_argument("--width", type=int, default=320)
@@ -394,8 +551,49 @@ def main():
     GLib.timeout_add(int(a.seconds * 1000), stop)
     GLib.timeout_add(int((a.seconds + 6) * 1000), lambda: (loop.quit(), False)[1])
 
+    def inject_pli():
+        ssrc = stats.get("video_ssrc")
+        depay = HOLDER.get("vdepay")
+        if ssrc is None or depay is None:
+            stats["pli_inject_err"] = "no ssrc or depay"
+            return False
+        try:
+            st = Gst.Structure.new_empty("GstForceKeyUnit")
+            v = GObject.Value()
+            v.init(GObject.TYPE_UINT)
+            v.set_uint(int(ssrc))
+            st.set_value("ssrc", v)
+            v2 = GObject.Value()
+            v2.init(GObject.TYPE_UINT)
+            v2.set_uint(96)
+            st.set_value("payload", v2)
+            ev = Gst.Event.new_custom(Gst.EventType.CUSTOM_UPSTREAM, st)
+            ok1 = bool(depay.get_static_pad("sink").push_event(ev))
+            ev2 = Gst.Event.new_custom(Gst.EventType.CUSTOM_UPSTREAM, st.copy())
+            ok2 = bool(depay.send_event(ev2))
+            stats["pli_push_ok"] = int(ok1)
+            stats["pli_send_ok"] = int(ok2)
+        except Exception as exc:
+            stats["pli_inject_err"] = str(exc)
+        return False
+
+    if a.role == "receiver" and a.inject_pli:
+        GLib.timeout_add(5000, inject_pli)
+
     loop.run()
     p.set_state(Gst.State.NULL)
+
+    if a.role == "receiver":
+        for key, jb in HOLDER.items():
+            try:
+                st = jb.get_property("stats")
+                d = {}
+                for i in range(st.n_fields()):
+                    nm = st.nth_field_name(i)
+                    d[nm] = st.get_value(nm)
+                stats[key] = d
+            except Exception as exc:
+                stats[key + "_err"] = str(exc)
 
     for key in ("sr_video", "sr_audio"):
         if key in stats:

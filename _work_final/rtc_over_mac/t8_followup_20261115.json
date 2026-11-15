@@ -1,0 +1,36 @@
+{
+  "date": "2026-11-15",
+  "items": {
+    "clock": {
+      "w32time": "started+synced (time.windows.com, stratum 5)",
+      "probe": "NTP-style 4-timestamp over TCP 9977",
+      "median_offset_pi_minus_windows_ms": -29.824,
+      "max_abs_offset_ms": 29.964,
+      "median_rtt_ms": 0.741,
+      "gate_5ms": "exceeded -> record as error term for cross-machine SR accounting"
+    },
+    "firewall": {
+      "rule": "GStreamer gst-launch UDP in (program-scoped, UDP inbound, any port)",
+      "verification": "direct receiver on 5004 without relay: 300 frames, 25,920,000 bytes"
+    },
+    "audio_rtx": {
+      "loss": 0.05,
+      "on": {"net_audio_pt111": 862, "net_audio_pt112": 408, "delivered_pt111": 894},
+      "off": {"net_audio_pt111": 866, "net_audio_pt112": 0, "delivered_pt111": 866},
+      "delta_packets": 28
+    },
+    "pli": {
+      "status": "not achieved",
+      "attempts": [
+        "rtpbin do-lost + rtph264depay request-keyframe: no PT206",
+        "wait-for-keyframe + request-keyframe: depay stays waiting, no PT206",
+        "manual GstForceKeyUnit with ssrc/payload: push_event=0, send_event=0"
+      ],
+      "source": [
+        "gstrtpsession.c:1919-1921 requires GstForceKeyUnit with ssrc+payload",
+        "gstrtph264depay.c:1126 requires waiting_for_keyframe; line 1104 clears it on first IDR",
+        "gstrtpbin.c has no ForceKeyUnit handling"
+      ]
+    }
+  }
+}
