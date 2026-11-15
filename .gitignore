@@ -91,3 +91,8 @@ _work_final/rtc/*.pcm
 
 # ---- 本机远程实验机凭据（不入库）----
 _work_final/rtc/remote_secrets.json
+
+# local GStreamer sources and one-off check scripts (not committed)
+_work_final/rtc_over_mac/gst-plugins-good-*/
+_work_final/rtc_over_mac/gst-plugins-good-*.tar.xz
+_work_final/rtc_over_mac/_check_*.sh
