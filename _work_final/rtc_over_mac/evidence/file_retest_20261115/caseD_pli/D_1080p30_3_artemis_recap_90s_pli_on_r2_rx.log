@@ -1,0 +1,233 @@
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:10.228: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:10.625: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:10.625: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:11.146: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:11.146: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:11.278: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:12.210: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:12.211: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:12.310: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:12.544: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:12.544: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:12.610: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:12.777: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:12.777: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:13.344: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:13.377: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:13.377: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:13.877: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.044: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.044: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.110: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.144: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.177: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.444: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.444: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.477: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.544: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.677: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.677: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.678: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.944: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.977: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:14.978: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:15.177: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:15.210: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:15.211: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:15.344: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:15.411: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:15.477: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:15.677: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:15.678: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:15.711: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:15.877: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:15.977: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.177: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.178: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.277: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.278: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.477: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.478: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.478: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.677: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.678: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.711: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.744: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.744: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.844: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.845: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.977: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:16.978: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.177: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.178: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.211: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.278: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.278: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.278: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.278: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.378: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.378: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.478: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.611: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.644: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.678: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.678: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.711: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.744: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.778: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.778: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.778: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:17.978: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.011: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.011: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.012: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.111: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.211: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.278: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.378: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.444: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.445: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.478: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.478: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.511: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.511: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.611: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.612: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.744: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.878: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.878: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.944: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:18.945: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.011: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.078: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.211: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.445: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.478: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.511: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.545: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.645: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.645: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.745: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.745: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.878: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.911: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:19.978: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:20.011: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+
+(python3:14484): GStreamer-CRITICAL **: 23:33:20.178: gst_event_writable_structure: assertion 'gst_event_is_writable (event)' failed
+RESULT {"role": "receiver", "stats": {"args": {"role": "receiver", "file": "/tmp/retest_clips/1080p30_3_artemis_recap_90s_10s.mp4", "host": "127.0.0.1", "video_rtp_port": 5205, "video_rtcp_port": 5206, "video_feedback_port": 5207, "audio_rtp_port": 5305, "audio_rtcp_port": 5306, "audio_feedback_port": 5307, "latency": 500, "seconds": 14.0, "video_loss": 0.0, "audio_loss": 0.0, "video_rtx": false, "audio_rtx": false, "srtp": false, "reencode_video": false, "pace": false, "force_keyframe": true, "width": 320, "height": 180}, "pad_added": ["recv_rtp_sink_0", "recv_rtp_sink_1", "recv_rtcp_sink_0", "recv_rtcp_sink_1", "send_rtcp_src_0", "send_rtcp_src_1", "recv_rtp_src_0_3254561049_96", "recv_rtp_src_1_748404749_111"], "session_props": [0, 1], "net_audio_pt111": 501, "ssrc": 748404749, "rtcp_out1_RR": 120, "rtcp_out1_202": 120, "jb_1_748404749": {"num-pushed": 501, "num-lost": 0, "num-late": 0, "num-duplicates": 0, "avg-jitter": 8391, "rtx-count": 0, "rtx-success-count": 0, "rtx-per-packet": 0.0, "rtx-rtt": 0, "rfc7273-active": false}, "sr_in_audio": [{"ssrc": 748404749, "ntp": 17195956369252243958, "rtp_ts": 3676638374}, {"ssrc": 748404749, "ntp": 17195956369409134819, "rtp_ts": 3676640127}, {"ssrc": 748404749, "ntp": 17195956369664187157, "rtp_ts": 3676642977}, {"ssrc": 748404749, "ntp": 17195956370073935627, "rtp_ts": 3676647557}], "net_video_pt96": 1907, "rtcp_out0_RR": 213, "rtcp_out0_202": 213, "sr_in_video": [{"ssrc": 3254561049, "ntp": 17195956369439946914, "rtp_ts": 1061345777}, {"ssrc": 3254561049, "ntp": 17195956369605041162, "rtp_ts": 1061349235}, {"ssrc": 3254561049, "ntp": 17195956370147894963, "rtp_ts": 1061360611}, {"ssrc": 3254561049, "ntp": 17195956370364425740, "rtp_ts": 1061365149}], "in_video_pt96": 1907, "rtcp_out0_PLI": 104, "video_frames": 207, "in_audio_pt111": 501, "audio_buffers": 501, "audio_samples": 480960, "jb_0_3254561049": {"num-pushed": 1907, "num-lost": 100, "num-late": 0, "num-duplicates": 0, "avg-jitter": 3561223, "rtx-count": 0, "rtx-success-count": 0, "rtx-per-packet": 0.0, "rtx-rtt": 0, "rfc7273-active": false}, "errors": ["WARN: Could not get/set settings from/on resource.", "WARN: Could not get/set settings from/on resource."]}}

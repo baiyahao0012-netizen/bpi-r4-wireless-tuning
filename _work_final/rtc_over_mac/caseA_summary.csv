@@ -1,0 +1,7 @@
+clip,case,arm,run,video_frames,expected_frames,audio_buffers,audio_samples,net_pt96,net_pt97,in_pt96,in_pt97,assoc,rtx_requests,rtx_packets,rtx_success,jb_lost,jb_late,jb_dup,nack,rr,pli,sr_video,sr_audio,a_net111,a_in111,a_net112,a_in112,a_assoc,a_rtx_pkts,tx_pli,rx_pli,kf_sink,kf_src,idr_aus,idr_500ms,tx_errors,errors
+1080p24_1_sintel_trailer_52s,A,base,r1,240,240,501,480960,725,,725,,,,,0,0,0,0,,4,,1,1,501,501,,,,,,,,,,,,WARN: Could not get/set settings from/on resource.;WARN: Could not get/set settings from/on resource.
+1080p24_2_caminandes_90s,A,base,r1,240,240,501,480960,1063,,1063,,,,,0,0,0,0,,4,,1,1,501,501,,,,,,,,,,,,WARN: Could not get/set settings from/on resource.;WARN: Could not get/set settings from/on resource.
+1080p25_3_bbb_trailer_33s,A,base,r1,250,250,501,480960,974,,974,,,,,0,0,0,0,,4,,1,1,501,501,,,,,,,,,,,,WARN: Could not get/set settings from/on resource.;WARN: Could not get/set settings from/on resource.
+1080p30_1_artemis_origins_85s,A,base,r1,300,300,501,480960,1018,,1018,,,,,0,0,0,0,,3,,1,1,501,501,,,,,,,,,,,,WARN: Could not get/set settings from/on resource.;WARN: Could not get/set settings from/on resource.
+1080p30_2_artemis_avatar_76s,A,base,r1,300,300,501,480960,1213,,1213,,,,,0,0,0,0,,3,,1,1,501,501,,,,,,,,,,,,WARN: Could not get/set settings from/on resource.;WARN: Could not get/set settings from/on resource.
+1080p30_3_artemis_recap_90s,A,base,r1,300,300,501,480960,1480,,1480,,,,,0,0,0,0,,5,,2,1,501,501,,,,,,,,,,,,WARN: Could not get/set settings from/on resource.;WARN: Could not get/set settings from/on resource.
