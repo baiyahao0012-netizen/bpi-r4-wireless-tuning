@@ -1,0 +1,13 @@
+{
+  "purpose": "prove the missing 0.2s of audio is a forced-kill artifact, not link loss",
+  "clip": "1080p25_3_bbb_trailer_33s_10s.mp4 (10.00 s media, 501 Opus packets)",
+  "sender_wire_packets_audio": {"value": 501, "method": "tcpdump -i eth0 udp port 5108 on the Pi"},
+  "wired_link": {"receiver": "Windows gst-launch, rtpbin latency=500",
+                 "kill": {"audio_samples": 470400, "seconds": 9.8, "frames": 250},
+                 "eos_ctrlc": {"audio_samples": 480960, "seconds": 10.02, "frames": 250}},
+  "wifi_link": {"topology": "Pi wlan1 192.168.240.126 -> AP -> laptop 192.168.240.2",
+                "kill": {"audio_samples": 470400, "seconds": 9.8, "frames": 250},
+                "eos_ctrlc": {"audio_samples": 480960, "seconds": 10.02, "frames": 250}},
+  "conclusion": "tail equals exactly the pipeline buffer flushed by EOS; kill -9 style termination drops it",
+  "note": "EOS delivered by Ctrl+C to the gst-launch console (GenerateConsoleCtrlEvent) with -e"
+}

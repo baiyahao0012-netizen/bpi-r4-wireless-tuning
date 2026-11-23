@@ -71,6 +71,15 @@ def probe_count(pad, stats, key):
     pad.add_probe(Gst.PadProbeType.BUFFER, cb)
 
 
+def probe_bytes(pad, stats, key):
+    def cb(p, info):
+        buf = probe_buffer(info)
+        if buf is not None:
+            stats[key] = stats.get(key, 0) + buf.get_size()
+        return Gst.PadProbeReturn.OK
+    pad.add_probe(Gst.PadProbeType.BUFFER, cb)
+
+
 def probe_audio_samples(pad, stats):
     def cb(p, info):
         buf = probe_buffer(info)
@@ -350,35 +359,55 @@ def build_sender(a, stats):
 
     srtp_enc = {}
     srtp_sink_pads = {}
+    srtp_rtcp_sink_pads = {}
+    srtp_dec_in = {}
     if a.srtp:
         # The srtpenc src pads are linked to the drop elements right away, so
         # both sides must already belong to the pipeline (else wrong-hierarchy).
         p.add(v_drop)
         p.add(a_drop)
+        p.add(v_rtcp)
+        p.add(a_rtcp)
         for sess in (0, 1):
             enc = make("srtpenc", "srtpenc%d" % sess)
             enc.set_property("key", Gst.Buffer.new_wrapped(TEST_KEY))
             p.add(enc)
 
             def _on_src(e, pad, sess=sess):
-                # rtp_src_%u is a SOMETIMES pad; it only exists once the sink
-                # side is active, so the handler must be connected first.
-                stats.setdefault("srtp_src_added", []).append(pad.get_name())
-                target = v_drop if sess == 0 else a_drop
+                # rtp_src_%u / rtcp_src_%u are SOMETIMES pads; they only exist
+                # once the sink side is active, so connect this handler first.
+                name = pad.get_name()
+                if pad.get_direction() != Gst.PadDirection.SRC:
+                    return
+                stats.setdefault("srtp_src_added", []).append(name)
+                if name.startswith("rtp_src_"):
+                    target = v_drop if sess == 0 else a_drop
+                else:
+                    target = v_rtcp if sess == 0 else a_rtcp
                 try:
-                    stats["srtp_src_link_%d" % sess] = pad.link(
+                    stats["srtp_src_link_%s" % name] = pad.link(
                         target.get_static_pad("sink")).value_nick
                 except Exception as exc:
-                    stats["srtp_src_link_err_%d" % sess] = str(exc)
+                    stats["srtp_src_link_err_%s" % name] = str(exc)
 
             enc.connect("pad-added", _on_src)
             srtp_enc[sess] = enc
             srtp_sink_pads[sess] = enc.request_pad_simple("rtp_sink_%d" % sess)
-            encsrc = enc.get_static_pad("rtp_src_%d" % sess)
-            if encsrc is not None and not encsrc.is_linked():
-                target = v_drop if sess == 0 else a_drop
-                stats["srtp_src_link_%d" % sess] = encsrc.link(
-                    target.get_static_pad("sink")).value_nick
+            srtp_rtcp_sink_pads[sess] = enc.request_pad_simple("rtcp_sink_%d" % sess)
+            for pname, target in (("rtp_src_%d" % sess, v_drop if sess == 0 else a_drop),
+                                  ("rtcp_src_%d" % sess, v_rtcp if sess == 0 else a_rtcp)):
+                try:
+                    sp = enc.get_static_pad(pname)
+                    if sp is not None and not sp.is_linked():
+                        stats["srtp_src_link_%s" % pname] = sp.link(
+                            target.get_static_pad("sink")).value_nick
+                except Exception as exc:
+                    stats["srtp_src_link_err_%s" % pname] = str(exc)
+            # decrypt the receiver's inbound RTCP (SRTCP)
+            dec = make("srtpdec", "srtpdec_in%d" % sess)
+            dec.connect("request-key", on_request_key, None)
+            p.add(dec)
+            srtp_dec_in[sess] = dec
 
     for el in (src, demux, vparse, vpay, apay, adev, aconv, ares, acap, aenc,
                rtpbin, v_drop, a_drop, v_sink, a_sink, v_rtcp, a_rtcp, v_fb, a_fb):
@@ -432,13 +461,29 @@ def build_sender(a, stats):
     apay.get_static_pad("src").link(rtpbin.request_pad_simple("send_rtp_sink_1"))
     apply_session_props(rtpbin, stats, 0)
     apply_session_props(rtpbin, stats, 1)
-    v_fb.get_static_pad("src").link(rtpbin.request_pad_simple("recv_rtcp_sink_0"))
-    a_fb.get_static_pad("src").link(rtpbin.request_pad_simple("recv_rtcp_sink_1"))
-    probe_rtcp_pt(v_fb.get_static_pad("src"), stats, "rtcp_in_video")
-    probe_rtcp_pt(a_fb.get_static_pad("src"), stats, "rtcp_in_audio")
-    for sess, sink, key in ((0, v_rtcp, "sr_video"), (1, a_rtcp, "sr_audio")):
-        pad = rtpbin.request_pad_simple("send_rtcp_src_%u" % sess)
-        pad.link(sink.get_static_pad("sink")); probe_sr(pad, stats, key)
+    if a.srtp:
+        for sess, fb, key in ((0, v_fb, "sr_video"), (1, a_fb, "sr_audio")):
+            fb.set_property("caps", caps("application/x-srtcp"))
+            dec = srtp_dec_in[sess]
+            fb.get_static_pad("src").link(dec.get_static_pad("rtcp_sink"))
+            dec.get_static_pad("rtcp_src").link(
+                rtpbin.request_pad_simple("recv_rtcp_sink_%d" % sess))
+            probe_rtcp_pt(dec.get_static_pad("rtcp_src"), stats,
+                          "rtcp_in_video" if sess == 0 else "rtcp_in_audio")
+        for sess, key in ((0, "sr_video"), (1, "sr_audio")):
+            pad = rtpbin.request_pad_simple("send_rtcp_src_%u" % sess)
+            probe_sr(pad, stats, key)
+            probe_rtcp_pt(pad, stats, "rtcp_out_srtcp_%d" % sess)
+            pad.link(srtp_rtcp_sink_pads[sess])
+    else:
+        v_fb.get_static_pad("src").link(rtpbin.request_pad_simple("recv_rtcp_sink_0"))
+        a_fb.get_static_pad("src").link(rtpbin.request_pad_simple("recv_rtcp_sink_1"))
+        probe_rtcp_pt(v_fb.get_static_pad("src"), stats, "rtcp_in_video")
+        probe_rtcp_pt(a_fb.get_static_pad("src"), stats, "rtcp_in_audio")
+        for sess, sink, key in ((0, v_rtcp, "sr_video"), (1, a_rtcp, "sr_audio")):
+            pad = rtpbin.request_pad_simple("send_rtcp_src_%u" % sess)
+            pad.link(sink.get_static_pad("sink"))
+            probe_sr(pad, stats, key)
     return p
 
 
@@ -466,11 +511,30 @@ def build_receiver(a, stats):
     for s in (v_rtcp_sink, a_rtcp_sink): s.set_property("sync", False); s.set_property("async", False)
 
     srtp_dec = {}
+    srtp_enc_fb = {}
     if a.srtp:
         for sess in (0, 1):
             dec = make("srtpdec", "srtpdec%d" % sess)
             dec.connect("request-key", on_request_key, None)
             p.add(dec); srtp_dec[sess] = dec
+            # encrypt our own outbound RTCP (RR/SR/PLI) as SRTCP
+            enc = make("srtpenc", "srtpenc_fb%d" % sess)
+            enc.set_property("key", Gst.Buffer.new_wrapped(TEST_KEY))
+            p.add(enc); srtp_enc_fb[sess] = enc
+
+            def _fb_src(e, pad, sess=sess):
+                name = pad.get_name()
+                if pad.get_direction() != Gst.PadDirection.SRC:
+                    return
+                stats.setdefault("srtcp_fb_src", []).append(name)
+                if name.startswith("rtcp_src_"):
+                    target = v_rtcp_sink if sess == 0 else a_rtcp_sink
+                    try:
+                        stats["srtcp_fb_link_%s" % name] = pad.link(
+                            target.get_static_pad("sink")).value_nick
+                    except Exception as exc:
+                        stats["srtcp_fb_link_err_%s" % name] = str(exc)
+            enc.connect("pad-added", _fb_src)
 
     vdepay = make("rtph264depay", "vdepay")
     if a.force_keyframe:
@@ -526,15 +590,31 @@ def build_receiver(a, stats):
     apply_session_props(rtpbin, stats, 0)
     apply_session_props(rtpbin, stats, 1)
     fb0 = rtpbin.request_pad_simple("recv_rtcp_sink_0"); fb1 = rtpbin.request_pad_simple("recv_rtcp_sink_1")
-    v_rtcp_src.get_static_pad("src").link(fb0); a_rtcp_src.get_static_pad("src").link(fb1)
-    probe_sr(fb0, stats, "sr_in_video"); probe_sr(fb1, stats, "sr_in_audio")
-    pad0 = rtpbin.request_pad_simple("send_rtcp_src_0"); pad0.link(v_rtcp_sink.get_static_pad("sink")); probe_rtcp_pt(pad0, stats, "rtcp_out0")
-    pad1 = rtpbin.request_pad_simple("send_rtcp_src_1"); pad1.link(a_rtcp_sink.get_static_pad("sink")); probe_rtcp_pt(pad1, stats, "rtcp_out1")
+    if a.srtp:
+        for sess, fb, udp, key in ((0, fb0, v_rtcp_src, "sr_in_video"),
+                                   (1, fb1, a_rtcp_src, "sr_in_audio")):
+            udp.set_property("caps", caps("application/x-srtcp"))
+            dec = srtp_dec[sess]
+            udp.get_static_pad("src").link(dec.get_static_pad("rtcp_sink"))
+            dec.get_static_pad("rtcp_src").link(fb)
+            probe_sr(dec.get_static_pad("rtcp_src"), stats, key)
+    else:
+        v_rtcp_src.get_static_pad("src").link(fb0); a_rtcp_src.get_static_pad("src").link(fb1)
+        probe_sr(fb0, stats, "sr_in_video"); probe_sr(fb1, stats, "sr_in_audio")
+    for sess, sink in ((0, v_rtcp_sink), (1, a_rtcp_sink)):
+        pad = rtpbin.request_pad_simple("send_rtcp_src_%u" % sess)
+        probe_rtcp_pt(pad, stats, "rtcp_out%d" % sess)
+        if a.srtp:
+            pad.link(srtp_enc_fb[sess].request_pad_simple("rtcp_sink_%d" % sess))
+        else:
+            pad.link(sink.get_static_pad("sink"))
 
     vdepay.link(vparse); vparse.link(vdec); vdec.link(vsink)
     adepay.link(adec); adec.link(aconv); aconv.link(ares); ares.link(acap); acap.link(asink)
     probe_count(vdec.get_static_pad("src"), stats, "video_frames")
     probe_audio_samples(acap.get_static_pad("src"), stats)
+    probe_bytes(v_src.get_static_pad("src"), stats, "net_video_bytes")
+    probe_bytes(a_src.get_static_pad("src"), stats, "net_audio_bytes")
     probe_rtp_pt(v_src.get_static_pad("src"), stats, "net_video")
     probe_rtp_pt(a_src.get_static_pad("src"), stats, "net_audio")
     return p
@@ -642,6 +722,8 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
 
 
 
