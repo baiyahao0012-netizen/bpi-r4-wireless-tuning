@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-23",
+  "purpose": "real Wi-Fi link six-clip matrix with EOS shutdown (audio complete)",
+  "topology": "Pi wlan1 192.168.240.126 -> BPI-R4 AP -> laptop 192.168.240.2",
+  "receiver": "Windows gst-launch 1.26.11, rtpbin latency=500, stopped with Ctrl+C (EOS)",
+  "results": [
+    {"clip": "1080p24_1_sintel_trailer_52s", "frames": 240, "expected_frames": 240, "audio_samples": 480960, "audio_seconds": 10.02},
+    {"clip": "1080p24_2_caminandes_90s", "frames": 240, "expected_frames": 240, "audio_samples": 480960, "audio_seconds": 10.02},
+    {"clip": "1080p25_3_bbb_trailer_33s", "frames": 250, "expected_frames": 250, "audio_samples": 480960, "audio_seconds": 10.02},
+    {"clip": "1080p30_1_artemis_origins_85s", "frames": 300, "expected_frames": 300, "audio_samples": 480960, "audio_seconds": 10.02},
+    {"clip": "1080p30_2_artemis_avatar_76s", "frames": 300, "expected_frames": 300, "audio_samples": 480960, "audio_seconds": 10.02},
+    {"clip": "1080p30_3_artemis_recap_90s", "frames": 300, "expected_frames": 300, "audio_samples": 480960, "audio_seconds": 10.02}
+  ],
+  "prior_kill_arm": {"audio_samples": 470400, "audio_seconds": 9.8, "note": "same receiver, same link, forced Stop-Process"}
+}
