@@ -1,4 +1,4 @@
-// l2_ai_ap_tx: AP-side L2 AI responder + bulk generator.
+﻿// l2_ai_ap_tx: AP-side L2 AI responder + bulk generator.
 // Runs on the AP (static aarch64 binary). Frames are AP-originated so they
 // traverse the AP egress qdisc, where tc classifies them by EtherType.
 //
@@ -88,7 +88,7 @@ static int send_frame(int sock, unsigned char *buf, int len) {
 static void on_signal(int s) { (void)s; g_stop = 1; }
 
 int main(int argc, char **argv) {
-    if (argc < 6) {
+    if (argc < 6) {  /* ai_prio optional as argv[6] */
         fprintf(stderr, "usage: %s <iface> <dst_mac> <resp_bytes> <bulk_mbps> <seconds>\n", argv[0]);
         return 1;
     }
@@ -99,6 +99,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     int resp_bytes = atoi(argv[3]);
+    int ai_prio = (argc > 6) ? atoi(argv[6]) : 3;
     double bulk_mbps = atof(argv[4]);
     int seconds = atoi(argv[5]);
 
@@ -108,8 +109,8 @@ int main(int argc, char **argv) {
     g_sock_ai = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     g_sock_bulk = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (g_sock_ai < 0 || g_sock_bulk < 0) { perror("socket"); return 1; }
-    int prio_ai = 0, prio_bulk = 1;
-    setsockopt(g_sock_ai, SOL_SOCKET, SO_PRIORITY, &prio_ai, sizeof(prio_ai));
+    int prio_ai = 3, prio_bulk = 0;  // overridden by argv[6]
+    setsockopt(g_sock_ai, SOL_SOCKET, SO_PRIORITY, &ai_prio, sizeof(ai_prio));
     setsockopt(g_sock_bulk, SOL_SOCKET, SO_PRIORITY, &prio_bulk, sizeof(prio_bulk));
     struct sockaddr_ll bind_sll;
     memset(&bind_sll, 0, sizeof(bind_sll));
@@ -188,4 +189,6 @@ int main(int argc, char **argv) {
     fprintf(stderr, "done req=%llu ai=%llu bulk=%llu\n", got_req, sent_ai, sent_bulk);
     return 0;
 }
+
+
 
