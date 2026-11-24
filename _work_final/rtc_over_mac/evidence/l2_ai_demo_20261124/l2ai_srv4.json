@@ -1,0 +1,1 @@
+RESULT {"role": "server", "requests_rx": 2, "requests_dup": 0, "responses_sent": 2, "responses_acked": 2, "responses_resent": 0, "bulk_rx": 0, "dedup_ok": true}
