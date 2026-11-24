@@ -66,6 +66,7 @@ class Scheduler:
 
     def __init__(self, mode, capacity, min_per_flow):
         self.mode = mode              # fifo | quota | ai-first | both
+        self.ai_evict = False         # sim AiFirst has no enqueue eviction
         self.capacity = capacity
         self.min_per_flow = min_per_flow
         self.queues = collections.OrderedDict()   # flow -> deque[Item]
@@ -84,14 +85,14 @@ class Scheduler:
 
     def enqueue(self, item, log):
         full = self.npackets >= self.capacity
-        if full and self.mode in ("ai-first", "both") and item.flow == 0:
+        if full and self.ai_evict and self.mode in ("ai-first", "both") and item.flow == 0:
             # AI arrival may evict the oldest bulk frame (AI-first admission)
             if self._evict_bulk(log):
                 full = False
         if full and self.mode in ("quota", "both"):
             # byte fair share over active flows
             nflows = max(1, len(self.queues))
-            share = max(self.min_per_flow * 1484, self.nbytes // nflows)
+            share = max(self.min_per_flow * 1484, self.capacity * 1484 // nflows)
             own = sum(i.nbytes for i in self.queues.get(item.flow, ()))
             if own < share:
                 victim = self._pick_victim()
@@ -176,6 +177,7 @@ class Client:
         self.a = a
         self.link = Link(a.iface, a.src_mac, a.dst_mac)
         self.sched = Scheduler(a.mode, a.qcap, a.min_per_flow)
+        self.sched.ai_evict = a.ai_evict
         self.lock = threading.RLock()
         self.stop = False
         self.outstanding = {}      # msg_id -> dict(bytes=Item, attempts, last_ns)
@@ -396,6 +398,8 @@ def main():
     ap.add_argument("--min-per-flow", type=int, default=20)
     ap.add_argument("--ack-timeout-ms", type=float, default=50.0)
     ap.add_argument("--max-resend", type=int, default=8)
+    ap.add_argument("--ai-evict", action="store_true",
+                    help="enable enqueue eviction for AI (NOT in sim AiFirst)")
     ap.add_argument("--msg-base", type=int, default=0)
     ap.add_argument("--ai-drop", type=float, default=0.0,
                     help="inject local AI drops (simulated MAC/TC loss)")
@@ -412,6 +416,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
