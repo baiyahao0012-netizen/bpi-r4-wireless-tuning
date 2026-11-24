@@ -1,0 +1,4 @@
+﻿RESULT {"role": "client", "mode": "client", "requests": 80, "delivered": 80, "resends": 622, "bulk_rx": 27916, "acks_rx": 0, "delivery_ratio": 1.0, "ttft_p50_us": 6706.3, "ttft_p95_us": 20273.7}
+RESULT {"role": "client", "mode": "client", "requests": 80, "delivered": 80, "resends": 622, "bulk_rx": 14210, "acks_rx": 0, "delivery_ratio": 1.0, "ttft_p50_us": 11089.4, "ttft_p95_us": 31939.6}
+RESULT {"role": "client", "mode": "client", "requests": 80, "delivered": 80, "resends": 622, "bulk_rx": 13909, "acks_rx": 0, "delivery_ratio": 1.0, "ttft_p50_us": 12965.1, "ttft_p95_us": 67145.1}
+RESULT {"role": "client", "mode": "client", "requests": 80, "delivered": 80, "resends": 622, "bulk_rx": 7096, "acks_rx": 0, "delivery_ratio": 1.0, "ttft_p50_us": 23899.8, "ttft_p95_us": 58916.6}
