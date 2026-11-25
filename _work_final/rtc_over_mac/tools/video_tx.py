@@ -62,7 +62,7 @@ class Sender:
         self.late = 0
         self.questions_sent = 0
         self.acks_sent = 0
-        self.ack_max = {}
+        self.ack_seen = {}
         self.ack_last = {}
         self.preload = {}
         if a.preload:
@@ -87,7 +87,7 @@ class Sender:
                 continue
             qid = p["qid"]
             with self.lock:
-                self.ack_max[qid] = max(self.ack_max.get(qid, -1), p["seq"])
+                self.ack_seen.setdefault(qid, set()).add(p["seq"])
             now = time.monotonic_ns()
             with self.lock:
                 t0 = self.pending.get(qid)
@@ -114,20 +114,33 @@ class Sender:
             self.questions_sent += 1
         self.log("question", qid, "idx=%d" % idx)
 
+    def _ack_state(self, qid):
+        seen = self.ack_seen.get(qid, set())
+        cum = -1
+        while (cum + 1) in seen:
+            cum += 1
+        cum_wire = cum + 1          # 0 means "nothing contiguous yet"
+        bitmap = 0
+        for i in range(32):
+            if (cum_wire + i) in seen:
+                bitmap |= 1 << i
+        return cum_wire, bitmap
+
     def ack_loop(self):
         while not self.stop:
             with self.lock:
-                pending = [(q, s) for q, s in self.ack_max.items()
-                           if self.ack_last.get(q) != s]
-            for q, s in pending:
+                pending = [q for q in self.ack_seen
+                           if self.ack_last.get(q) != self._ack_state(q)]
+            for q in pending:
+                cum_wire, bitmap = self._ack_state(q)
                 try:
                     for _ in range(3):
-                        self.tx.send(ack(self.dst, self.src, q, s))
+                        self.tx.send(ack(self.dst, self.src, q, cum_wire, bitmap))
                         with self.lock:
                             self.acks_sent += 1
                         time.sleep(0.002)
                     with self.lock:
-                        self.ack_last[q] = s
+                        self.ack_last[q] = (cum_wire, bitmap)
                 except OSError:
                     pass
             time.sleep(0.02)
@@ -224,6 +237,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 

@@ -20,6 +20,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fast_tx import PcapTx
+from reliable import ReliableBuffer
 from pcap_rx import PcapRx
 from video_proto import FRAME_MAX, ack, answer, mac, parse, question
 
@@ -103,6 +104,10 @@ class State:
         self.lost_ids = set()
         self.loss = a.loss
         self.outstanding = {}
+        self.rbuf = ReliableBuffer(
+            depth=a.buffer_depth, rto_ms=a.answer_timeout_ms,
+            max_sends=a.max_resend + 1, on_send=self._tx_frame,
+            ledger_path=(a.ledger + '.chunks.jsonl') if a.ledger else None)
         self.q = queue.Queue()
         self.clients = []
         self.lock = threading.RLock()
@@ -126,13 +131,8 @@ class State:
         if not p:
             return
         if p["type"] == "ack":
-            qid, seq = p["qid"], p["seq"]
-            with self.run_lock:
-                for key in [k for k in self.outstanding
-                            if k[0] == qid and k[1] <= seq]:
-                    self.outstanding.pop(key, None)
-                    with self.lock:
-                        self.stats["ans_acked"] += 1
+            self.rbuf.on_ack(p["qid"], p["cum"], p["bitmap"])
+            self._sync_rbuf()
             return
         if p["type"] == "video":
             self.stats["frags"] += 1
@@ -161,45 +161,36 @@ class State:
             self.q.put(p)
 
 
-    def send_answer(self, qid, seq, flags, t2, text):
-        frame = answer(self.dst, self.src, qid, seq, flags, t2, text)
-        key = (qid, seq)
-        with self.run_lock:
-            self.outstanding[key] = {"frame": frame, "attempts": 0,
-                                     "last": time.monotonic()}
-        self._emit_answer(key)
-
-    def _emit_answer(self, key):
-        rec = self.outstanding.get(key)
-        if rec is None:
-            return
-        rec["attempts"] += 1
-        rec["last"] = time.monotonic()
+    def _tx_frame(self, frame):
         if random.random() < self.loss:
             with self.lock:
                 self.stats["ans_dropped"] += 1
             return
         try:
-            self.tx.send(rec["frame"])
-            with self.lock:
-                self.stats["ans_sent"] += 1
+            self.tx.send(frame)
         except Exception:
             pass
 
+    def _sync_rbuf(self):
+        s = self.rbuf.stats
+        with self.lock:
+            self.stats["ans_sent"] = s["sent"]
+            self.stats["ans_acked"] = s["acked"]
+            self.stats["ans_retx"] = s["retx"]
+            self.stats["ans_failed"] = s["expired"]
+            self.stats["ans_evicted"] = s["evicted"]
+
+    def send_answer(self, qid, seq, flags, t2, text):
+        self.rbuf.add(qid, seq, answer(self.dst, self.src, qid, seq, flags, t2, text))
+        self._sync_rbuf()
+
     def retx_loop(self):
         while self.running:
-            now = time.monotonic()
-            for key, rec in list(self.outstanding.items()):
-                if now - rec["last"] < self.a.answer_timeout_ms / 1000.0:
-                    continue
-                if rec["attempts"] > self.a.max_resend:
-                    self.outstanding.pop(key, None)
-                    with self.lock:
-                        self.stats["ans_failed"] += 1
-                    continue
-                with self.lock:
-                    self.stats["ans_retx"] += 1
-                self._emit_answer(key)
+            try:
+                self.rbuf.tick()
+                self._sync_rbuf()
+            except Exception:
+                pass
             time.sleep(0.02)
 
     def reset_for_run(self):
@@ -213,8 +204,9 @@ class State:
             self.stats.update({"questions": 0, "answers": 0, "empty": 0,
                                "frames_total": 0, "lost": 0, "frags": 0,
                                "ans_sent": 0, "ans_dropped": 0, "ans_retx": 0,
-                               "ans_acked": 0, "ans_failed": 0})
+                               "ans_acked": 0, "ans_failed": 0, "ans_evicted": 0})
             self.outstanding.clear()
+            self.rbuf.clear()
             self.lost_ids = set()
         self.push({"phase": "reset"})
 
@@ -555,6 +547,7 @@ def main():
     ap.add_argument("--loss", type=float, default=0.0)
     ap.add_argument("--answer-timeout-ms", type=float, default=400.0)
     ap.add_argument("--max-resend", type=int, default=8)
+    ap.add_argument("--buffer-depth", type=int, default=64)
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--bind", default="127.0.0.1")
     ap.add_argument("--ledger", default="")

@@ -22,7 +22,7 @@ MAGIC_A = b"A01"
 VI = struct.Struct("!IQHHH")   # frame_idx, pts_us, frag_idx, frag_total, plen
 QH = struct.Struct("!IIQQH")   # qid, frame_idx, pts_us, t0_ns, tlen
 AH = struct.Struct("!IIBQH")   # qid, seq, flags, t2_ns, tlen
-ACKH = struct.Struct("!II")    # qid, seq
+ACKH = struct.Struct("!III")   # qid, cum_seq, bitmap
 
 ETH_HDR = 14
 FRAME_MAX = 1500
@@ -50,8 +50,8 @@ def answer(dst, src, qid, seq, flags, t2_ns, text):
     return dst + src + struct.pack("!H", ETH_QA) + body
 
 
-def ack(dst, src, qid, seq):
-    body = MAGIC_K + ACKH.pack(qid, seq)
+def ack(dst, src, qid, cum, bitmap):
+    body = MAGIC_K + ACKH.pack(qid, cum, bitmap)
     return dst + src + struct.pack("!H", ETH_ACK) + body
 
 
@@ -70,8 +70,8 @@ def parse(raw):
                 "payload": body[VI.size:VI.size + plen]}
     if et == ETH_ACK:
         if body[:3] == MAGIC_K and len(body) >= 3 + ACKH.size:
-            qid, seq = ACKH.unpack(body[3:3 + ACKH.size])
-            return {"type": "ack", "qid": qid, "seq": seq}
+            qid, cum, bitmap = ACKH.unpack(body[3:3 + ACKH.size])
+            return {"type": "ack", "qid": qid, "cum": cum, "bitmap": bitmap}
         return None
     if et == ETH_QA:
         if body[:3] == MAGIC_Q and len(body) >= 3 + QH.size:
@@ -85,4 +85,5 @@ def parse(raw):
             return {"type": "answer", "qid": qid, "seq": seq, "flags": flags,
                     "t2_ns": t2, "text": txt.decode("utf-8", "replace")}
     return None
+
 
