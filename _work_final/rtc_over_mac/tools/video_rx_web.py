@@ -46,11 +46,13 @@ body{background:#111;color:#ddd;font-family:system-ui;margin:0;display:flex;flex
  <div id="right"><h3>Q/A（按时间追加）</h3><div id="log"></div></div>
 </div>
 <script>
+const vid=document.getElementById('v');if(vid){vid.onerror=()=>{setTimeout(()=>{vid.src='/stream.mjpg?r='+Date.now();},1000);};}
 const log=document.getElementById('log'),btn=document.getElementById('btn'),st=document.getElementById('st'),met=document.getElementById('met'),loss=document.getElementById('loss');
 loss.onchange=()=>{fetch('/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({loss:loss.checked?0.3:0})});};
 const es=new EventSource('/events');
 es.onmessage=e=>{const d=JSON.parse(e.data);
   if(d.phase==='reset'){log.innerHTML='';window._cur=null;
+    const v=document.getElementById('v');if(v)v.src='/stream.mjpg?r='+Date.now();
     st.textContent='新一轮（模型已重置）';met.textContent='frames 0 | lost 0 | queue 0 | 已答 0';}
   else if(d.phase==='start'){window._cur=document.createElement('div');window._cur.className='q';
     window._cur.innerHTML=`<div class="meta">#${d.qid} t=${d.t}s frame=${d.idx} ${d.miss?'(frame miss)':''}</div>
@@ -83,6 +85,17 @@ class State:
         self.reasm = {}
         self.latest = None
         self.latest_seq = 0
+        self.placeholder = base64.b64decode(
+            '/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAP//////////////////////////////////////////'
+            '//////////////////////////////////////////////////////////2wBDAf//'
+            '//////////////////////////////////////////////////////////////wAARCAABAAEDASIA'
+            'AhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oA'
+            'DAMBAAIQAxAAAAF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABBQJ//8QAFBEBAAAA'
+            'AAAAAAAAAAAAAAAAAP/aAAgBAwEBPwF//8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAgBAgEB'
+            'PwF//8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQAGPwJ//8QAFBABAAAAAAAAAAAAAAAA'
+            'AAAAAP/aAAgBAQABPyF//9oADAMBAAIAAwAAABD/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oA'
+            'CAMDAQE/EH//xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EH//xAAUEAEAAAAAAAAA'
+            'AAAAAAAAAAAA/9oACAEBAAE/EH//2Q==')
         self.stats = {"frames": 0, "frames_total": 0, "lost": 0, "frags": 0,
                       "questions": 0, "answers": 0, "empty": 0,
                       "ans_sent": 0, "ans_dropped": 0, "ans_retx": 0,
@@ -462,6 +475,17 @@ def make_handler(st):
                 self.send_header("Content-Type",
                                  "multipart/x-mixed-replace; boundary=frame")
                 self.end_headers()
+                try:
+                    with st.lock:
+                        fr0 = st.latest
+                    img0 = fr0["jpeg"] if fr0 else st.placeholder
+                    self.wfile.write(b"--frame\r\nContent-Type: image/jpeg\r\n"
+                                     b"Content-Length: %d\r\n\r\n" % len(img0))
+                    self.wfile.write(img0)
+                    self.wfile.write(b"\r\n")
+                    self.wfile.flush()
+                except Exception:
+                    return
                 last = -1
                 while st.running:
                     with st.lock:
