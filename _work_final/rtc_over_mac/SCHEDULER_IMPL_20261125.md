@@ -44,3 +44,30 @@
 - S2（quota 驱逐）、S5（超份额负向）、S6（限速≥链路容量的对照）尚未跑；
 - fcfs_violations 仍有 3（~0.04%），需定位来源；
 - 结论口径：所有数字来自应用层队列，**不能外推为 MAC 队列行为**。
+
+## 6. 第二轮审计修正（度量口径）
+
+| 审计项 | 修正 | 验证 |
+|---|---|---|
+| `attempts_total` 反而小于 `sendp_calls` | 改为 `attempts_ever`（每次发送/注入都 +1）；另报 `attempts_ledger=Σlen(sends)` 与 `attempts_ge_sendp` 自检 | S1f `attempts=128 = sendp=128`、`ge=True`；`ledger=112`（16 条已淘汰，可解释） |
+| `fcfs_violations` 不可用（fifo 报 7） | 删除"相邻比较"，改为**服务结束后按 flow 扫全量 service_log 检查 enq 单调**；顺带修根因：重试复用旧 Item 导致 enq_ns 早于后入队项（重试时新建 Item） | S1f fifo `fcfs_inv=0`、S3f ai-first `fcfs_inv=0` |
+| `ai_overtakes` 是帧数不是次数 | 拆成 `ai_jump_frames`（发生越队的 AI 条数）与 `bulk_skipped_total`（被跳过的 bulk 帧数） | S3f `jump=92`、`skipped=44590`；S1f 两者均 0 |
+| quota 在 capacity 15 下数学退化 | 加 `quota_degenerate` 标志（`min_per_flow > capacity` 时置真）；quota 一律在 capacity 500 跑 | S2e cap500 `degen=False`、`evict=138`、`evicted_by_flow={1:42,2:39,3:33,4:24}` |
+
+### 6.1 修正后的主表
+
+| 臂 | 送达 | TTFT p50 | p95 | jump | fcfs_inv |
+|---|---:|---:|---:|---:|---:|
+| S1f fifo（cap500） | 70/80 | 1051.6 ms | 2078.8 ms | 0 | 0 |
+| S3f ai-first（cap500） | **80/80** | **50.8 ms** | 180.2 ms | 92 | 0 |
+| S2e quota（cap500） | 68/80 | 983.6 ms | 1074.7 ms | 0 | 0 |
+
+- ai-first 相对 fifo：p50 约 **20×** 改善，且每次 AI 发送都确实越过了更早入队的 bulk（jump=92）；
+- quota 单独不改善时延（保护准入、保持 FCFS），与仿真语义一致；
+- 所有结论仅限应用层队列。
+
+## 7. 仍未完成
+
+- S5（quota 负向：AI 自身超过份额时应被拒）；
+- S6（`rate ≥ 250 Mbps` 对照：无积压时 ai-first 应无收益）；
+- S2 的"受害者是超标最多流"需按 `evicted_by_flow` 与当时的每流字节对账（账本已记录 sends 与时间，可离线重算）。

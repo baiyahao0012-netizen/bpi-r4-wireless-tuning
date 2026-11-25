@@ -43,7 +43,12 @@ class Scheduler:
         self.dropped = collections.Counter()
         self.evicted_by_flow = collections.Counter()
         self.rejected_by_flow = collections.Counter()
-        self.ai_overtakes = 0
+        self.ai_jump_frames = 0
+        self.bulk_skipped_total = 0
+        self.service_log = []
+        # if the per-flow floor exceeds the whole queue, no flow can ever be
+        # "over share": quota degenerates into "reject when full".
+        self.quota_degenerate = mode in ("quota", "both") and min_per_flow > capacity
         self.fcfs_violations = 0
         self.service_order = collections.deque(maxlen=256)
         self.served = []          # 閺堝秴濮熸惔蹇撳灙閿涘牏鏁ゆ禍搴㈡簚閸掑墎楠囬崚銈嗗祦閿?
@@ -135,14 +140,23 @@ class Scheduler:
     def note_served(self, item):
         """Called after the item was actually transmitted (not on speculative pop)."""
         if self.mode in ("ai-first", "both") and item.flow == 0:
-            # bulk frames queued *earlier* than this AI frame and still waiting
-            self.ai_overtakes += sum(
-                1 for flow, dq in self.queues.items() if flow != 0
-                for it in dq if it.enq_ns < item.enq_ns)
-        if self.service_order and self.service_order[-1][1] == item.flow:
-            if item.enq_ns < self.service_order[-1][2]:
-                self.fcfs_violations += 1
-        self.service_order.append((time.monotonic_ns(), item.flow, item.enq_ns))
+            skipped = sum(1 for flow, dq in self.queues.items() if flow != 0
+                          for it in dq if it.enq_ns < item.enq_ns)
+            self.bulk_skipped_total += skipped
+            if skipped > 0:
+                self.ai_jump_frames += 1   # an actual overtake event
+        self.service_log.append((item.flow, item.enq_ns))
+
+    def _count_inversions(self):
+        """Per-flow monotonic check over the whole served log (adjacent compare
+        is insufficient and was inflated by speculative pops)."""
+        last = {}
+        inv = 0
+        for flow, enq in self.service_log:
+            if flow in last and enq < last[flow]:
+                inv += 1
+            last[flow] = enq
+        return inv
 
     def stats(self):
         return {
@@ -152,9 +166,13 @@ class Scheduler:
             "drops_by_flow": dict(self.dropped),
             "evicted_by_flow": dict(self.evicted_by_flow),
             "rejected_by_flow": dict(self.rejected_by_flow),
-            "ai_overtakes": self.ai_overtakes,
-            "fcfs_violations": self.fcfs_violations,
+            "ai_jump_frames": self.ai_jump_frames,
+            "bulk_skipped_total": self.bulk_skipped_total,
+            "fcfs_inversions": self._count_inversions(),
+            "quota_degenerate": self.quota_degenerate,
         }
+
+
 
 
 

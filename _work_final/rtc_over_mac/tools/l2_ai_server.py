@@ -71,6 +71,7 @@ class Server:
             "rejected_by_flow": {}, "evicted_by_flow": {},
         }
         self.created_total = 0
+        self.attempts_ever = 0
         self.csv = open(a.csv, "w", buffering=1) if a.csv else None
         if self.csv:
             self.csv.write("t_ns,event,flow,msg_id,detail\n")
@@ -257,6 +258,7 @@ class Server:
                                   b"\x00" * (item.nbytes - 20))
                         with self.lock:
                             self.stats["bulk_sent"] += 1
+                            self.sched.note_served(item)
                     except Exception:
                         pass
                     continue
@@ -277,6 +279,7 @@ class Server:
                         rec["sends"].append({"n": n, "t_ns": now_ns, "ack": "none",
                                              "sendp_us": 0.0, "injected": "drop"})
                         self.stats["injected_drop"] += 1
+                        self.attempts_ever += 1
                     self.log("inject_drop", 0, mid, "n=%d" % n)
                     continue
                 if self.fail_resp.get(mid, 0) >= n:
@@ -288,6 +291,8 @@ class Server:
                         rec["sends"].append({"n": n, "t_ns": now_ns, "ack": "none",
                                              "sendp_us": 0.0, "injected": "fail"})
                         self.stats["send_err_retry"] += 1
+                        self.attempts_ever += 1
+                        rec["item"] = self._new_item(mid, rec["item"].t0_ns)
                         self.sched.enqueue(rec["item"])
                     self.log("inject_fail", 0, mid, "n=%d" % n)
                     continue
@@ -300,6 +305,7 @@ class Server:
                     with self.lock:
                         rec["state"] = "queued"
                         self.stats["send_err_retry"] += 1
+                        rec["item"] = self._new_item(mid, rec["item"].t0_ns)
                         self.sched.enqueue(rec["item"])
                     self.log("send_err", 0, mid, str(exc))
                     continue
@@ -312,6 +318,7 @@ class Server:
                                          "sendp_us": sendp_us})
                     self.stats["responses_sent"] += 1
                     self.stats["sendp_calls"] += 1
+                    self.attempts_ever += 1
                     self.sched.note_served(item)
 
     # ---------- retransmit ----------
@@ -331,6 +338,7 @@ class Server:
                             continue
                         if (now - rec.get("reject_ns", now)) / 1e6 >= self.a.reject_retry_ms:
                             self.stats["retry_rejected"] += 1
+                            rec["item"] = self._new_item(mid, rec["item"].t0_ns)
                             retry.append(mid)
                         continue
                     if rec["state"] != "inflight":
@@ -384,7 +392,9 @@ class Server:
             res["msg_done"] = states.get("done", 0)
             res["msg_abandoned"] = states.get("abandoned", 0)
             res["msg_rejected"] = states.get("rejected", 0)
-            res["attempts_total"] = sum(r["attempts"] for r in self.records.values())
+            res["attempts_total"] = self.attempts_ever
+            res["attempts_ledger"] = sum(len(r["sends"]) for r in self.records.values())
+            res["attempts_ge_sendp"] = self.attempts_ever >= self.stats["sendp_calls"]
         if self.a.ledger:
             with open(self.a.ledger, "w", encoding="utf-8") as fh:
                 for mid, rec in self.records.items():
@@ -448,6 +458,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 
