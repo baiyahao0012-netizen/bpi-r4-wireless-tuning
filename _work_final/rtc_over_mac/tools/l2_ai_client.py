@@ -35,7 +35,7 @@ class Client:
         self.awaiting = {}      # request awaiting response (TTFT start point)
         self.ttft_us = []
         self.stats = {"requests": 0, "delivered": 0, "resends": 0,
-                      "bulk_rx": 0, "acks_rx": 0}
+                      "resp_timeout_resend": 0, "bulk_rx": 0, "acks_rx": 0}
         self.csv = open(a.csv, "w", buffering=1) if a.csv else None
         if self.csv:
             self.csv.write("t_ns,event,msg_id,detail\n")
@@ -99,7 +99,8 @@ class Client:
             with self.lock:
                 self.outstanding[mid] = {"t0_ns": t0, "attempts": 1,
                                          "last_ns": time.monotonic_ns()}
-                self.awaiting[mid] = {"t0_ns": t0, "last_ns": time.monotonic_ns()}
+                self.awaiting[mid] = {"t0_ns": t0, "last_ns": time.monotonic_ns(),
+                                      "attempts": 0}
                 self.stats["requests"] += 1
             mid += 1
             next_t += self.a.ai_interval_ms / 1000.0
@@ -121,6 +122,26 @@ class Client:
                     self.send_req(mid, t0)
                     self.stats["resends"] += 1
                     self.log("resend", mid, "")
+                except OSError:
+                    pass
+            # responses that never arrived -> resend the request (safety net)
+            now = time.monotonic_ns()
+            resp_retry = []
+            with self.lock:
+                for mid, rec in list(self.awaiting.items()):
+                    if mid not in self.outstanding:
+                        continue  # request already ACKed: server owns the response retx
+                    if rec["attempts"] >= self.a.max_resend:
+                        continue
+                    if (now - rec["last_ns"]) / 1e6 >= self.a.resp_timeout_ms * (2 ** min(rec["attempts"], 3)):
+                        rec["attempts"] += 1
+                        rec["last_ns"] = now
+                        resp_retry.append((mid, rec["t0_ns"]))
+            for mid, t0 in resp_retry:
+                try:
+                    self.send_req(mid, t0)
+                    self.stats["resp_timeout_resend"] += 1
+                    self.log("resp_timeout_resend", mid, "")
                 except OSError:
                     pass
             time.sleep(0.01)
@@ -159,6 +180,7 @@ def main():
     ap.add_argument("--seconds", type=float, default=12)
     ap.add_argument("--ai-interval-ms", type=float, default=100.0)
     ap.add_argument("--ack-timeout-ms", type=float, default=60.0)
+    ap.add_argument("--resp-timeout-ms", type=float, default=120.0)
     ap.add_argument("--max-resend", type=int, default=8)
     ap.add_argument("--msg-base", type=int, default=0)
     ap.add_argument("--csv", default="")
@@ -173,4 +195,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
