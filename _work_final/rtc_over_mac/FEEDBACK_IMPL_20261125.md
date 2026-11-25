@@ -154,3 +154,50 @@ sudo python3 tools/l2_ai_client.py --dst-mac 40:c2:ba:52:70:95 \
 | 每次丢包才重发 | 定时器到期就重发 | 需要 RTT 自适应超时 + 每秒重发上限 |
 
 下一步修法：客户端 ack-timeout 改为 **RTT 自适应**（`max(150ms, 3×ack_rtt_p95)`）+ 全局重发速率上限，然后重跑 E8/E10。
+
+## 9. USB 3.0 修正与最终矩阵（2026-11-25 晚）
+
+### 9.1 我此前的一个错误结论
+
+之前读 `lsusb -v` 得到 `bcdUSB 2.10 / High Speed 480M`，据此判断"网卡是 USB 2.0、换 3.0 口不会提速"——**这是错的**。那块卡实际是 **USB 3.x（bcdUSB 3.20）**，当时它已从 3.0 口降级到 2.0 口（dmesg 里有 `4-1.4` SuperSpeed → `-71 EPROTO` → disconnect → `1-2` 480M 的搬迁记录）。换回 3.0 口后：
+
+| 项 | USB 2.0（480M） | USB 3.0（5000M） |
+|---|---|---|
+| 100M offered 丢包 | 4.7% | **0.11%** |
+| 200M offered 丢包 | 11% | **1.3%** |
+| ping avg / mdev | 4.2 / 8.8 ms | **2.6 / 0.04 ms** |
+
+结论：**之前 12% 的 `tx failed` 与"215 Mbps 容量"至少部分是 USB 2.0 造成的**，相关拥塞结论需以新链路重测为准。
+
+### 9.2 接口与网络配置（决定：不改名）
+
+- **不改名**（wlan0），因为所有脚本已参数化；改名的收益只是省一次参数调整，成本是 systemd .link + 重启。
+- 把 wlan0 交给 **NetworkManager** 托管：`rtc-media` profile 绑定 `interface-name wlan0`、静态 `192.168.240.126/24`、`ipv4.never-default yes`、`wifi.powersave 2`；
+- 删除当初为板载写的 `/etc/NetworkManager/conf.d/99-rtc-unmanaged-wlan0.conf`（它误伤了顶替上来的 USB 卡）；
+- 持久化 ARP 策略 `arp_ignore=1 / arp_announce=2`（解决 AP→Pi 的 `INCOMPLETE`）；
+- 结果：Pi→AP 1.7 ms、**AP→Pi 0.72–1.43 ms（ARP REACHABLE）**，USB 重插后 NM 自动恢复地址。
+
+### 9.3 最终机制矩阵（全部可核对）
+
+| 实验 | 注入 | 结果 | 断言 |
+|---|---|---|---|
+| E1 | 无 | 80/80，p50 14.6 ms，p95 49.0 ms | 基线 |
+| E2 | 响应第 1 次不发 | n=1 `drop(ack:timeout)` → n=2 `recv`（78 ms） | 超时档 ≈ tmo |
+| E3 | 连续 4 次不发 | n=1..4 drop → n=5 recv | 多次超时后恢复 |
+| E4 | 连续 9 次不发 | n=1..8 全 drop，`final:inflight` | 8 次上限生效 |
+| E5 | 请求 ACK 丢 | `constructed=40`（=唯一），`requests_dup=25` | 只推理一次 |
+| E6 | 响应 ACK 丢 | `dup_resp=10`，送达仍 40/40 | 重复响应不重计 |
+| E8 | 请求首发不发 | `injected_drop=1` → 重传 → 40/40，`constructed=40` | 上行方向可恢复 |
+| E9 | 发送失败 | n=1 `inject:fail` → **n=2 同一时间戳**（0 ms） | 事件档 ≈ 0 ms |
+| E10 | `capacity=1` + 0.05 Mbps | `enqueue_reject=29`，`drops_by_flow{0:29}` | 入队拒绝路径被触发 |
+
+### 9.4 修复的两个自激 bug
+
+1. `attempts` 在 retx 与 send 两处各加一次 → 注入编号跳号（1→3→5）；改为只在 send 处递增；
+2. 客户端无界重传 + 服务端"每 dup 必发" → 9.6 倍放大；加两道闸：dup 重发最小间隔 `resp_timeout/2`、客户端**全局重发令牌桶**（默认 20 pkt/s）。
+
+### 9.5 与仿真的剩余差异
+
+- 8 次上限：仿真是"初始 + 8 次重发"（`kMaxResendsPerChunk=8`），当前实现是**总共 8 次发送**，差一次，需按报告口径说明或改为 9；
+- 空中丢包仍只能靠 ACK 超时（78 ms）发现；事件档（入队拒绝/发送失败）可做到 ≈0 ms；
+- 客户端重传上限 8、指数退避、令牌桶是硬件侧新增，仿真无对应物。

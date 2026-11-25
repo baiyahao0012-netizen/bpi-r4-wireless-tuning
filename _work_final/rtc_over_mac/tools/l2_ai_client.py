@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """L2 AI client: request generator + feedback state machine + ledger + echo probe.
 
@@ -57,8 +57,10 @@ class Client:
         self.inject_fail = parse_spec(a.fail_req)
         self.drop_ack_resp = parse_spec(a.drop_ack_resp)
         self.ack_sent = collections.Counter()
+        self.retx_tokens = float(a.retx_budget)
+        self.retx_last = time.monotonic()
         self.stats = {"requests": 0, "delivered": 0, "resends": 0,
-                      "resp_timeout_resend": 0, "injected_drop": 0,
+                      "resp_timeout_resend": 0, "retx_budget_drop": 0, "injected_drop": 0,
                       "injected_fail": 0, "dup_resp": 0, "acks_rx": 0,
                       "bulk_rx": 0, "echo_sent": 0, "echo_rx": 0}
         self.csv = open(a.csv, "w", buffering=1) if a.csv else None
@@ -210,6 +212,16 @@ class Client:
             time.sleep(0.05)
 
     # ---------- retransmit ----------
+    def _take_token(self):
+        now = time.monotonic()
+        self.retx_tokens = min(self.a.retx_budget,
+                               self.retx_tokens + (now - self.retx_last) * self.a.retx_budget)
+        self.retx_last = now
+        if self.retx_tokens >= 1.0:
+            self.retx_tokens -= 1.0
+            return True
+        return False
+
     def retx_loop(self):
         while not self.stop:
             now = time.monotonic_ns()
@@ -222,6 +234,9 @@ class Client:
                     if (now - o["last_ns"]) / 1e6 >= self.a.ack_timeout_ms * (2 ** min(rec["attempts"] - 1, 3)):
                         req_retry.append((mid, rec["t0_ns"]))
             for mid, t0 in req_retry:
+                if not self._take_token():
+                    self.stats["retx_budget_drop"] += 1
+                    continue
                 try:
                     self.send_req(mid, t0, reason="ack_timeout")
                     self.stats["resends"] += 1
@@ -240,6 +255,9 @@ class Client:
                         aw["last_ns"] = now
                         resp_retry.append((mid, aw["t0_ns"]))
             for mid, t0 in resp_retry:
+                if not self._take_token():
+                    self.stats["retx_budget_drop"] += 1
+                    continue
                 try:
                     self.send_req(mid, t0, reason="resp_timeout")
                     self.stats["resp_timeout_resend"] += 1
@@ -282,6 +300,8 @@ def main():
     ap.add_argument("--ack-timeout-ms", type=float, default=60.0)
     ap.add_argument("--resp-timeout-ms", type=float, default=120.0)
     ap.add_argument("--max-resend", type=int, default=8)
+    ap.add_argument("--retx-budget", type=float, default=20.0,
+                    help="global retransmit budget, packets per second")
     ap.add_argument("--msg-base", type=int, default=0)
     ap.add_argument("--echo", type=int, default=0)
     ap.add_argument("--drop-req", default="")
@@ -300,3 +320,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
