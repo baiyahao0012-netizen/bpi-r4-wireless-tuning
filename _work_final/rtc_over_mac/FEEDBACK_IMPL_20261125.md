@@ -105,3 +105,26 @@ sudo python3 tools/l2_ai_client.py --dst-mac 40:c2:ba:52:70:95 \
 - p50 稳定在 15–26 ms；p95 45–144 ms；
 - 服务端内部 recv→send p50 = 0 µs，p95 约 15–46 ms → 剩余时延主要来自 Windows/Npcap 发送路径与空口，不是协议逻辑；
 - 与 ping 的 4.2 ms 相比，p50 16 ms 的差额有待用"AP 侧发送时间戳"进一步拆分（下一步）。
+
+## 7. 埋点与定点注入（2026-11-25 下午）
+
+### 7.1 新增能力
+
+- **逐消息账本**：`--ledger` 输出 JSONL，服务端字段 `constructed / dup_requests / injected_drop / sends[{n,t,ack,sendp_us,injected}]`；客户端字段 `t0/attempts/reasons/ttft/dup_resp/resp_from_attempt`；
+- **ACK 三态**：`ack: none|recv|timeout`（不再写"丢"，"丢"是推断）；
+- **响应携带 attempt**：`flags` 字段回传第几次发送，客户端据此记录 `resp_from_attempt`；
+- **进程内定点注入**：`--drop-resp mid:n`（假装发出但丢失→超时档）、`--fail-resp mid:n`（立即失败→事件档）、`--drop-ack-req mid:n`、`--drop-req mid:n`、`--fail-req mid:n`、`--drop-ack-resp mid:n`；
+- **echo 探针 `0x88B9`**：已实现但**判定不可用**——回复走 scapy `sendp`，每次 20–40 ms，20 个探针自激排队（空闲 p50 380 ms），不能当空口底噪。
+
+### 7.2 已测结果
+
+| 实验 | 结果 |
+|---|---|
+| **E0 有线对照** | 80/80 送达，**TTFT p50 13.1 ms**、p95 36.8 ms → 工具底噪（Npcap+Python）就有 13 ms |
+| E1 WiFi | 100/100 送达，**TTFT p50 16.4 ms**、p95 55.0 ms → 空口只多约 3 ms |
+| E2 超时档 | mid 500000 账本：`n=1 injected:"drop"`、`n=2 ack:"recv"`；但该轮恢复走的是 dup 路径（客户端重发请求），需用大 ack-timeout 隔离 |
+| **E9 事件档** | mid 500000 账本：`n=1 injected:"fail"`、**`n=2` 与 `n=1` 同一时间戳**（≈0 ms 补发），`send_err_retry=1`，40/40 送达 |
+
+### 7.3 发现的放大器问题
+
+用 runner 跑 E1（60 请求 / 6 s）时出现 0 送达、`requests_rx=578`（9.6 倍放大）：客户端因 ACK 超时重发请求，服务端**每个 dup 都重发一次响应**，两者叠加形成风暴，最终客户端收不到任何响应。修法（下一步）：dup 重发加最小间隔（如 `resp_timeout/2`）或只在"从未发出"时才补发。

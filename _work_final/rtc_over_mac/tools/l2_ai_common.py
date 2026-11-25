@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Shared L2 AI demo protocol: 12-byte RTC shim + AI record header.
 
@@ -16,6 +16,7 @@ import struct
 ETH_AI = 0x88B6
 ETH_BULK = 0x88B7
 ETH_ACK = 0x88B8
+ETH_ECHO = 0x88B9   # L2 echo probe (single-clock RTT floor)
 
 SHIM = struct.Struct("!BBHHBBHH")      # ver,type,flow,len,ttl,hlen,crc,stream
 AIHDR = struct.Struct("!IHHQI")        # msg_id, kind, plen, t0_ns, flags
@@ -40,7 +41,7 @@ def parse_frame(raw):
     if len(raw) < 14 + SHIM.size + AIHDR.size:
         return None
     ethertype = struct.unpack("!H", raw[12:14])[0]
-    if ethertype not in (ETH_AI, ETH_BULK, ETH_ACK):
+    if ethertype not in (ETH_AI, ETH_BULK, ETH_ACK, ETH_ECHO):
         return None
     shim = raw[14:14 + SHIM.size]
     ver, typ, flow, plen, ttl, hlen, crc, stream = SHIM.unpack(shim)
@@ -71,3 +72,4 @@ def mac_bytes(s):
 
 def mac_str(b):
     return ":".join("%02x" % x for x in b)
+
