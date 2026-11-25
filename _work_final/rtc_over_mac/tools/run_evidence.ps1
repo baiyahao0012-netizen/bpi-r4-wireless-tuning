@@ -1,4 +1,4 @@
-param(
+﻿param(
   [string]$Tag = "E1",
   [string]$DropResp = "",
   [string]$FailResp = "",
@@ -14,6 +14,7 @@ param(
   [int]$Capacity = 200,
   [int]$BufferDepth = 64,
   [double]$RateMbps = 10,
+  [double]$BulkMbps = 0,
   [double]$SrvRespTimeout = 80,
   [double]$CliAckTimeout = 60,
   [double]$CliRespTimeout = 120,
@@ -25,7 +26,12 @@ New-Item -ItemType Directory -Force $Evidence | Out-Null
 $srvOut = "$env:TEMP\ev_${Tag}_srv.json"
 $srvLedger = "$env:TEMP\ev_${Tag}_srv.jsonl"
 $cliLedger = "/tmp/ev_${Tag}_cli.jsonl"
-$sargs = @("--mode", "fifo", "--seconds", ($Seconds + 8), "--bulk-mbps", 0,
+# never reuse a stale ledger: a missing/old file must not be mistaken for a run
+Remove-Item $srvLedger -ErrorAction SilentlyContinue
+Remove-Item "$Evidence\${Tag}_srv.jsonl" -ErrorAction SilentlyContinue
+Remove-Item "$Evidence\${Tag}_cli.jsonl" -ErrorAction SilentlyContinue
+& ssh -i $key -o BatchMode=yes -o ConnectTimeout=8 bai@192.168.240.153 "rm -f $cliLedger" 2>&1 | Out-Null
+$sargs = @("--mode", "fifo", "--seconds", ($Seconds + 8), "--bulk-mbps", $BulkMbps,
            "--client-mac", $ClientMac, "--capacity", $Capacity,
            "--buffer-depth", $BufferDepth, "--rate-mbps", $RateMbps,
            "--resp-timeout-ms", $SrvRespTimeout, "--ledger", $srvLedger, "--out", $srvOut)

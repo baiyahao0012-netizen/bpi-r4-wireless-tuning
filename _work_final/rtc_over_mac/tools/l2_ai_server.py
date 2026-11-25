@@ -64,11 +64,13 @@ class Server:
             "requests_rx": 0, "requests_dup": 0, "responses_sent": 0,
             "responses_acked": 0, "resp_dup_resend": 0, "enqueue_reject": 0,
             "send_err_retry": 0, "retx_timeout": 0, "injected_drop": 0,
-            "constructed": 0, "ack_req_dropped": 0, "done": 0,
-            "resend_cap_hit": 0, "tx_attempts_total": 0, "ack_resp_recv": 0,
+            "constructed": 0, "ack_req_dropped": 0,
+            "resend_cap_hit": 0, "sendp_calls": 0, "ack_resp_recv": 0,
             "echo_rx": 0, "bulk_sent": 0, "dup_resend_limited": 0,
-            "buffer_evicted": 0,
+            "buffer_evicted": 0, "abandoned": 0, "retry_rejected": 0,
+            "rejected_by_flow": {}, "evicted_by_flow": {},
         }
+        self.created_total = 0
         self.csv = open(a.csv, "w", buffering=1) if a.csv else None
         if self.csv:
             self.csv.write("t_ns,event,flow,msg_id,detail\n")
@@ -96,9 +98,16 @@ class Server:
         if ok:
             rec["state"] = "queued"
         else:
+            # admission rejected: this is an EVENT, not a terminal state.
+            # Simulation: HasToDropBeforeEnqueue -> DropBeforeEnqueue ->
+            # OnTextQueueDiscDropped -> ScheduleNow (immediate retry).
             rec["state"] = "rejected"
+            rec["reject_ns"] = time.monotonic_ns()
+            rec["reject_retries"] = rec.get("reject_retries", 0) + 1
             self.stats["enqueue_reject"] += 1
-            self.log("enqueue_reject", 0, mid, "")
+            self.stats["rejected_by_flow"][rec["item"].flow] = \
+                self.stats["rejected_by_flow"].get(rec["item"].flow, 0) + 1
+            self.log("enqueue_reject", 0, mid, "retry=%d" % rec["reject_retries"])
         return ok
 
     # ---------- RX ----------
@@ -126,7 +135,6 @@ class Server:
                             s["ack_after_us"] = (now - s["t_ns"]) / 1000.0
                             break
                     rec["state"] = "done"
-                    self.stats["done"] += 1
                 self.stats["responses_acked"] += 1
                 self.stats["ack_resp_recv"] += 1
             return
@@ -144,6 +152,7 @@ class Server:
                            "sends": []}
                     self.records[mid] = rec
                     self.order.append(mid)
+                    self.created_total += 1
                     self.stats["constructed"] += 1
                     # bounded history (AiTextRetransmitBuffer depth), evict oldest done
                     while len(self.order) > self.a.buffer_depth:
@@ -303,7 +312,7 @@ class Server:
                     rec["sends"].append({"n": n, "t_ns": now_ns, "ack": "none",
                                          "sendp_us": sendp_us})
                     self.stats["responses_sent"] += 1
-                    self.stats["tx_attempts_total"] += 1
+                    self.stats["sendp_calls"] += 1
 
     # ---------- retransmit ----------
     def retx_loop(self):
@@ -312,9 +321,24 @@ class Server:
             retry = []
             with self.lock:
                 for mid, rec in self.records.items():
+                    if rec["state"] == "rejected":
+                        # admission event: retry quickly (event-driven), not on
+                        # the inflight timeout. Bounded by reject_retries.
+                        if (now - rec["recv_ns"]) / 1e6 > self.a.deadline_ms:
+                            rec["state"] = "abandoned"
+                            self.stats["abandoned"] += 1
+                            self.log("abandoned", 0, mid, "deadline")
+                            continue
+                        if (now - rec.get("reject_ns", now)) / 1e6 >= self.a.reject_retry_ms:
+                            self.stats["retry_rejected"] += 1
+                            retry.append(mid)
+                        continue
                     if rec["state"] != "inflight":
                         continue
-                    if rec["attempts"] > self.a.max_resend:
+                    if rec["attempts"] >= self.a.max_resend + 1:
+                        rec["state"] = "abandoned"
+                        self.stats["abandoned"] += 1
+                        self.log("abandoned", 0, mid, "attempts=%d" % rec["attempts"])
                         continue
                     if (now - rec["last_ns"]) / 1e6 >= self.a.resp_timeout_ms:
                         for s in reversed(rec["sends"]):
@@ -351,10 +375,16 @@ class Server:
             pass
         res = {"role": "server", "mode": self.a.mode, "pacing": self.a.pacing,
                "rate_mbps": self.a.rate_mbps, "bulk_mbps": self.a.bulk_mbps,
-               "unique_requests": len(self.records)}
+               "unique_requests": self.created_total}
         with self.lock:
             res.update(self.stats)
             res.update(self.sched.stats())
+            # message-level terminal states (not per-ACK counts)
+            states = collections.Counter(r["state"] for r in self.records.values())
+            res["msg_done"] = states.get("done", 0)
+            res["msg_abandoned"] = states.get("abandoned", 0)
+            res["msg_rejected"] = states.get("rejected", 0)
+            res["attempts_total"] = sum(r["attempts"] for r in self.records.values())
         if self.a.ledger:
             with open(self.a.ledger, "w", encoding="utf-8") as fh:
                 for mid, rec in self.records.items():
@@ -363,6 +393,7 @@ class Server:
                         "constructed": rec["constructed"],
                         "dup_requests": rec["dup_requests"],
                         "injected_drop": rec["injected_drop"],
+                        "attempts": rec["attempts"],
                         "deadline_ns": rec["recv_ns"] + int(self.a.deadline_ms * 1e6),
                         "sends": rec["sends"], "final": rec["state"]},
                         ensure_ascii=False) + "\n")
@@ -386,6 +417,7 @@ def main():
     ap.add_argument("--response-bytes", type=int, default=1200)
     ap.add_argument("--send-batch", type=int, default=8)
     ap.add_argument("--resp-timeout-ms", type=float, default=80.0)
+    ap.add_argument("--reject-retry-ms", type=float, default=5.0)
     ap.add_argument("--max-resend", type=int, default=8)
     ap.add_argument("--drop-resp", default="", help='e.g. "1001:1,1002:2"')
     ap.add_argument("--fail-resp", default="", help='e.g. "1003:1"')
@@ -416,6 +448,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
 
 
 

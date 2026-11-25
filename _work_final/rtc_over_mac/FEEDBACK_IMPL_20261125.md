@@ -177,3 +177,24 @@
 | 入队拒绝路径 | ✅（E10 enqueue_reject=29） |
 
 唯一根本差异：**空口丢包只能靠超时发现**，这是 mac80211 不向用户态暴露逐 MPDU ACK 造成的，不是实现缺陷。
+
+## 12. 审计修复（2026-11-25 晚，回应 LEDGER_AUDIT）
+
+审计指出的四处硬失败已修复并用 `verify_ledger.py` 复验（`evidence/ledger_audit_20261125/fixed/`）：
+
+| 问题 | 修复 |
+|---|---|
+| 拒绝即终态（`state="rejected"` 无人捞） | `retx_loop` 增加 rejected 分支：每 `--reject-retry-ms`（默认 5 ms）重试入队，对应仿真 `DropBeforeEnqueue → OnTextQueueDiscDropped → ScheduleNow`；按 `deadline_ms` 兜底为 `abandoned` |
+| 终态缺 `abandoned` | 超过重发预算或 deadline 时置 `abandoned` 并计数 |
+| `done` 是 ACK 条数不是消息数 | 新增 `msg_done/msg_abandoned/msg_rejected`（按记录终态统计）；`done` 不再作为消息计数 |
+| `tx_attempts_total` 只数真实 sendp | 改名 `sendp_calls`，另加 `attempts_total`（含注入尝试） |
+| `unique_requests` 取缓冲区尺寸 | 改为 `created_total`（ever-created 计数），淘汰不失真 |
+| E9 客户端账本与本次运行不配对 | runner 每轮先删本地/远端旧账本；新 `E9fix` 配对校验 `event_repair_ms=(0,0)` |
+| E10 只证明"拒绝发生" | 新 `E10e`（capacity 5、bulk 20M、rate 10M）：`enqueue_reject=20`、`retry_rejected=20`、**60/60 送达** |
+
+独立校验结果（`verify_ledger.py`）：E9fix / E10c / E10d / E10e 全部 **no hard failure**；旧的 E10fix（修复前代码）单独放在 `prefix/` 作为对照。
+
+### 12.1 仍存在的度量限制
+
+- 时间戳分辨率约为 **15.6 ms 一拍**（受线程调度/tick 影响），"0 ms 补发"应表述为"同一拍内补发（≤15.6 ms）"；
+- E4c 的终态此前写 `inflight`，现应为 `abandoned`（新代码重跑后核对）。
