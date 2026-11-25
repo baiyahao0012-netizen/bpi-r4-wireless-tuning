@@ -12,26 +12,23 @@ param(
   [string]$SrcMac = "90:de:80:1c:6a:7a",
   [string]$ClientMac = "90:de:80:1c:6a:7a",
   [int]$Capacity = 200,
+  [int]$BufferDepth = 64,
   [double]$RateMbps = 10,
   [double]$SrvRespTimeout = 80,
   [double]$CliAckTimeout = 60,
   [double]$CliRespTimeout = 120,
-  [string]$Evidence = "D:\Desktop\AI 辅助对话\_work_final\rtc_over_mac\evidence\feedback_evidence_20261125"
+  [string]$Evidence = "C:\Users\15732\AppData\Local\Temp\evidence"
 )
 $dir = "C:\Users\15732\AppData\Local\Temp\l2ai"
 $key = "C:/Users/15732/.ssh/id_ed25519_pi_rtc"
-$tools = "D:\Desktop\AI 辅助对话\_work_final\rtc_over_mac\tools"
-foreach ($f in @("l2_ai_common.py", "l2_ai_sched.py", "l2_ai_server.py", "l2_ai_client.py")) {
-  Copy-Item "$tools\$f" $dir -Force
-}
 New-Item -ItemType Directory -Force $Evidence | Out-Null
 $srvOut = "$env:TEMP\ev_${Tag}_srv.json"
 $srvLedger = "$env:TEMP\ev_${Tag}_srv.jsonl"
 $cliLedger = "/tmp/ev_${Tag}_cli.jsonl"
 $sargs = @("--mode", "fifo", "--seconds", ($Seconds + 8), "--bulk-mbps", 0,
            "--client-mac", $ClientMac, "--capacity", $Capacity,
-           "--rate-mbps", $RateMbps, "--resp-timeout-ms", $SrvRespTimeout,
-           "--ledger", $srvLedger, "--out", $srvOut)
+           "--buffer-depth", $BufferDepth, "--rate-mbps", $RateMbps,
+           "--resp-timeout-ms", $SrvRespTimeout, "--ledger", $srvLedger, "--out", $srvOut)
 if ($DropResp)   { $sargs += @("--drop-resp", $DropResp) }
 if ($FailResp)   { $sargs += @("--fail-resp", $FailResp) }
 if ($DropAckReq) { $sargs += @("--drop-ack-req", $DropAckReq) }
@@ -49,4 +46,4 @@ Wait-Process -Id $srv.Id -Timeout 30 -ErrorAction SilentlyContinue
 Copy-Item $srvLedger "$Evidence\${Tag}_srv.jsonl" -Force -ErrorAction SilentlyContinue
 & scp -i $key -o IdentitiesOnly=yes "bai@192.168.240.153:$cliLedger" "$Evidence\${Tag}_cli.jsonl" 2>&1 | Out-Null
 "$Tag CLIENT: $cli"
-if (Test-Path $srvOut) { "$Tag SERVER: $(Get-Content $srvOut)" } else { "$Tag NO_SERVER" }
+if (Test-Path $srvOut) { "$Tag SERVER: $(Get-Content $srvOut)" } else { "$Tag NO_SERVER"; Get-Content "$env:TEMP\ev_${Tag}_srv.err" -Tail 5 }

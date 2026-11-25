@@ -53,6 +53,7 @@ class Server:
         self.lock = threading.RLock()
         self.stop = False
         self.records = {}
+        self.order = collections.deque()      # insertion order for bounded history
         self.ackq = collections.deque()
         self.echoq = collections.deque()
         self.drop_resp = parse_spec(a.drop_resp)
@@ -66,6 +67,7 @@ class Server:
             "constructed": 0, "ack_req_dropped": 0, "done": 0,
             "resend_cap_hit": 0, "tx_attempts_total": 0, "ack_resp_recv": 0,
             "echo_rx": 0, "bulk_sent": 0, "dup_resend_limited": 0,
+            "buffer_evicted": 0,
         }
         self.csv = open(a.csv, "w", buffering=1) if a.csv else None
         if self.csv:
@@ -141,7 +143,18 @@ class Server:
                            "dup_requests": 0, "injected_drop": 0, "fail_send": 0,
                            "sends": []}
                     self.records[mid] = rec
+                    self.order.append(mid)
                     self.stats["constructed"] += 1
+                    # bounded history (AiTextRetransmitBuffer depth), evict oldest done
+                    while len(self.order) > self.a.buffer_depth:
+                        old = self.order.popleft()
+                        orec = self.records.get(old)
+                        if orec is not None and orec["state"] == "done":
+                            del self.records[old]
+                            self.stats["buffer_evicted"] += 1
+                        else:
+                            self.order.append(old)
+                            break
                     need = True
                 elif rec["state"] != "done":
                     self.stats["requests_dup"] += 1
@@ -350,6 +363,7 @@ class Server:
                         "constructed": rec["constructed"],
                         "dup_requests": rec["dup_requests"],
                         "injected_drop": rec["injected_drop"],
+                        "deadline_ns": rec["recv_ns"] + int(self.a.deadline_ms * 1e6),
                         "sends": rec["sends"], "final": rec["state"]},
                         ensure_ascii=False) + "\n")
         return res
@@ -376,6 +390,8 @@ def main():
     ap.add_argument("--drop-resp", default="", help='e.g. "1001:1,1002:2"')
     ap.add_argument("--fail-resp", default="", help='e.g. "1003:1"')
     ap.add_argument("--drop-ack-req", default="", help='e.g. "1004:2"')
+    ap.add_argument("--buffer-depth", type=int, default=64)
+    ap.add_argument("--deadline-ms", type=float, default=30000.0)
     ap.add_argument("--ledger", default="")
     ap.add_argument("--csv", default="")
     ap.add_argument("--out", default="")
@@ -400,6 +416,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
