@@ -65,7 +65,7 @@ class Server:
             "send_err_retry": 0, "retx_timeout": 0, "injected_drop": 0,
             "constructed": 0, "ack_req_dropped": 0, "done": 0,
             "resend_cap_hit": 0, "tx_attempts_total": 0, "ack_resp_recv": 0,
-            "echo_rx": 0, "bulk_sent": 0,
+            "echo_rx": 0, "bulk_sent": 0, "dup_resend_limited": 0,
         }
         self.csv = open(a.csv, "w", buffering=1) if a.csv else None
         if self.csv:
@@ -137,7 +137,7 @@ class Server:
                 if rec is None:
                     rec = {"state": "queued", "item": self._new_item(mid, p["t0_ns"]),
                            "recv_ns": time.monotonic_ns(), "attempts": 0,
-                           "last_ns": time.monotonic_ns(), "constructed": 1,
+                           "last_ns": time.monotonic_ns(), "last_send_ns": 0, "constructed": 1,
                            "dup_requests": 0, "injected_drop": 0, "fail_send": 0,
                            "sends": []}
                     self.records[mid] = rec
@@ -146,7 +146,12 @@ class Server:
                 elif rec["state"] != "done":
                     self.stats["requests_dup"] += 1
                     rec["dup_requests"] += 1
-                    need = rec["attempts"] < self.a.max_resend
+                    now_ns = time.monotonic_ns()
+                    rate_ok = (rec["attempts"] == 0 or
+                               (now_ns - rec["last_send_ns"]) >= self.a.resp_timeout_ms * 0.5 * 1e6)
+                    need = rec["attempts"] < self.a.max_resend and rate_ok
+                    if not rate_ok and rec["attempts"] < self.a.max_resend:
+                        self.stats["dup_resend_limited"] = self.stats.get("dup_resend_limited", 0) + 1
                     if need:
                         self.stats["resp_dup_resend"] += 1
                         rec["item"] = self._new_item(mid, p["t0_ns"])
@@ -246,6 +251,7 @@ class Server:
                         rec["state"] = "inflight"
                         rec["attempts"] = n
                         rec["last_ns"] = now_ns
+                        rec["last_send_ns"] = now_ns
                         rec["injected_drop"] += 1
                         rec["sends"].append({"n": n, "t_ns": now_ns, "ack": "none",
                                              "sendp_us": 0.0, "injected": "drop"})
@@ -256,6 +262,7 @@ class Server:
                     with self.lock:
                         rec["state"] = "queued"
                         rec["attempts"] = n
+                        rec["last_send_ns"] = now_ns
                         rec["fail_send"] += 1
                         rec["sends"].append({"n": n, "t_ns": now_ns, "ack": "none",
                                              "sendp_us": 0.0, "injected": "fail"})
@@ -279,6 +286,7 @@ class Server:
                     rec["state"] = "inflight"
                     rec["attempts"] = n
                     rec["last_ns"] = time.monotonic_ns()
+                    rec["last_send_ns"] = now_ns
                     rec["sends"].append({"n": n, "t_ns": now_ns, "ack": "none",
                                          "sendp_us": sendp_us})
                     self.stats["responses_sent"] += 1
@@ -293,14 +301,13 @@ class Server:
                 for mid, rec in self.records.items():
                     if rec["state"] != "inflight":
                         continue
-                    if rec["attempts"] > self.a.max_resend:
+                    if rec["attempts"] >= self.a.max_resend:
                         continue
                     if (now - rec["last_ns"]) / 1e6 >= self.a.resp_timeout_ms:
                         for s in reversed(rec["sends"]):
                             if s["ack"] == "none":
                                 s["ack"] = "timeout"
                                 break
-                        rec["attempts"] += 1
                         rec["item"] = self._new_item(mid, rec["item"].t0_ns)
                         self.stats["retx_timeout"] += 1
                         retry.append(mid)
@@ -393,5 +400,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
 
 

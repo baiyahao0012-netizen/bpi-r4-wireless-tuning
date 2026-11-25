@@ -1,0 +1,40 @@
+{"mid": 500000, "t0_ns": 1748284341275, "attempts": 3, "reasons": ["ack_timeout", "resp_timeout"], "t_resp_ns": 1748411351212, "ttft_us": 127009.937, "dup_resp": 1, "resp_from_attempt": 1, "done": true}
+{"mid": 500001, "t0_ns": 1748384347316, "attempts": 1, "reasons": [], "t_resp_ns": 1748412722843, "ttft_us": 28375.527, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500002, "t0_ns": 1748484357227, "attempts": 1, "reasons": [], "t_resp_ns": 1748487847508, "ttft_us": 3490.281, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500003, "t0_ns": 1748584357604, "attempts": 1, "reasons": [], "t_resp_ns": 1748597480580, "ttft_us": 13122.976, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500004, "t0_ns": 1748684353965, "attempts": 1, "reasons": [], "t_resp_ns": 1748691610676, "ttft_us": 7256.711, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500005, "t0_ns": 1748784347733, "attempts": 2, "reasons": ["ack_timeout"], "t_resp_ns": 1748800745083, "ttft_us": 16397.35, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500006, "t0_ns": 1748884343724, "attempts": 1, "reasons": [], "t_resp_ns": 1748893137436, "ttft_us": 8793.712, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500007, "t0_ns": 1748984341622, "attempts": 1, "reasons": [], "t_resp_ns": 1749016130728, "ttft_us": 31789.106, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500008, "t0_ns": 1749084339094, "attempts": 2, "reasons": ["ack_timeout"], "t_resp_ns": 1749093879381, "ttft_us": 9540.287, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500009, "t0_ns": 1749185353085, "attempts": 2, "reasons": ["ack_timeout"], "t_resp_ns": 1749203773993, "ttft_us": 18420.908, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500010, "t0_ns": 1749285351779, "attempts": 1, "reasons": [], "t_resp_ns": 1749298524274, "ttft_us": 13172.495, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500011, "t0_ns": 1749385348122, "attempts": 1, "reasons": [], "t_resp_ns": 1749394032742, "ttft_us": 8684.62, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500012, "t0_ns": 1749485341371, "attempts": 1, "reasons": [], "t_resp_ns": 1749520417592, "ttft_us": 35076.221, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500013, "t0_ns": 1749585334013, "attempts": 2, "reasons": ["ack_timeout"], "t_resp_ns": 1749595921821, "ttft_us": 10587.808, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500014, "t0_ns": 1749685326916, "attempts": 1, "reasons": [], "t_resp_ns": 1749706328106, "ttft_us": 21001.19, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500015, "t0_ns": 1749785320134, "attempts": 1, "reasons": [], "t_resp_ns": 1749813689868, "ttft_us": 28369.734, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500016, "t0_ns": 1749885264686, "attempts": 1, "reasons": [], "t_resp_ns": 1749933194700, "ttft_us": 47930.014, "dup_resp": 1, "resp_from_attempt": 1, "done": true}
+{"mid": 500017, "t0_ns": 1749985256922, "attempts": 2, "reasons": ["ack_timeout"], "t_resp_ns": 1750018468236, "ttft_us": 33211.314, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500018, "t0_ns": 1750085252807, "attempts": 2, "reasons": ["ack_timeout"], "t_resp_ns": 1750111457779, "ttft_us": 26204.972, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500019, "t0_ns": 1750185252858, "attempts": 1, "reasons": [], "t_resp_ns": 1750202331895, "ttft_us": 17079.037, "dup_resp": 0, "resp_from_attempt": 1, "done": true}
+{"mid": 500020, "t0_ns": 1750285248743, "attempts": 1, "reasons": [], "t_resp_ns": 1750364593013, "ttft_us": 79344.27, "dup_resp": 1, "resp_from_attempt": 1, "done": true}
+{"mid": 500021, "t0_ns": 1750385242517, "attempts": 1, "reasons": [], "t_resp_ns": 1750430121602, "ttft_us": 44879.085, "dup_resp": 2, "resp_from_attempt": 1, "done": true}
+{"mid": 500022, "t0_ns": 1750485239087, "attempts": 2, "reasons": ["ack_timeout"], "t_resp_ns": 1750601234751, "ttft_us": 115995.664, "dup_resp": 2, "resp_from_attempt": 1, "done": true}
+{"mid": 500023, "t0_ns": 1750585236511, "attempts": 2, "reasons": ["ack_timeout"], "t_resp_ns": 1750660989707, "ttft_us": 75753.196, "dup_resp": 1, "resp_from_attempt": 1, "done": true}
+{"mid": 500024, "t0_ns": 1750685237475, "attempts": 3, "reasons": ["ack_timeout", "resp_timeout"], "t_resp_ns": 1751128519528, "ttft_us": 443282.053, "dup_resp": 1, "resp_from_attempt": 1, "done": true}
+{"mid": 500025, "t0_ns": 1750785235014, "attempts": 3, "reasons": ["ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500026, "t0_ns": 1750885231774, "attempts": 3, "reasons": ["ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500027, "t0_ns": 1750985241275, "attempts": 7, "reasons": ["ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500028, "t0_ns": 1751085239721, "attempts": 7, "reasons": ["ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500029, "t0_ns": 1751185236370, "attempts": 7, "reasons": ["ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500030, "t0_ns": 1751285232667, "attempts": 7, "reasons": ["ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500031, "t0_ns": 1751385231372, "attempts": 7, "reasons": ["ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500032, "t0_ns": 1751485228151, "attempts": 5, "reasons": ["ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500033, "t0_ns": 1751585224377, "attempts": 5, "reasons": ["ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500034, "t0_ns": 1751685217661, "attempts": 5, "reasons": ["ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500035, "t0_ns": 1751785211779, "attempts": 5, "reasons": ["ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500036, "t0_ns": 1751885214396, "attempts": 5, "reasons": ["ack_timeout", "resp_timeout", "ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500037, "t0_ns": 1751985209421, "attempts": 3, "reasons": ["ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500038, "t0_ns": 1752085205724, "attempts": 3, "reasons": ["ack_timeout", "resp_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
+{"mid": 500039, "t0_ns": 1752185211082, "attempts": 2, "reasons": ["ack_timeout"], "t_resp_ns": 0, "ttft_us": null, "dup_resp": 0, "resp_from_attempt": null, "done": false}
