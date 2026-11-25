@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Laptop-side receiver: reassemble L2 video, serve MJPEG + Q/A SSE, call Ollama.
 
@@ -48,7 +48,9 @@ body{background:#111;color:#ddd;font-family:system-ui;margin:0;display:flex;flex
 const log=document.getElementById('log'),btn=document.getElementById('btn'),st=document.getElementById('st'),met=document.getElementById('met');
 const es=new EventSource('/events');
 es.onmessage=e=>{const d=JSON.parse(e.data);
-  if(d.phase==='start'){window._cur=document.createElement('div');window._cur.className='q';
+  if(d.phase==='reset'){log.innerHTML='';window._cur=null;
+    st.textContent='新一轮（模型已重置）';met.textContent='frames 0 | lost 0 | queue 0 | 已答 0';}
+  else if(d.phase==='start'){window._cur=document.createElement('div');window._cur.className='q';
     window._cur.innerHTML=`<div class="meta">#${d.qid} t=${d.t}s frame=${d.idx} ${d.miss?'(frame miss)':''}</div>
     <div><b>问：</b>${d.question}</div><div class="a" id="a${d.qid}"></div>`;
     log.appendChild(window._cur);}
@@ -57,7 +59,8 @@ es.onmessage=e=>{const d=JSON.parse(e.data);
   else if(d.phase==='delta'){const el=document.getElementById('a'+d.qid);if(el)el.textContent=(el.textContent||'')+d.text;}
   else if(d.phase==='final'){const el=document.getElementById('a'+d.qid);if(el)el.textContent=d.answer;
     const m=window._cur?window._cur.querySelector('.meta'):null;
-    if(m)m.textContent+=` | e2e ${d.e2e_ms}ms | prompt ${d.prompt_eval_ms}ms/${d.prompt_eval_count}tok | gen ${d.eval_ms}ms/${d.eval_count}tok`;}
+    if(m)m.textContent+=` | model ${d.model_ms}ms | prompt ${d.prompt_eval_ms}ms/${d.prompt_eval_count}tok | gen ${d.eval_ms}ms/${d.eval_count}tok`;}
+    if(d.empty){const el=document.getElementById('a'+d.qid);if(el)el.textContent='[EMPTY/截断] '+(d.answer||'');}
   else if(d.phase==='stats'){met.textContent=`frames ${d.frames} | lost ${d.lost} | queue ${d.queue} | 已答 ${d.answers||0}`;
     if(d.running){st.textContent=`运行中 ${d.elapsed_s||0}s`;btn.disabled=true;}
     else{st.textContent=d.last_msg||'空闲';btn.disabled=false;}}
@@ -78,11 +81,13 @@ class State:
         self.reasm = {}
         self.latest = None
         self.latest_seq = 0
-        self.stats = {"frames": 0, "lost": 0, "frags": 0, "questions": 0, "answers": 0}
+        self.stats = {"frames": 0, "frames_total": 0, "lost": 0, "frags": 0,
+                      "questions": 0, "answers": 0, "empty": 0}
+        self.lost_ids = set()
         self.q = queue.Queue()
         self.clients = []
         self.lock = threading.RLock()
-        self.ledger = open(a.ledger, "w", buffering=1, encoding="utf-8") if a.ledger else None
+        self.ledger = open(a.ledger, "a", buffering=1, encoding="utf-8") if a.ledger else None
         self.running = True
         self.run = {"running": False, "started": 0.0, "tag": "", "last_msg": "空闲",
                     "last_result": None}
@@ -121,11 +126,36 @@ class State:
                     self.latest = self.frames[idx]
                     self.latest_seq += 1
                     self.stats["frames"] = len(self.frames)
+                    self.stats["frames_total"] += 1
         elif p["type"] == "question":
             self.stats["questions"] += 1
             p["t_recv"] = time.monotonic_ns()
             self.q.put(p)
 
+
+    def reset_for_run(self):
+        """Clear the Q/A panel and all per-run counters; drop queued questions."""
+        with self.lock:
+            while True:
+                try:
+                    self.q.get_nowait()
+                except queue.Empty:
+                    break
+            self.stats.update({"questions": 0, "answers": 0, "empty": 0,
+                               "frames_total": 0, "lost": 0, "frags": 0})
+            self.lost_ids = set()
+        self.push({"phase": "reset"})
+
+    def unload_model(self):
+        """Unload the model so the next run starts from a clean state."""
+        import requests
+        try:
+            requests.post(self.a.ollama + "/api/generate",
+                          json={"model": self.a.model, "keep_alive": 0,
+                                "prompt": ""}, timeout=15)
+            print("MODEL_UNLOADED %s" % self.a.model, flush=True)
+        except Exception as exc:
+            print("MODEL_UNLOAD_FAIL %s" % exc, flush=True)
 
     def start_run(self):
         with self.run_lock:
@@ -133,22 +163,26 @@ class State:
                 return False, "已在运行"
             a = self.a
             tag = time.strftime("%H%M%S")
-            remote = ("cd /tmp && echo %s | sudo -S python3 %s --loop %d --seconds %d "
+            remote = ("cd /tmp && sudo -S python3 %s --loop %d --seconds %d "
                       "--preload --out /tmp/run_%s.json" %
-                      (a.sudo_pass, a.tx_script, a.tx_loop, a.tx_seconds, tag))
+                      (a.tx_script, a.tx_loop, a.tx_seconds, tag))
             cmd = ["ssh", "-i", a.ssh_key, "-o", "BatchMode=yes",
                    "-o", "StrictHostKeyChecking=accept-new",
                    "%s@%s" % (a.pi_user, a.pi_host), remote]
             self.run.update({"running": True, "started": time.monotonic(),
                              "tag": tag, "last_msg": "运行中"})
+            self.reset_for_run()
 
             def worker():
                 out = ""
+                self.unload_model()
                 try:
-                    p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                    p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                         stdout=subprocess.PIPE,
                                          stderr=subprocess.STDOUT, text=True,
                                          encoding="utf-8", errors="replace")
-                    out = p.communicate(timeout=a.tx_seconds + 60)[0] or ""
+                    out = p.communicate(input=a.sudo_pass + "\n",
+                                        timeout=a.tx_seconds + 60)[0] or ""
                     res = None
                     for line in out.splitlines():
                         if line.startswith("RESULT "):
@@ -189,7 +223,9 @@ def expire_loop(st):
             for idx, r in list(st.reasm.items()):
                 if now - r["t0"] > 0.5:
                     del st.reasm[idx]
-                    st.stats["lost"] += 1
+                    if idx not in st.lost_ids:
+                        st.lost_ids.add(idx)
+                        st.stats["lost"] += 1
         time.sleep(0.05)
 
 
@@ -208,20 +244,28 @@ def get_frame(st, idx, wait_ms=80):
     return None, None, True
 
 
-def ollama_stream(st, qid, idx, text, t1_ns, b64):
+def ollama_stream(st, p, idx_used, fr, miss, b64):
     a = st.a
     import requests
-    t2 = None
-    seq = 0
-    sent_any = False
-    buf = ""
-    last_flush = time.monotonic()
-    payload = {"model": a.model, "prompt": text, "images": [b64], "stream": True,
+    qid = p["qid"]
+    text = p["text"]
+    t1_ns = p["t_recv"]
+    t0_ns = p.get("t0_ns")
+    frame_age_ms = round(t1_ns / 1e9 - fr["t_recv"], 3) * 1000 if fr else None
+    # no_think + short answer: keep the generation budget for visible tokens
+    prompt = ("只回答一句，不超过15个字。问题：%s /no_think" % text)
+    payload = {"model": a.model, "prompt": prompt, "images": [b64], "stream": True,
+               "think": False,
                "options": {"num_predict": a.num_predict, "temperature": 0},
                "keep_alive": "10m"}
-    metrics = {}
-    print("ollama start qid=%s model=%s" % (qid, a.model), flush=True)
+    t2 = None
+    seq = 0
+    buf = ""
+    last_flush = time.monotonic()
     full = ""
+    think_txt = ""
+    metrics = {}
+    print("ollama start qid=%s run=%s" % (qid, st.run.get("tag")), flush=True)
     try:
         with requests.post(a.ollama + "/api/generate", json=payload, stream=True,
                            timeout=180) as r:
@@ -230,6 +274,7 @@ def ollama_stream(st, qid, idx, text, t1_ns, b64):
                     continue
                 d = json.loads(line)
                 delta = d.get("response") or ""
+                think_txt += d.get("thinking") or ""
                 now = time.monotonic_ns()
                 if delta and t2 is None:
                     t2 = now
@@ -238,7 +283,6 @@ def ollama_stream(st, qid, idx, text, t1_ns, b64):
                     seq += 1
                     st.push({"phase": "first", "qid": qid, "text": delta,
                              "ttft_ms": round((t2 - t1_ns) / 1e6, 1)})
-                    sent_any = True
                 elif delta:
                     full += delta
                     buf += delta
@@ -254,7 +298,8 @@ def ollama_stream(st, qid, idx, text, t1_ns, b64):
                         "prompt_eval_duration", "eval_count", "eval_duration")}
                     break
     except Exception as exc:
-        import traceback; traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         metrics = {"error": str(exc)}
     if buf:
         st.tx.send(answer(st.dst, st.src, qid, seq, 0, t2 or 0, buf))
@@ -263,8 +308,13 @@ def ollama_stream(st, qid, idx, text, t1_ns, b64):
     st.tx.send(answer(st.dst, st.src, qid, seq, 2, t2 or 0, ""))
     mj = {k: (round(v / 1e6, 1) if isinstance(v, int) and k.endswith("duration") else v)
           for k, v in metrics.items()}
-    st.push({"phase": "final", "qid": qid, "answer": full,
-             "e2e_ms": round((time.monotonic_ns() - t1_ns) / 1e6, 1),
+    empty = not full.strip()
+    model_ms = round((time.monotonic_ns() - t1_ns) / 1e6, 1)
+    if empty:
+        st.stats["empty"] += 1
+    st.push({"phase": "final", "qid": qid, "answer": full, "empty": empty,
+             "model_ms": model_ms,
+             "thinking_chars": len(think_txt),
              "prompt_eval_ms": mj.get("prompt_eval_duration"),
              "prompt_eval_count": mj.get("prompt_eval_count"),
              "eval_ms": mj.get("eval_duration"),
@@ -272,11 +322,15 @@ def ollama_stream(st, qid, idx, text, t1_ns, b64):
              "ttft_ms": round((t2 - t1_ns) / 1e6, 1) if t2 else None})
     st.stats["answers"] += 1
     if st.ledger:
-        st.ledger.write(json.dumps({"qid": qid, "idx": idx, "question": text,
-                                    "ttft_ms": round((t2 - t1_ns) / 1e6, 1) if t2 else None,
-                                    "answer": full, "metrics": mj},
-                                   ensure_ascii=False) + "\n")
-
+        st.ledger.write(json.dumps({
+            "run_tag": st.run.get("tag"), "qid": qid,
+            "frame_idx_req": p["frame_idx"], "idx_used": idx_used,
+            "frame_miss": miss, "frame_age_ms": frame_age_ms,
+            "t0_ns": t0_ns, "t1_ns": t1_ns, "t2_ns": t2,
+            "ttft_ms": round((t2 - t1_ns) / 1e6, 1) if t2 else None,
+            "model_ms": model_ms, "empty": empty,
+            "thinking_chars": len(think_txt), "answer": full,
+            "metrics": mj}, ensure_ascii=False) + "\n")
 
 def question_loop(st):
     while st.running:
@@ -284,18 +338,24 @@ def question_loop(st):
             p = st.q.get(timeout=0.2)
         except queue.Empty:
             continue
-        print("Q recv qid=%s idx=%s" % (p["qid"], p["frame_idx"]), flush=True)
         idx, fr, miss = get_frame(st, p["frame_idx"])
-        print("Q frame idx=%s found=%s miss=%s" % (idx, fr is not None, miss), flush=True)
         if fr is None:
             st.push({"phase": "start", "qid": p["qid"], "t": p["pts_us"] / 1e6,
                      "idx": p["frame_idx"], "question": p["text"], "miss": True})
+            st.stats["answers"] += 1
+            if st.ledger:
+                st.ledger.write(json.dumps({
+                    "run_tag": st.run.get("tag"), "qid": p["qid"],
+                    "frame_idx_req": p["frame_idx"], "idx_used": None,
+                    "frame_miss": True, "empty": True,
+                    "error": "frame_missing", "answer": ""},
+                    ensure_ascii=False) + "\n")
             continue
         b64 = base64.b64encode(fr["jpeg"]).decode()
         st.push({"phase": "start", "qid": p["qid"], "t": p["pts_us"] / 1e6,
-                 "idx": idx, "question": p["text"], "miss": miss})
-        ollama_stream(st, p["qid"], idx, p["text"], p["t_recv"], b64)
-
+                 "idx": idx, "question": p["text"], "miss": miss,
+                 "frame_age_ms": round(p["t_recv"] / 1e9 - fr["t_recv"], 3) * 1000})
+        ollama_stream(st, p, idx, fr, miss, b64)
 
 def make_handler(st):
     class H(BaseHTTPRequestHandler):
@@ -360,10 +420,11 @@ def make_handler(st):
                             msg = q.get(timeout=0.5)
                         except queue.Empty:
                             msg = "data: " + json.dumps(
-                                {"phase": "stats", "frames": st.stats["frames"],
+                                {"phase": "stats", "frames": st.stats["frames_total"],
                                  "lost": st.stats["lost"],
                                  "queue": st.q.qsize(),
                                  "answers": st.stats["answers"],
+                                 "empty": st.stats["empty"],
                                  "running": st.run["running"],
                                  "elapsed_s": int(time.monotonic() - st.run["started"]) if st.run["running"] else 0,
                                  "last_msg": st.run["last_msg"]}) + "\n\n"
@@ -390,6 +451,7 @@ def main():
     ap.add_argument("--model", default="qwen3-vl:2b")
     ap.add_argument("--num-predict", type=int, default=160)
     ap.add_argument("--port", type=int, default=8080)
+    ap.add_argument("--bind", default="127.0.0.1")
     ap.add_argument("--ledger", default="")
     ap.add_argument("--seconds", type=float, default=0, help="0 = run until Ctrl-C")
     ap.add_argument("--pi-host", default="192.168.240.153")
@@ -417,7 +479,7 @@ def main():
           threading.Thread(target=question_loop, args=(st,), daemon=True)]
     for t in ts:
         t.start()
-    srv = ThreadingHTTPServer(("0.0.0.0", a.port), make_handler(st))
+    srv = ThreadingHTTPServer((a.bind, a.port), make_handler(st))
     th = threading.Thread(target=srv.serve_forever, daemon=True)
     th.start()
     print("READY http://127.0.0.1:%d/ frames=%d" % (a.port, 0), flush=True)
