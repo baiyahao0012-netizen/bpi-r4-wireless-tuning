@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Laptop-side receiver: reassemble L2 video, serve MJPEG + Q/A SSE, call Ollama.
 
@@ -7,6 +7,7 @@ Answers are streamed back over L2: first token immediately, then deltas.
 """
 import argparse
 import base64
+import subprocess
 import collections
 import json
 import os
@@ -23,27 +24,33 @@ from video_proto import FRAME_MAX, answer, mac, parse, question
 
 HTML = """<!doctype html><html><head><meta charset="utf-8"><title>RTC VLM</title>
 <style>
-body{background:#111;color:#ddd;font-family:system-ui;margin:0;display:flex;height:100vh}
-#left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #333}
-#left img{max-width:100%;max-height:92vh}
+body{background:#111;color:#ddd;font-family:system-ui;margin:0;display:flex;flex-direction:column;height:100vh}
+#top{display:flex;align-items:center;gap:14px;padding:10px 14px;border-bottom:1px solid #333;background:#181818}
+#btn{font-size:16px;padding:8px 22px;border-radius:6px;border:0;background:#2d8f4e;color:#fff;cursor:pointer}
+#btn:disabled{background:#444;cursor:default}
+#st{font-size:14px;color:#9ad}
+#met{font-size:12px;color:#888;margin-left:auto}
+#main{flex:1;display:flex;min-height:0}
+#left{flex:1;display:flex;align-items:center;justify-content:center;border-right:1px solid #333}
+#left img{max-width:100%;max-height:100%}
 #right{width:44%;overflow-y:auto;padding:10px;font-size:13px}
 .q{border:1px solid #444;border-radius:6px;margin:8px 0;padding:8px;background:#1a1a1a}
 .meta{color:#888;font-size:11px}
 .a{color:#8fd694;white-space:pre-wrap}
-#hdr{position:fixed;top:0;right:0;padding:4px 8px;font-size:11px;color:#888;background:#000a}
 </style></head><body>
-<div id="left"><img id="v" src="/stream.mjpg"></div>
-<div id="right"><h3>Q/A锛堟寜鏃堕棿杩藉姞锛?/h3><div id="log"></div></div>
-<div id="hdr">frames <span id="nf">0</span> | lost <span id="nl">0</span> | queue <span id="nq">0</span></div>
+<div id="top"><button id="btn">开始测试</button><span id="st">空闲</span>
+ <span id="met">frames 0 | lost 0 | queue 0</span></div>
+<div id="main">
+ <div id="left"><img id="v" src="/stream.mjpg"></div>
+ <div id="right"><h3>Q/A（按时间追加）</h3><div id="log"></div></div>
+</div>
 <script>
-const log=document.getElementById('log');
-function add(txt,cls){const d=document.createElement('div');d.className='q';d.innerHTML=txt;
-  if(cls)d.classList.add(cls);log.appendChild(d);window.scrollTo(0,document.body.scrollHeight);}
+const log=document.getElementById('log'),btn=document.getElementById('btn'),st=document.getElementById('st'),met=document.getElementById('met');
 const es=new EventSource('/events');
 es.onmessage=e=>{const d=JSON.parse(e.data);
   if(d.phase==='start'){window._cur=document.createElement('div');window._cur.className='q';
     window._cur.innerHTML=`<div class="meta">#${d.qid} t=${d.t}s frame=${d.idx} ${d.miss?'(frame miss)':''}</div>
-    <div><b>闂細</b>${d.question}</div><div class="a" id="a${d.qid}"></div>`;
+    <div><b>问：</b>${d.question}</div><div class="a" id="a${d.qid}"></div>`;
     log.appendChild(window._cur);}
   else if(d.phase==='first'){const el=document.getElementById('a'+d.qid);if(el)el.textContent=d.text;
     const m=window._cur?window._cur.querySelector('.meta'):null;if(m)m.textContent+=` | TTFT ${d.ttft_ms}ms`;}
@@ -51,9 +58,13 @@ es.onmessage=e=>{const d=JSON.parse(e.data);
   else if(d.phase==='final'){const el=document.getElementById('a'+d.qid);if(el)el.textContent=d.answer;
     const m=window._cur?window._cur.querySelector('.meta'):null;
     if(m)m.textContent+=` | e2e ${d.e2e_ms}ms | prompt ${d.prompt_eval_ms}ms/${d.prompt_eval_count}tok | gen ${d.eval_ms}ms/${d.eval_count}tok`;}
-  else if(d.phase==='stats'){document.getElementById('nf').textContent=d.frames;
-    document.getElementById('nl').textContent=d.lost;document.getElementById('nq').textContent=d.queue;}
+  else if(d.phase==='stats'){met.textContent=`frames ${d.frames} | lost ${d.lost} | queue ${d.queue} | 已答 ${d.answers||0}`;
+    if(d.running){st.textContent=`运行中 ${d.elapsed_s||0}s`;btn.disabled=true;}
+    else{st.textContent=d.last_msg||'空闲';btn.disabled=false;}}
 };
+btn.onclick=()=>{btn.disabled=true;st.textContent='启动中…';
+  fetch('/start',{method:'POST'}).then(r=>r.json()).then(d=>{st.textContent=d.msg||'已启动';})
+   .catch(e=>{st.textContent='启动失败 '+e;btn.disabled=false;});};
 </script></body></html>"""
 
 
@@ -67,12 +78,15 @@ class State:
         self.reasm = {}
         self.latest = None
         self.latest_seq = 0
-        self.stats = {"frames": 0, "lost": 0, "frags": 0, "questions": 0}
+        self.stats = {"frames": 0, "lost": 0, "frags": 0, "questions": 0, "answers": 0}
         self.q = queue.Queue()
         self.clients = []
         self.lock = threading.RLock()
         self.ledger = open(a.ledger, "w", buffering=1, encoding="utf-8") if a.ledger else None
         self.running = True
+        self.run = {"running": False, "started": 0.0, "tag": "", "last_msg": "空闲",
+                    "last_result": None}
+        self.run_lock = threading.Lock()
 
     def push(self, obj):
         line = "data: " + json.dumps(obj, ensure_ascii=False) + "\n\n"
@@ -111,6 +125,50 @@ class State:
             self.stats["questions"] += 1
             p["t_recv"] = time.monotonic_ns()
             self.q.put(p)
+
+
+    def start_run(self):
+        with self.run_lock:
+            if self.run["running"]:
+                return False, "已在运行"
+            a = self.a
+            tag = time.strftime("%H%M%S")
+            remote = ("cd /tmp && echo %s | sudo -S python3 %s --loop %d --seconds %d "
+                      "--preload --out /tmp/run_%s.json" %
+                      (a.sudo_pass, a.tx_script, a.tx_loop, a.tx_seconds, tag))
+            cmd = ["ssh", "-i", a.ssh_key, "-o", "BatchMode=yes",
+                   "-o", "StrictHostKeyChecking=accept-new",
+                   "%s@%s" % (a.pi_user, a.pi_host), remote]
+            self.run.update({"running": True, "started": time.monotonic(),
+                             "tag": tag, "last_msg": "运行中"})
+
+            def worker():
+                out = ""
+                try:
+                    p = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                         stderr=subprocess.STDOUT, text=True,
+                                         encoding="utf-8", errors="replace")
+                    out = p.communicate(timeout=a.tx_seconds + 60)[0] or ""
+                    res = None
+                    for line in out.splitlines():
+                        if line.startswith("RESULT "):
+                            try:
+                                res = json.loads(line[7:])
+                            except Exception:
+                                pass
+                    with self.run_lock:
+                        self.run["last_result"] = res
+                        self.run["last_msg"] = "完成 %s" % tag
+                except Exception as exc:
+                    with self.run_lock:
+                        self.run["last_msg"] = "失败: %s" % exc
+                finally:
+                    with self.run_lock:
+                        self.run["running"] = False
+                    print("RUN_END %s %s" % (self.run["tag"], out[-300:]), flush=True)
+
+            threading.Thread(target=worker, daemon=True).start()
+            return True, "已启动 %s" % tag
 
 
 def capture_loop(st, rx):
@@ -212,6 +270,7 @@ def ollama_stream(st, qid, idx, text, t1_ns, b64):
              "eval_ms": mj.get("eval_duration"),
              "eval_count": mj.get("eval_count"),
              "ttft_ms": round((t2 - t1_ns) / 1e6, 1) if t2 else None})
+    st.stats["answers"] += 1
     if st.ledger:
         st.ledger.write(json.dumps({"qid": qid, "idx": idx, "question": text,
                                     "ttft_ms": round((t2 - t1_ns) / 1e6, 1) if t2 else None,
@@ -242,6 +301,19 @@ def make_handler(st):
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):
             pass
+
+        def do_POST(self):
+            if self.path == "/start":
+                ok, msg = st.start_run()
+                body = json.dumps({"ok": ok, "msg": msg}, ensure_ascii=False).encode()
+                self.send_response(200 if ok else 409)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            self.send_response(404)
+            self.end_headers()
 
         def do_GET(self):
             if self.path == "/":
@@ -290,7 +362,11 @@ def make_handler(st):
                             msg = "data: " + json.dumps(
                                 {"phase": "stats", "frames": st.stats["frames"],
                                  "lost": st.stats["lost"],
-                                 "queue": st.q.qsize()}) + "\n\n"
+                                 "queue": st.q.qsize(),
+                                 "answers": st.stats["answers"],
+                                 "running": st.run["running"],
+                                 "elapsed_s": int(time.monotonic() - st.run["started"]) if st.run["running"] else 0,
+                                 "last_msg": st.run["last_msg"]}) + "\n\n"
                         self.wfile.write(msg.encode())
                         self.wfile.flush()
                 except Exception:
@@ -316,6 +392,13 @@ def main():
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--ledger", default="")
     ap.add_argument("--seconds", type=float, default=0, help="0 = run until Ctrl-C")
+    ap.add_argument("--pi-host", default="192.168.240.153")
+    ap.add_argument("--pi-user", default="bai")
+    ap.add_argument("--ssh-key", default="C:/Users/15732/.ssh/id_ed25519_pi_rtc")
+    ap.add_argument("--sudo-pass", default="12345678")
+    ap.add_argument("--tx-script", default="/tmp/video_tx.py")
+    ap.add_argument("--tx-seconds", type=float, default=122)
+    ap.add_argument("--tx-loop", type=int, default=1)
     a = ap.parse_args()
     st = State(a)
     import base64 as _b64, requests as _rq
@@ -355,5 +438,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
 
 
