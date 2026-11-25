@@ -41,14 +41,17 @@ body{background:#111;color:#ddd;font-family:system-ui;margin:0;display:flex;flex
 .a{color:#8fd694;white-space:pre-wrap}
 </style></head><body>
 <div id="top"><button id="btn">开始测试</button><span id="st">空闲</span>
- <label style="font-size:13px;color:#ccc"><input type="checkbox" id="loss"> 模拟丢包30%</label><span id="met">frames 0 | lost 0 | queue 0</span></div>
+ <label style="font-size:13px;color:#ccc"><input type="checkbox" id="loss"> 模拟丢包30%</label><canvas id="fps" width="420" height="70" style="background:#0b0b0b"></canvas><span id="met">frames 0 | lost 0 | queue 0</span></div>
 <div id="main">
  <div id="left"><img id="v" src="/stream.mjpg"></div>
  <div id="right"><h3>Q/A（按时间追加）</h3><div id="log"></div></div>
 </div>
 <script>
 const vid=document.getElementById('v');if(vid){vid.onerror=()=>{setTimeout(()=>{vid.src='/stream.mjpg?r='+Date.now();},1000);};}
-const log=document.getElementById('log'),btn=document.getElementById('btn'),st=document.getElementById('st'),met=document.getElementById('met'),loss=document.getElementById('loss');
+const log=document.getElementById('log'),btn=document.getElementById('btn'),st=document.getElementById('st'),met=document.getElementById('met'),loss=document.getElementById('loss'),cv=document.getElementById('fps'),ctx=cv.getContext('2d');
+function drawFps(h){ctx.clearRect(0,0,cv.width,cv.height);if(!h||!h.length)return;const mx=Math.max(1,...h);
+ ctx.strokeStyle='#2d8f4e';ctx.beginPath();h.forEach((v,i)=>{const x=i*(cv.width-2)/Math.max(1,h.length-1)+1,y=cv.height-2-(v/mx)*(cv.height-6);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+ ctx.fillStyle='#888';ctx.font='10px monospace';ctx.fillText(mx+' fps',4,10);}
 loss.onchange=()=>{fetch('/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({loss:loss.checked?0.3:0})});};
 const es=new EventSource('/events');
 es.onmessage=e=>{const d=JSON.parse(e.data);
@@ -66,12 +69,13 @@ es.onmessage=e=>{const d=JSON.parse(e.data);
     const m=window._cur?window._cur.querySelector('.meta'):null;
     if(m)m.textContent+=` | model ${d.model_ms}ms | prompt ${d.prompt_eval_ms}ms/${d.prompt_eval_count}tok | gen ${d.eval_ms}ms/${d.eval_count}tok`;}
     if(d.empty){const el=document.getElementById('a'+d.qid);if(el)el.textContent='[EMPTY/截断] '+(d.answer||'');}
-  else if(d.phase==='stats'){met.textContent=`frames ${d.frames} | lost ${d.lost} | 已答 ${d.answers||0} | 丢/重传/确认 ${d.ans_dropped||0}/${d.ans_retx||0}/${d.ans_acked||0}`;
-    if(d.running){st.textContent=`运行中 ${d.elapsed_s||0}s`;btn.disabled=true;}
-    else{st.textContent=d.last_msg||'空闲';btn.disabled=false;}}
+  else if(d.phase==='stats'){met.textContent=`帧率 ${d.fps||0} | 帧 ${d.frames} 丢 ${d.lost} | 包 发${d.ans_sent||0} 丢${d.ans_dropped||0} 重传${d.ans_retx||0} 确认${d.ans_acked||0} 过期${d.ans_failed||0} 补救${d.recovery||0}% | TTFT ${d.ttft_p50||'-'}ms`;
+  drawFps(d.fps_hist||[]);
+    if(d.running){st.textContent=`运行中 ${d.elapsed_s||0}s`;btn.disabled=false;btn.textContent='停止测试';}
+    else{st.textContent=d.last_msg||'空闲';btn.disabled=false;btn.textContent='开始测试';}}
 };
-btn.onclick=()=>{btn.disabled=true;st.textContent='启动中…';
-  fetch('/start',{method:'POST'}).then(r=>r.json()).then(d=>{st.textContent=d.msg||'已启动';})
+btn.onclick=()=>{const running=btn.textContent.indexOf('停止')>=0;btn.disabled=true;st.textContent=running?'停止中…':'启动中…';
+  fetch(running?'/stop':'/start',{method:'POST'}).then(r=>r.json()).then(d=>{st.textContent=d.msg||'';btn.disabled=false;})
    .catch(e=>{st.textContent='启动失败 '+e;btn.disabled=false;});};
 </script></body></html>"""
 
@@ -103,6 +107,9 @@ class State:
                       "ans_acked": 0, "ans_failed": 0}
         self.lost_ids = set()
         self.loss = a.loss
+        self.fps_hist = collections.deque(maxlen=120)
+        self.frames_1s = 0
+        self.ttfts = []
         self.outstanding = {}
         self.rbuf = ReliableBuffer(
             depth=a.buffer_depth, rto_ms=a.answer_timeout_ms,
@@ -155,13 +162,14 @@ class State:
                     self.latest_seq += 1
                     self.stats["frames"] = len(self.frames)
                     self.stats["frames_total"] += 1
+                    self.frames_1s += 1
         elif p["type"] == "question":
             self.stats["questions"] += 1
             p["t_recv"] = time.monotonic_ns()
             self.q.put(p)
 
 
-    def _tx_frame(self, frame):
+    def _tx_frame(self, key, frame):
         if random.random() < self.loss:
             with self.lock:
                 self.stats["ans_dropped"] += 1
@@ -169,7 +177,10 @@ class State:
         try:
             self.tx.send(frame)
         except Exception:
-            pass
+            # local send failure: retransmit immediately instead of waiting RTO
+            with self.lock:
+                self.stats["send_fail"] += 1
+            self.rbuf.retry_now(key)
 
     def _sync_rbuf(self):
         s = self.rbuf.stats
@@ -193,6 +204,31 @@ class State:
                 pass
             time.sleep(0.02)
 
+    def stop_run(self):
+        with self.run_lock:
+            if not self.run["running"]:
+                return False, "未在运行"
+            proc = self.run.get("proc")
+            self.run["running"] = False
+            self.run["last_msg"] = "已停止"
+        if proc is not None:
+            try:
+                proc.terminate()
+            except Exception:
+                pass
+        try:
+            subprocess.Popen(["ssh", "-i", self.a.ssh_key, "-o", "BatchMode=yes",
+                              "%s@%s" % (self.a.pi_user, self.a.pi_host),
+                              "pkill -f video_tx.py"], stdin=subprocess.DEVNULL,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+        self.push({"phase": "stats", "frames": self.stats["frames_total"],
+                   "lost": self.stats["lost"], "queue": 0,
+                   "answers": self.stats["answers"], "empty": self.stats["empty"],
+                   "running": False, "last_msg": "已停止"})
+        return True, "已停止"
+
     def reset_for_run(self):
         """Clear the Q/A panel and all per-run counters; drop queued questions."""
         with self.lock:
@@ -204,7 +240,8 @@ class State:
             self.stats.update({"questions": 0, "answers": 0, "empty": 0,
                                "frames_total": 0, "lost": 0, "frags": 0,
                                "ans_sent": 0, "ans_dropped": 0, "ans_retx": 0,
-                               "ans_acked": 0, "ans_failed": 0, "ans_evicted": 0})
+                               "ans_acked": 0, "ans_failed": 0, "ans_evicted": 0,
+                      "send_fail": 0})
             self.outstanding.clear()
             self.rbuf.clear()
             self.lost_ids = set()
@@ -245,6 +282,7 @@ class State:
                                          stdout=subprocess.PIPE,
                                          stderr=subprocess.STDOUT, text=True,
                                          encoding="utf-8", errors="replace")
+                    self.run["proc"] = p
                     out = p.communicate(input=a.sudo_pass + "\n",
                                         timeout=a.tx_seconds + 60)[0] or ""
                     res = None
@@ -278,6 +316,14 @@ def capture_loop(st, rx):
             continue
         if raw:
             st.handle(raw)
+
+
+def fps_loop(st):
+    while st.running:
+        time.sleep(1.0)
+        with st.lock:
+            st.fps_hist.append(st.frames_1s)
+            st.frames_1s = 0
 
 
 def expire_loop(st):
@@ -384,6 +430,8 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
              "eval_ms": mj.get("eval_duration"),
              "eval_count": mj.get("eval_count"),
              "ttft_ms": round((t2 - t1_ns) / 1e6, 1) if t2 else None})
+    if t2:
+        st.ttfts.append(round((t2 - t1_ns) / 1e6, 1))
     st.stats["answers"] += 1
     if st.ledger:
         st.ledger.write(json.dumps({
@@ -436,6 +484,15 @@ def make_handler(st):
                     st.loss = 0.0
                 body = json.dumps({"loss": st.loss}).encode()
                 self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            if self.path == "/stop":
+                ok, msg = st.stop_run()
+                body = json.dumps({"ok": ok, "msg": msg}, ensure_ascii=False).encode()
+                self.send_response(200 if ok else 409)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
@@ -519,6 +576,13 @@ def make_handler(st):
                                  "ans_retx": st.stats["ans_retx"],
                                  "ans_acked": st.stats["ans_acked"],
                                  "ans_failed": st.stats["ans_failed"],
+                                 "send_fail": st.stats["send_fail"],
+                                 "evicted": st.stats["ans_evicted"],
+                                 "fps": st.fps_hist[-1] if st.fps_hist else 0,
+                                 "fps_hist": list(st.fps_hist),
+                                 "ttft_p50": (sorted(st.ttfts)[len(st.ttfts)//2] if st.ttfts else None),
+                                 "recovery": (round(100.0 * st.rbuf.stats["acked"] /
+                                               max(1, st.rbuf.stats["acked"] + st.rbuf.stats["expired"]), 1)),
                                  "running": st.run["running"],
                                  "elapsed_s": int(time.monotonic() - st.run["started"]) if st.run["running"] else 0,
                                  "last_msg": st.run["last_msg"]}) + "\n\n"
@@ -575,7 +639,8 @@ def main():
     ts = [threading.Thread(target=capture_loop, args=(st, rx), daemon=True),
           threading.Thread(target=expire_loop, args=(st,), daemon=True),
           threading.Thread(target=question_loop, args=(st,), daemon=True),
-          threading.Thread(target=st.retx_loop, daemon=True)]
+          threading.Thread(target=st.retx_loop, daemon=True),
+          threading.Thread(target=fps_loop, args=(st,), daemon=True)]
     for t in ts:
         t.start()
     srv = ThreadingHTTPServer((a.bind, a.port), make_handler(st))

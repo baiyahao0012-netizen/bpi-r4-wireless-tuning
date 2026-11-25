@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Simulation-equivalent reliable delivery buffer, shared by both paths.
 
@@ -60,7 +60,7 @@ class ReliableBuffer:
             frame = rec["frame"]
         if self.on_send:
             try:
-                self.on_send(frame)
+                self.on_send(key, frame)
             except Exception:
                 pass
         return True
@@ -109,6 +109,17 @@ class ReliableBuffer:
             self._send(key)
         return [self.chunks[k]["frame"] for k in out if k in self.chunks]
 
+    def retry_now(self, key):
+        """Immediate resend after a local send failure (no RTO wait)."""
+        with self.lock:
+            rec = self.chunks.get(key)
+            if rec is None:
+                return
+            if rec["sends"] >= self.max_sends:
+                return
+        self.stats["retx"] += 1
+        self._send(key)
+
     def clear(self):
         with self.lock:
             self.chunks.clear()
@@ -123,3 +134,4 @@ class ReliableBuffer:
     def _log(self, obj):
         if self.ledger:
             self.ledger.write(json.dumps(obj, ensure_ascii=False) + "\n")
+
