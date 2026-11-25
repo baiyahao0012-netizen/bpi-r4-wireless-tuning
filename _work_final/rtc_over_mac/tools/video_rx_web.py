@@ -41,13 +41,15 @@ body{background:#111;color:#ddd;font-family:system-ui;margin:0;display:flex;flex
 .a{color:#8fd694;white-space:pre-wrap}
 </style></head><body>
 <div id="top"><button id="btn">开始测试</button><span id="st">空闲</span>
- <label style="font-size:13px;color:#ccc"><input type="checkbox" id="loss"> 模拟丢包30%</label><canvas id="fps" width="420" height="70" style="background:#0b0b0b"></canvas><span id="met">frames 0 | lost 0 | queue 0</span></div>
+ <label style="font-size:13px;color:#ccc"><input type="checkbox" id="loss"> 模拟丢包30%</label><select id="smode" style="font-size:13px"><option value="off">调度:关</option><option value="fifo">fifo</option><option value="ai-first">ai-first</option><option value="quota">quota</option></select><input id="sbulk" type="number" value="20" style="width:52px" title="背景流 Mbps"><button id="sapply" style="font-size:12px">应用</button><canvas id="fps" width="420" height="70" style="background:#0b0b0b"></canvas><span id="met">frames 0 | lost 0 | queue 0</span></div>
 <div id="main">
  <div id="left"><img id="v" src="/stream.mjpg"></div>
  <div id="right"><h3>Q/A（按时间追加）</h3><div id="log"></div></div>
 </div>
 <script>
 const vid=document.getElementById('v');if(vid){vid.onerror=()=>{setTimeout(()=>{vid.src='/stream.mjpg?r='+Date.now();},1000);};}
+const smode=document.getElementById('smode'),sbulk=document.getElementById('sbulk'),sapply=document.getElementById('sapply');
+sapply.onclick=()=>{fetch('/sched',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:smode.value,rate:50,bulk:parseFloat(sbulk.value||'0')})});};
 const log=document.getElementById('log'),btn=document.getElementById('btn'),st=document.getElementById('st'),met=document.getElementById('met'),loss=document.getElementById('loss'),cv=document.getElementById('fps'),ctx=cv.getContext('2d');
 function drawFps(h){ctx.clearRect(0,0,cv.width,cv.height);if(!h||!h.length)return;const mx=Math.max(1,...h);
  ctx.strokeStyle='#2d8f4e';ctx.beginPath();h.forEach((v,i)=>{const x=i*(cv.width-2)/Math.max(1,h.length-1)+1,y=cv.height-2-(v/mx)*(cv.height-6);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
@@ -69,7 +71,7 @@ es.onmessage=e=>{const d=JSON.parse(e.data);
     const m=window._cur?window._cur.querySelector('.meta'):null;
     if(m)m.textContent+=` | model ${d.model_ms}ms | prompt ${d.prompt_eval_ms}ms/${d.prompt_eval_count}tok | gen ${d.eval_ms}ms/${d.eval_count}tok`;}
     if(d.empty){const el=document.getElementById('a'+d.qid);if(el)el.textContent='[EMPTY/截断] '+(d.answer||'');}
-  else if(d.phase==='stats'){met.textContent=`帧率 ${d.fps||0} | 帧 ${d.frames} 丢 ${d.lost} | 包 发${d.ans_sent||0} 丢${d.ans_dropped||0} 重传${d.ans_retx||0} 确认${d.ans_acked||0} 过期${d.ans_failed||0} 补救${d.recovery||0}% | TTFT ${d.ttft_p50||'-'}ms`;
+  else if(d.phase==='stats'){met.textContent=`[${d.sched_mode||'off'} 深${d.sched_depth||0} 越队${d.ai_jump||0} 驱逐${d.evicted||0} ai/bulk ${d.sent_ai||0}/${d.sent_bulk||0}] `+`帧率 ${d.fps||0} | 帧 ${d.frames} 丢 ${d.lost} | 包 发${d.ans_sent||0} 丢${d.ans_dropped||0} 重传${d.ans_retx||0} 确认${d.ans_acked||0} 过期${d.ans_failed||0} 补救${d.recovery||0}% | TTFT ${d.ttft_p50||'-'}ms`;
   drawFps(d.fps_hist||[]);
     if(d.running){st.textContent=`运行中 ${d.elapsed_s||0}s`;btn.disabled=false;btn.textContent='停止测试';}
     else{st.textContent=d.last_msg||'空闲';btn.disabled=false;btn.textContent='开始测试';}}
@@ -108,6 +110,19 @@ class State:
         self.lost_ids = set()
         self.loss = a.loss
         self.fps_hist = collections.deque(maxlen=120)
+        self.sched_mode = "off"
+        self.sched_rate = a.sched_rate_mbps
+        self.bulk_mbps = a.bulk_mbps
+        self.sched_cap = a.sched_capacity
+        self.ai_q = collections.deque()
+        self.bulk_q = collections.deque()
+        self.q_keys = set()
+        self.qseq = 0
+        self.q_lock = threading.Lock()
+        self.bulk_on = False
+        self.drain_on = False
+        self.sched_stats = {"depth": 0, "ai_jump": 0, "evicted": 0,
+                            "sent_ai": 0, "sent_bulk": 0}
         self.frames_1s = 0
         self.ttfts = []
         self.outstanding = {}
@@ -170,17 +185,125 @@ class State:
 
 
     def _tx_frame(self, key, frame):
+        if self.sched_mode == "off":
+            self._wire_send(frame)
+            return
+        with self.q_lock:
+            if key is not None and key in self.q_keys:
+                return
+            self.qseq += 1
+            if key is not None:
+                self.q_keys.add(key)
+            self.ai_q.append((self.qseq, key, frame))
+            if self.sched_mode == "quota" and len(self.ai_q) + len(self.bulk_q) > self.sched_cap:
+                if self.bulk_q:
+                    self.bulk_q.popleft()
+                    self.sched_stats["evicted"] += 1
+            self._sync_sched()
+
+    def _wire_send(self, frame):
         if random.random() < self.loss:
             with self.lock:
                 self.stats["ans_dropped"] += 1
-            return
+            return True
         try:
             self.tx.send(frame)
+            return True
         except Exception:
-            # local send failure: retransmit immediately instead of waiting RTO
             with self.lock:
                 self.stats["send_fail"] += 1
-            self.rbuf.retry_now(key)
+            return False
+
+    def _sync_sched(self):
+        self.sched_stats["depth"] = len(self.ai_q) + len(self.bulk_q)
+        with self.lock:
+            self.stats["ai_jump"] = self.sched_stats["ai_jump"]
+            self.stats["evicted"] = self.sched_stats["evicted"]
+
+    def _pick_next(self):
+        with self.q_lock:
+            kind = None
+            item = None
+            if self.sched_mode in ("ai-first", "quota"):
+                if self.ai_q:
+                    kind, item = "ai", self.ai_q.popleft()
+                    if self.bulk_q:
+                        self.sched_stats["ai_jump"] += 1
+                elif self.bulk_q:
+                    kind, item = "bulk", self.bulk_q.popleft()
+            else:  # fifo
+                if self.ai_q and self.bulk_q:
+                    if self.ai_q[0][0] < self.bulk_q[0][0]:
+                        kind, item = "ai", self.ai_q.popleft()
+                    else:
+                        kind, item = "bulk", self.bulk_q.popleft()
+                elif self.ai_q:
+                    kind, item = "ai", self.ai_q.popleft()
+                elif self.bulk_q:
+                    kind, item = "bulk", self.bulk_q.popleft()
+            if kind == "ai" and item is not None:
+                self.q_keys.discard(item[1])
+            self._sync_sched()
+            return kind, item
+
+    def drain_loop(self):
+        rate = max(1.0, self.sched_rate) * 1e6 / 8.0
+        tokens = 0.0
+        last = time.monotonic()
+        while self.running:
+            now = time.monotonic()
+            tokens = min(rate * 0.05, tokens + rate * (now - last))
+            last = now
+            kind, item = self._pick_next()
+            if item is None:
+                time.sleep(0.003)
+                continue
+            frame = item[2]
+            if tokens < len(frame):
+                with self.q_lock:
+                    (self.ai_q if kind == "ai" else self.bulk_q).appendleft(item)
+                time.sleep(0.002)
+                continue
+            tokens -= len(frame)
+            ok = self._wire_send(frame)
+            self.sched_stats["sent_" + kind] += 1
+            if kind == "ai" and not ok and item[1] is not None:
+                self.rbuf.retry_now(item[1])
+
+    def bulk_loop(self):
+        size = 1400
+        while self.running:
+            if not self.bulk_on:
+                time.sleep(0.05)
+                continue
+            per_tick = max(1, int((self.bulk_mbps * 1e6 / 8.0) / size / 100))
+            for _ in range(per_tick):
+                frame = self.dst + self.src + (0x88B7).to_bytes(2, "big") + b"\x00" * (size - 14)
+                with self.q_lock:
+                    if len(self.bulk_q) >= self.sched_cap:
+                        self.bulk_q.popleft()
+                        self.sched_stats["evicted"] += 1
+                    self.qseq += 1
+                    self.bulk_q.append((self.qseq, None, frame))
+                self._sync_sched()
+            time.sleep(0.01)
+
+    def set_sched(self, mode, rate=None, bulk=None):
+        with self.q_lock:
+            self.sched_mode = mode
+            if rate is not None:
+                self.sched_rate = rate
+            if bulk is not None:
+                self.bulk_mbps = bulk
+            self.bulk_on = mode != "off" and (self.bulk_mbps or 0) > 0
+            if not self.bulk_on:
+                self.bulk_q.clear()
+        if mode != "off" and not self.drain_on:
+            self.drain_on = True
+            threading.Thread(target=self.drain_loop, daemon=True).start()
+        self._sync_sched()
+        return {"mode": self.sched_mode, "rate": self.sched_rate,
+                "bulk": self.bulk_mbps}
 
     def _sync_rbuf(self):
         s = self.rbuf.stats
@@ -489,6 +612,22 @@ def make_handler(st):
                 self.end_headers()
                 self.wfile.write(body)
                 return
+            if self.path == "/sched":
+                try:
+                    n2 = int(self.headers.get("Content-Length", "0"))
+                    cfg = json.loads(self.rfile.read(n2) if n2 else b"{}")
+                    out = st.set_sched(str(cfg.get("mode", "off")),
+                                        float(cfg.get("rate", st.sched_rate)),
+                                        float(cfg.get("bulk", st.bulk_mbps)))
+                except Exception as exc:
+                    out = {"error": str(exc)}
+                body = json.dumps(out).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             if self.path == "/stop":
                 ok, msg = st.stop_run()
                 body = json.dumps({"ok": ok, "msg": msg}, ensure_ascii=False).encode()
@@ -580,6 +719,13 @@ def make_handler(st):
                                  "evicted": st.stats["ans_evicted"],
                                  "fps": st.fps_hist[-1] if st.fps_hist else 0,
                                  "fps_hist": list(st.fps_hist),
+                                 "sched_mode": st.sched_mode, "sched_rate": st.sched_rate,
+                                 "sched_bulk": st.bulk_mbps,
+                                 "sched_depth": st.sched_stats["depth"],
+                                 "ai_jump": st.sched_stats["ai_jump"],
+                                 "evicted": st.sched_stats["evicted"],
+                                 "sent_ai": st.sched_stats["sent_ai"],
+                                 "sent_bulk": st.sched_stats["sent_bulk"],
                                  "ttft_p50": (sorted(st.ttfts)[len(st.ttfts)//2] if st.ttfts else None),
                                  "recovery": (round(100.0 * st.rbuf.stats["acked"] /
                                                max(1, st.rbuf.stats["acked"] + st.rbuf.stats["expired"]), 1)),
@@ -612,6 +758,9 @@ def main():
     ap.add_argument("--answer-timeout-ms", type=float, default=400.0)
     ap.add_argument("--max-resend", type=int, default=8)
     ap.add_argument("--buffer-depth", type=int, default=64)
+    ap.add_argument("--sched-rate-mbps", type=float, default=50.0)
+    ap.add_argument("--sched-capacity", type=int, default=500)
+    ap.add_argument("--bulk-mbps", type=float, default=0.0)
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--bind", default="127.0.0.1")
     ap.add_argument("--ledger", default="")
@@ -640,7 +789,8 @@ def main():
           threading.Thread(target=expire_loop, args=(st,), daemon=True),
           threading.Thread(target=question_loop, args=(st,), daemon=True),
           threading.Thread(target=st.retx_loop, daemon=True),
-          threading.Thread(target=fps_loop, args=(st,), daemon=True)]
+          threading.Thread(target=fps_loop, args=(st,), daemon=True),
+          threading.Thread(target=st.bulk_loop, daemon=True)]
     for t in ts:
         t.start()
     srv = ThreadingHTTPServer((a.bind, a.port), make_handler(st))
