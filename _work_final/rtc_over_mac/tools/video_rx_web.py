@@ -43,11 +43,12 @@ body{background:#111;color:#ddd;font-family:system-ui;margin:0;display:flex;flex
 <div id="top"><button id="btn">开始测试</button><span id="st">空闲</span>
  <label style="font-size:13px;color:#ccc"><input type="checkbox" id="loss"> 模拟丢包30%</label><select id="smode" style="font-size:13px"><option value="off">调度:关</option><option value="fifo">fifo</option><option value="ai-first">ai-first</option><option value="quota">quota</option></select><input id="sbulk" type="number" value="20" style="width:52px" title="背景流 Mbps"><button id="sapply" style="font-size:12px">应用</button><canvas id="fps" width="420" height="70" style="background:#0b0b0b"></canvas><span id="met">frames 0 | lost 0 | queue 0</span></div>
 <div id="main">
- <div id="left"><img id="v" src="/stream.mjpg"></div>
+ <div id="left"><img id="v" src="/frame.jpg"></div>
  <div id="right"><h3>Q/A（按时间追加）</h3><div id="log"></div></div>
 </div>
 <script>
-const vid=document.getElementById('v');if(vid){vid.onerror=()=>{setTimeout(()=>{vid.src='/stream.mjpg?r='+Date.now();},1000);};}
+const vid=document.getElementById('v');
+if(vid){setInterval(()=>{const im=new Image();im.onload=()=>{vid.src=im.src;};im.src='/frame.jpg?t='+Date.now();},50);}
 const smode=document.getElementById('smode'),sbulk=document.getElementById('sbulk'),sapply=document.getElementById('sapply');
 sapply.onclick=()=>{fetch('/sched',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:smode.value,rate:50,bulk:parseFloat(sbulk.value||'0')})});};
 const log=document.getElementById('log'),btn=document.getElementById('btn'),st=document.getElementById('st'),met=document.getElementById('met'),loss=document.getElementById('loss'),cv=document.getElementById('fps'),ctx=cv.getContext('2d');
@@ -58,7 +59,7 @@ loss.onchange=()=>{fetch('/config',{method:'POST',headers:{'Content-Type':'appli
 const es=new EventSource('/events');
 es.onmessage=e=>{const d=JSON.parse(e.data);
   if(d.phase==='reset'){log.innerHTML='';window._cur=null;
-    const v=document.getElementById('v');if(v)v.src='/stream.mjpg?r='+Date.now();
+    const v=document.getElementById('v');if(v)v.src='/frame.jpg?t='+Date.now();
     st.textContent='新一轮（模型已重置）';met.textContent='frames 0 | lost 0 | queue 0 | 已答 0';}
   else if(d.phase==='start'){window._cur=document.createElement('div');window._cur.className='q';
     window._cur.innerHTML=`<div class="meta">#${d.qid} t=${d.t}s frame=${d.idx} ${d.miss?'(frame miss)':''}</div>
@@ -690,6 +691,17 @@ def make_handler(st):
                         except Exception:
                             return
                     time.sleep(0.06)
+                return
+            if self.path.startswith("/frame.jpg"):
+                with st.lock:
+                    fr = st.latest
+                img = fr["jpeg"] if fr else st.placeholder
+                self.send_response(200)
+                self.send_header("Content-Type", "image/jpeg")
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", str(len(img)))
+                self.end_headers()
+                self.wfile.write(img)
                 return
             if self.path == "/events":
                 self.send_response(200)
