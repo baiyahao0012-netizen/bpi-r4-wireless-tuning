@@ -1,0 +1,359 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Laptop-side receiver: reassemble L2 video, serve MJPEG + Q/A SSE, call Ollama.
+
+Left panel: MJPEG of received frames. Right panel: question / answer stream.
+Answers are streamed back over L2: first token immediately, then deltas.
+"""
+import argparse
+import base64
+import collections
+import json
+import os
+import queue
+import sys
+import threading
+import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from fast_tx import PcapTx
+from pcap_rx import PcapRx
+from video_proto import FRAME_MAX, answer, mac, parse, question
+
+HTML = """<!doctype html><html><head><meta charset="utf-8"><title>RTC VLM</title>
+<style>
+body{background:#111;color:#ddd;font-family:system-ui;margin:0;display:flex;height:100vh}
+#left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #333}
+#left img{max-width:100%;max-height:92vh}
+#right{width:44%;overflow-y:auto;padding:10px;font-size:13px}
+.q{border:1px solid #444;border-radius:6px;margin:8px 0;padding:8px;background:#1a1a1a}
+.meta{color:#888;font-size:11px}
+.a{color:#8fd694;white-space:pre-wrap}
+#hdr{position:fixed;top:0;right:0;padding:4px 8px;font-size:11px;color:#888;background:#000a}
+</style></head><body>
+<div id="left"><img id="v" src="/stream.mjpg"></div>
+<div id="right"><h3>Q/A锛堟寜鏃堕棿杩藉姞锛?/h3><div id="log"></div></div>
+<div id="hdr">frames <span id="nf">0</span> | lost <span id="nl">0</span> | queue <span id="nq">0</span></div>
+<script>
+const log=document.getElementById('log');
+function add(txt,cls){const d=document.createElement('div');d.className='q';d.innerHTML=txt;
+  if(cls)d.classList.add(cls);log.appendChild(d);window.scrollTo(0,document.body.scrollHeight);}
+const es=new EventSource('/events');
+es.onmessage=e=>{const d=JSON.parse(e.data);
+  if(d.phase==='start'){window._cur=document.createElement('div');window._cur.className='q';
+    window._cur.innerHTML=`<div class="meta">#${d.qid} t=${d.t}s frame=${d.idx} ${d.miss?'(frame miss)':''}</div>
+    <div><b>闂細</b>${d.question}</div><div class="a" id="a${d.qid}"></div>`;
+    log.appendChild(window._cur);}
+  else if(d.phase==='first'){const el=document.getElementById('a'+d.qid);if(el)el.textContent=d.text;
+    const m=window._cur?window._cur.querySelector('.meta'):null;if(m)m.textContent+=` | TTFT ${d.ttft_ms}ms`;}
+  else if(d.phase==='delta'){const el=document.getElementById('a'+d.qid);if(el)el.textContent=(el.textContent||'')+d.text;}
+  else if(d.phase==='final'){const el=document.getElementById('a'+d.qid);if(el)el.textContent=d.answer;
+    const m=window._cur?window._cur.querySelector('.meta'):null;
+    if(m)m.textContent+=` | e2e ${d.e2e_ms}ms | prompt ${d.prompt_eval_ms}ms/${d.prompt_eval_count}tok | gen ${d.eval_ms}ms/${d.eval_count}tok`;}
+  else if(d.phase==='stats'){document.getElementById('nf').textContent=d.frames;
+    document.getElementById('nl').textContent=d.lost;document.getElementById('nq').textContent=d.queue;}
+};
+</script></body></html>"""
+
+
+class State:
+    def __init__(self, a):
+        self.a = a
+        self.src = mac(a.src_mac)
+        self.dst = mac(a.dst_mac)
+        self.tx = PcapTx(a.ip)
+        self.frames = collections.OrderedDict()
+        self.reasm = {}
+        self.latest = None
+        self.latest_seq = 0
+        self.stats = {"frames": 0, "lost": 0, "frags": 0, "questions": 0}
+        self.q = queue.Queue()
+        self.clients = []
+        self.lock = threading.RLock()
+        self.ledger = open(a.ledger, "w", buffering=1, encoding="utf-8") if a.ledger else None
+        self.running = True
+
+    def push(self, obj):
+        line = "data: " + json.dumps(obj, ensure_ascii=False) + "\n\n"
+        with self.lock:
+            for q in list(self.clients):
+                try:
+                    q.put_nowait(line)
+                except Exception:
+                    pass
+
+    def handle(self, raw):
+        p = parse(raw)
+        if not p:
+            return
+        if p["type"] == "video":
+            self.stats["frags"] += 1
+            idx = p["frame_idx"]
+            r = self.reasm.get(idx)
+            if r is None:
+                r = {"pts": p["pts_us"], "total": p["frag_total"], "parts": {},
+                     "t0": time.monotonic()}
+                self.reasm[idx] = r
+            r["parts"][p["frag_idx"]] = p["payload"]
+            if len(r["parts"]) == r["total"]:
+                data = b"".join(r["parts"][i] for i in range(r["total"]))
+                del self.reasm[idx]
+                with self.lock:
+                    self.frames[idx] = {"pts": p["pts_us"], "jpeg": data,
+                                        "t_recv": time.monotonic()}
+                    while len(self.frames) > 400:
+                        self.frames.popitem(last=False)
+                    self.latest = self.frames[idx]
+                    self.latest_seq += 1
+                    self.stats["frames"] = len(self.frames)
+        elif p["type"] == "question":
+            self.stats["questions"] += 1
+            p["t_recv"] = time.monotonic_ns()
+            self.q.put(p)
+
+
+def capture_loop(st, rx):
+    while st.running:
+        try:
+            raw = rx.next_packet()
+        except OSError:
+            time.sleep(0.01)
+            continue
+        if raw:
+            st.handle(raw)
+
+
+def expire_loop(st):
+    while st.running:
+        now = time.monotonic()
+        with st.lock:
+            for idx, r in list(st.reasm.items()):
+                if now - r["t0"] > 0.5:
+                    del st.reasm[idx]
+                    st.stats["lost"] += 1
+        time.sleep(0.05)
+
+
+def get_frame(st, idx, wait_ms=80):
+    deadline = time.monotonic() + wait_ms / 1000.0
+    while time.monotonic() < deadline:
+        with st.lock:
+            if idx in st.frames:
+                return idx, st.frames[idx], False
+        time.sleep(0.005)
+    with st.lock:
+        lower = [k for k in st.frames if k <= idx]
+        if lower:
+            k = max(lower)
+            return k, st.frames[k], True
+    return None, None, True
+
+
+def ollama_stream(st, qid, idx, text, t1_ns, b64):
+    a = st.a
+    import requests
+    t2 = None
+    seq = 0
+    sent_any = False
+    buf = ""
+    last_flush = time.monotonic()
+    payload = {"model": a.model, "prompt": text, "images": [b64], "stream": True,
+               "options": {"num_predict": a.num_predict, "temperature": 0},
+               "keep_alive": "10m"}
+    metrics = {}
+    print("ollama start qid=%s model=%s" % (qid, a.model), flush=True)
+    full = ""
+    try:
+        with requests.post(a.ollama + "/api/generate", json=payload, stream=True,
+                           timeout=180) as r:
+            for line in r.iter_lines(decode_unicode=True):
+                if not line:
+                    continue
+                d = json.loads(line)
+                delta = d.get("response") or ""
+                now = time.monotonic_ns()
+                if delta and t2 is None:
+                    t2 = now
+                    full += delta
+                    st.tx.send(answer(st.dst, st.src, qid, seq, 1, t2, delta))
+                    seq += 1
+                    st.push({"phase": "first", "qid": qid, "text": delta,
+                             "ttft_ms": round((t2 - t1_ns) / 1e6, 1)})
+                    sent_any = True
+                elif delta:
+                    full += delta
+                    buf += delta
+                    if time.monotonic() - last_flush > 0.03:
+                        st.tx.send(answer(st.dst, st.src, qid, seq, 0, t2, buf))
+                        seq += 1
+                        st.push({"phase": "delta", "qid": qid, "text": buf})
+                        buf = ""
+                        last_flush = time.monotonic()
+                if d.get("done"):
+                    metrics = {k: d.get(k) for k in (
+                        "total_duration", "load_duration", "prompt_eval_count",
+                        "prompt_eval_duration", "eval_count", "eval_duration")}
+                    break
+    except Exception as exc:
+        import traceback; traceback.print_exc()
+        metrics = {"error": str(exc)}
+    if buf:
+        st.tx.send(answer(st.dst, st.src, qid, seq, 0, t2 or 0, buf))
+        seq += 1
+        st.push({"phase": "delta", "qid": qid, "text": buf})
+    st.tx.send(answer(st.dst, st.src, qid, seq, 2, t2 or 0, ""))
+    mj = {k: (round(v / 1e6, 1) if isinstance(v, int) and k.endswith("duration") else v)
+          for k, v in metrics.items()}
+    st.push({"phase": "final", "qid": qid, "answer": full,
+             "e2e_ms": round((time.monotonic_ns() - t1_ns) / 1e6, 1),
+             "prompt_eval_ms": mj.get("prompt_eval_duration"),
+             "prompt_eval_count": mj.get("prompt_eval_count"),
+             "eval_ms": mj.get("eval_duration"),
+             "eval_count": mj.get("eval_count"),
+             "ttft_ms": round((t2 - t1_ns) / 1e6, 1) if t2 else None})
+    if st.ledger:
+        st.ledger.write(json.dumps({"qid": qid, "idx": idx, "question": text,
+                                    "ttft_ms": round((t2 - t1_ns) / 1e6, 1) if t2 else None,
+                                    "answer": full, "metrics": mj},
+                                   ensure_ascii=False) + "\n")
+
+
+def question_loop(st):
+    while st.running:
+        try:
+            p = st.q.get(timeout=0.2)
+        except queue.Empty:
+            continue
+        print("Q recv qid=%s idx=%s" % (p["qid"], p["frame_idx"]), flush=True)
+        idx, fr, miss = get_frame(st, p["frame_idx"])
+        print("Q frame idx=%s found=%s miss=%s" % (idx, fr is not None, miss), flush=True)
+        if fr is None:
+            st.push({"phase": "start", "qid": p["qid"], "t": p["pts_us"] / 1e6,
+                     "idx": p["frame_idx"], "question": p["text"], "miss": True})
+            continue
+        b64 = base64.b64encode(fr["jpeg"]).decode()
+        st.push({"phase": "start", "qid": p["qid"], "t": p["pts_us"] / 1e6,
+                 "idx": idx, "question": p["text"], "miss": miss})
+        ollama_stream(st, p["qid"], idx, p["text"], p["t_recv"], b64)
+
+
+def make_handler(st):
+    class H(BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+
+        def do_GET(self):
+            if self.path == "/":
+                body = HTML.encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            if self.path == "/stream.mjpg":
+                self.send_response(200)
+                self.send_header("Content-Type",
+                                 "multipart/x-mixed-replace; boundary=frame")
+                self.end_headers()
+                last = -1
+                while st.running:
+                    with st.lock:
+                        seq = st.latest_seq
+                        fr = st.latest
+                    if fr and seq != last:
+                        last = seq
+                        try:
+                            self.wfile.write(b"--frame\r\nContent-Type: image/jpeg\r\n"
+                                             b"Content-Length: %d\r\n\r\n" % len(fr["jpeg"]))
+                            self.wfile.write(fr["jpeg"])
+                            self.wfile.write(b"\r\n")
+                            self.wfile.flush()
+                        except Exception:
+                            return
+                    time.sleep(0.06)
+                return
+            if self.path == "/events":
+                self.send_response(200)
+                self.send_header("Content-Type", "text/event-stream")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                q = queue.Queue()
+                with st.lock:
+                    st.clients.append(q)
+                try:
+                    while st.running:
+                        try:
+                            msg = q.get(timeout=0.5)
+                        except queue.Empty:
+                            msg = "data: " + json.dumps(
+                                {"phase": "stats", "frames": st.stats["frames"],
+                                 "lost": st.stats["lost"],
+                                 "queue": st.q.qsize()}) + "\n\n"
+                        self.wfile.write(msg.encode())
+                        self.wfile.flush()
+                except Exception:
+                    pass
+                finally:
+                    with st.lock:
+                        if q in st.clients:
+                            st.clients.remove(q)
+                return
+            self.send_response(404)
+            self.end_headers()
+    return H
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--ip", default="192.168.240.2")
+    ap.add_argument("--src-mac", default="40:c2:ba:52:70:95")
+    ap.add_argument("--dst-mac", default="90:de:80:1c:6a:7a")
+    ap.add_argument("--ollama", default="http://127.0.0.1:11434")
+    ap.add_argument("--model", default="qwen3-vl:2b")
+    ap.add_argument("--num-predict", type=int, default=160)
+    ap.add_argument("--port", type=int, default=8080)
+    ap.add_argument("--ledger", default="")
+    ap.add_argument("--seconds", type=float, default=0, help="0 = run until Ctrl-C")
+    a = ap.parse_args()
+    st = State(a)
+    import base64 as _b64, requests as _rq
+    png = _b64.b64encode(bytes.fromhex("89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c6360000002000154a24f6f0000000049454e44ae426082")).decode()
+    t_w = time.monotonic()
+    try:
+        _rq.post(a.ollama + "/api/generate", json={"model": a.model, "prompt": "warmup",
+                "images": [png], "stream": False, "options": {"num_predict": 1}},
+                timeout=300)
+        print("WARMUP %.1fs" % (time.monotonic() - t_w), flush=True)
+    except Exception as exc:
+        print("WARMUP_FAIL %s" % exc, flush=True)
+    rx = PcapRx(a.ip, bpf="ether proto 0x88b5 or ether proto 0x88b6")
+    ts = [threading.Thread(target=capture_loop, args=(st, rx), daemon=True),
+          threading.Thread(target=expire_loop, args=(st,), daemon=True),
+          threading.Thread(target=question_loop, args=(st,), daemon=True)]
+    for t in ts:
+        t.start()
+    srv = ThreadingHTTPServer(("0.0.0.0", a.port), make_handler(st))
+    th = threading.Thread(target=srv.serve_forever, daemon=True)
+    th.start()
+    print("READY http://127.0.0.1:%d/ frames=%d" % (a.port, 0), flush=True)
+    try:
+        if a.seconds > 0:
+            time.sleep(a.seconds)
+        else:
+            while True:
+                time.sleep(1)
+    except KeyboardInterrupt:
+        pass
+    st.running = False
+    res = {"role": "laptop-rx", "frames_seen": st.stats["frames"],
+           "frags": st.stats["frags"], "lost": st.stats["lost"],
+           "questions": st.stats["questions"]}
+    print("RESULT " + json.dumps(res, ensure_ascii=False), flush=True)
+
+
+if __name__ == "__main__":
+    main()
+
+

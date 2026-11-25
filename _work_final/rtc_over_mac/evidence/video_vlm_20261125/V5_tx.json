@@ -1,0 +1,1 @@
+{"role": "pi-video-tx", "fps": 24.0, "frames": 2880, "loops": 1, "frames_sent": 721, "frags_sent": 39836, "late_frames": 0, "questions_sent": 6, "answers_first": 5, "e2e_p50_us": 918498.2, "e2e_p95_us": 1179420.4, "e2e_us": [722000.0, 746019.0, 918498.2, 1095254.9, 1179420.4]}
