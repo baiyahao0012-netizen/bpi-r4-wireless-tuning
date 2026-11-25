@@ -152,7 +152,7 @@ class Server:
                 rec = self.records.get(mid)
                 if rec is None:
                     rec = {"state": "queued", "item": self._new_item(mid, p["t0_ns"]),
-                           "recv_ns": time.monotonic_ns(), "attempts": 0,
+                           "recv_ns": time.monotonic_ns(), "qdepth_at_recv": self.sched.npackets, "attempts": 0,
                            "last_ns": time.monotonic_ns(), "last_send_ns": 0, "constructed": 1,
                            "dup_requests": 0, "injected_drop": 0, "fail_send": 0,
                            "sends": []}
@@ -415,6 +415,7 @@ class Server:
                         "dup_requests": rec["dup_requests"],
                         "injected_drop": rec["injected_drop"],
                         "attempts": rec["attempts"],
+                        "qdepth_at_recv": rec.get("qdepth_at_recv", 0),
                         "deadline_ns": rec["recv_ns"] + int(self.a.deadline_ms * 1e6),
                         "sends": rec["sends"], "final": rec["state"]},
                         ensure_ascii=False) + "\n")
@@ -472,6 +473,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
