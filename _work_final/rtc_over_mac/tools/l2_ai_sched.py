@@ -73,6 +73,9 @@ class Scheduler:
             if own < share:
                 victim = self._pick_victim(share)
                 if victim is not None:
+                    flow_bytes = {f: sum(i.nbytes for i in q) for f, q in self.queues.items() if q}
+                    victim_bytes = flow_bytes.get(victim.flow, 0)
+                    victim_over = victim_bytes - share
                     vq = self.queues[victim.flow]
                     v = vq.popleft()
                     self.npackets -= 1
@@ -80,7 +83,10 @@ class Scheduler:
                     self.evictions += 1
                     self.dropped[victim.flow] += 1
                     self.evicted_by_flow[victim.flow] += 1
-                    self.log("evict", v.flow, v.msg_id, "quota_evict")
+                    self.log("evict", v.flow, v.msg_id,
+                             "quota_evict share=%d victim_over=%d flows=%s" %
+                             (share, victim_over,
+                              ";".join("%d:%d" % (f, b) for f, b in sorted(flow_bytes.items()))))
                     full = False
             if full:
                 self.rejections += 1
@@ -171,6 +177,9 @@ class Scheduler:
             "fcfs_inversions": self._count_inversions(),
             "quota_degenerate": self.quota_degenerate,
         }
+
+
+
 
 
 

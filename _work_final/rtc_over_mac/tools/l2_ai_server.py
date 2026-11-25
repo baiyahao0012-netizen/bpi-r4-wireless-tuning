@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from l2_ai_common import (ETH_AI, ETH_ACK, ETH_BULK, ETH_ECHO, KIND_REQ,
                           KIND_RESP, build_frame, parse_frame, mac_bytes)
 from l2_ai_sched import Item, Scheduler
+from fast_tx import PcapTx
 
 from scapy.all import AsyncSniffer, Ether, Raw, conf, sendp
 from scapy.arch import get_if_addr
@@ -72,6 +73,7 @@ class Server:
         }
         self.created_total = 0
         self.attempts_ever = 0
+        self.tx = PcapTx(a.ip) if getattr(a, "fast_tx", False) else None
         self.csv = open(a.csv, "w", buffering=1) if a.csv else None
         if self.csv:
             self.csv.write("t_ns,event,flow,msg_id,detail\n")
@@ -86,8 +88,11 @@ class Server:
         frame = build_frame(self.dst, self.src, ethertype, flow, msg_id, kind,
                             t0_ns, payload, flags)
         t0 = time.monotonic_ns()
-        sendp(Ether(dst=self.dst, src=self.src, type=ethertype) / Raw(frame[14:]),
-              iface=self.iface, verbose=0)
+        if self.tx is not None:
+            self.tx.send(frame)
+        else:
+            sendp(Ether(dst=self.dst, src=self.src, type=ethertype) / Raw(frame[14:]),
+                  iface=self.iface, verbose=0)
         return len(frame), (time.monotonic_ns() - t0) / 1000.0
 
     # ---------- record helpers ----------
@@ -213,6 +218,8 @@ class Server:
 
     # ---------- bulk ----------
     def gen_loop(self):
+        if self.a.bulk_delay > 0:
+            time.sleep(self.a.bulk_delay)
         pkt = 1400
         pps = (self.a.bulk_mbps * 1e6 / 8.0) / pkt
         carry = 0.0
@@ -395,6 +402,10 @@ class Server:
             res["attempts_total"] = self.attempts_ever
             res["attempts_ledger"] = sum(len(r["sends"]) for r in self.records.values())
             res["attempts_ge_sendp"] = self.attempts_ever >= self.stats["sendp_calls"]
+            if self.tx is not None:
+                res["fast_tx"] = True
+                res["tx_frames"] = self.tx.frames
+                res["tx_errors"] = self.tx.errors
         if self.a.ledger:
             with open(self.a.ledger, "w", encoding="utf-8") as fh:
                 for mid, rec in self.records.items():
@@ -418,9 +429,12 @@ def main():
     ap.add_argument("--client-mac", default="90:de:80:1c:6a:7a")
     ap.add_argument("--seconds", type=float, default=14)
     ap.add_argument("--rate-mbps", type=float, default=10.0)
+    ap.add_argument("--fast-tx", dest="fast_tx", action="store_true", default=False,
+                    help="send via Npcap pcap_sendpacket instead of scapy sendp")
     ap.add_argument("--pacing", dest="pacing", action="store_true", default=True)
     ap.add_argument("--no-pacing", dest="pacing", action="store_false")
     ap.add_argument("--bulk-mbps", type=float, default=0.0)
+    ap.add_argument("--bulk-delay", type=float, default=0.0)
     ap.add_argument("--flows", type=int, default=4)
     ap.add_argument("--capacity", type=int, default=200)
     ap.add_argument("--min-per-flow", type=int, default=20)
@@ -458,6 +472,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
 
 
 

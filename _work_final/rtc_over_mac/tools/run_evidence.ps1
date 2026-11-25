@@ -14,6 +14,10 @@
   [int]$Capacity = 200,
   [int]$BufferDepth = 64,
   [double]$RateMbps = 10,
+  [string]$Mode = "fifo",
+  [double]$AiInterval = 100,
+  [switch]$FastTx,
+  [double]$BulkDelay = 0,
   [double]$BulkMbps = 0,
   [double]$SrvRespTimeout = 80,
   [double]$CliAckTimeout = 60,
@@ -31,10 +35,11 @@ Remove-Item $srvLedger -ErrorAction SilentlyContinue
 Remove-Item "$Evidence\${Tag}_srv.jsonl" -ErrorAction SilentlyContinue
 Remove-Item "$Evidence\${Tag}_cli.jsonl" -ErrorAction SilentlyContinue
 & ssh -i $key -o BatchMode=yes -o ConnectTimeout=8 bai@192.168.240.153 "rm -f $cliLedger" 2>&1 | Out-Null
-$sargs = @("--mode", "fifo", "--seconds", ($Seconds + 8), "--bulk-mbps", $BulkMbps,
+$sargs = @("--mode", $Mode, "--seconds", ($Seconds + 8), "--bulk-mbps", $BulkMbps, "--bulk-delay", $BulkDelay,
            "--client-mac", $ClientMac, "--capacity", $Capacity,
            "--buffer-depth", $BufferDepth, "--rate-mbps", $RateMbps,
            "--resp-timeout-ms", $SrvRespTimeout, "--ledger", $srvLedger, "--out", $srvOut)
+if ($FastTx)     { $sargs += @("--fast-tx") }
 if ($DropResp)   { $sargs += @("--drop-resp", $DropResp) }
 if ($FailResp)   { $sargs += @("--fail-resp", $FailResp) }
 if ($DropAckReq) { $sargs += @("--drop-ack-req", $DropAckReq) }
@@ -42,7 +47,7 @@ $srv = Start-Process -FilePath (Get-Command python).Source -ArgumentList (@("$di
   -WorkingDirectory $dir -PassThru -WindowStyle Hidden `
   -RedirectStandardOutput "$env:TEMP\ev_${Tag}_srv.log" -RedirectStandardError "$env:TEMP\ev_${Tag}_srv.err"
 Start-Sleep -Seconds 3
-$clientArgs = "--dst-mac 40:c2:ba:52:70:95 --seconds $Seconds --iface $Iface --src-mac $SrcMac --msg-base $MsgBase --ack-timeout-ms $CliAckTimeout --resp-timeout-ms $CliRespTimeout --ledger $cliLedger --out /tmp/ev_${Tag}_cli.json"
+$clientArgs = "--dst-mac 40:c2:ba:52:70:95 --seconds $Seconds --iface $Iface --src-mac $SrcMac --msg-base $MsgBase --ai-interval-ms $AiInterval --ack-timeout-ms $CliAckTimeout --resp-timeout-ms $CliRespTimeout --ledger $cliLedger --out /tmp/ev_${Tag}_cli.json"
 if ($DropReq)     { $clientArgs += " --drop-req $DropReq" }
 if ($FailReq)     { $clientArgs += " --fail-req $FailReq" }
 if ($DropAckResp) { $clientArgs += " --drop-ack-resp $DropAckResp" }
