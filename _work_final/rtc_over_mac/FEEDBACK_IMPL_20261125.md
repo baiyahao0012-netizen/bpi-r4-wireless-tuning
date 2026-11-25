@@ -1,203 +1,155 @@
-# 反馈机制实现（对齐仿真语义，2026-11-25）
+﻿# 鍙嶉鏈哄埗瀹炵幇锛堝榻愪豢鐪熻涔夛紝2026-11-25锛?
+鐩爣锛氭妸 `contrib/genai` 鐨勫弽棣堟満鍒跺湪鐪熸満涓婂疄鐜版垚涓庝豢鐪?*璇箟涓€鑷?*鐨勭姸鎬佹満锛屽苟鐢ㄦ満鍒剁骇璁℃暟鍣ㄩ獙璇併€?
+## 1. 涓庝豢鐪熺殑瀵圭収
 
-目标：把 `contrib/genai` 的反馈机制在真机上实现成与仿真**语义一致**的状态机，并用机制级计数器验证。
-
-## 1. 与仿真的对照
-
-| 仿真语义 | 实现 |
+| 浠跨湡璇箟 | 瀹炵幇 |
 |---|---|
-| `Store`(`ai-server-application.cc:347`) 先于发送(`:352`) | 请求一到即建 `rec{state:"queued", attempts:0, item}`，**登记在入队之前** |
-| 入队被拒 → `DropBeforeEnqueue` → 立即补发 | `enqueue()` 返回值被接住；失败置 `rejected` 并计数 `enqueue_reject`，由重试回路补发 |
-| 发送失败 → 补发 | `send_err` 不再跳过，回置 `queued` 并计数 `send_err_retry` |
-| 去重 = 只推理一次，但可重复传输 | 重复请求且 `state != done` → **重发响应**（`resp_dup_resend`）；仅 `done` 时只回 ACK |
-| 重发上限 8（`kMaxResendsPerChunk`/`kMaxRequestRetxAttempts`） | `attempts < max_resend` 对所有路径生效（含 dup），超出计 `resend_cap_hit` |
-| 事件驱动补发 | 入队拒绝/发送失败为事件驱动（≈0 ms） |
-| MAC 丢包事件 | 真机不可得 → 用**响应超时**（默认 80 ms）作为等价信号（`retx_timeout`） |
+| `Store`(`ai-server-application.cc:347`) 鍏堜簬鍙戦€?`:352`) | 璇锋眰涓€鍒板嵆寤?`rec{state:"queued", attempts:0, item}`锛?*鐧昏鍦ㄥ叆闃熶箣鍓?* |
+| 鍏ラ槦琚嫆 鈫?`DropBeforeEnqueue` 鈫?绔嬪嵆琛ュ彂 | `enqueue()` 杩斿洖鍊艰鎺ヤ綇锛涘け璐ョ疆 `rejected` 骞惰鏁?`enqueue_reject`锛岀敱閲嶈瘯鍥炶矾琛ュ彂 |
+| 鍙戦€佸け璐?鈫?琛ュ彂 | `send_err` 涓嶅啀璺宠繃锛屽洖缃?`queued` 骞惰鏁?`send_err_retry` |
+| 鍘婚噸 = 鍙帹鐞嗕竴娆★紝浣嗗彲閲嶅浼犺緭 | 閲嶅璇锋眰涓?`state != done` 鈫?**閲嶅彂鍝嶅簲**锛坄resp_dup_resend`锛夛紱浠?`done` 鏃跺彧鍥?ACK |
+| 閲嶅彂涓婇檺 8锛坄kMaxResendsPerChunk`/`kMaxRequestRetxAttempts`锛?| `attempts < max_resend` 瀵规墍鏈夎矾寰勭敓鏁堬紙鍚?dup锛夛紝瓒呭嚭璁?`resend_cap_hit` |
+| 浜嬩欢椹卞姩琛ュ彂 | 鍏ラ槦鎷掔粷/鍙戦€佸け璐ヤ负浜嬩欢椹卞姩锛堚増0 ms锛?|
+| MAC 涓㈠寘浜嬩欢 | 鐪熸満涓嶅彲寰?鈫?鐢?*鍝嶅簲瓒呮椂**锛堥粯璁?80 ms锛変綔涓虹瓑浠蜂俊鍙凤紙`retx_timeout`锛?|
 
-状态机：`queued → inflight → done`，任一非 `done` 态的失败都回到 `queued`。
+鐘舵€佹満锛歚queued 鈫?inflight 鈫?done`锛屼换涓€闈?`done` 鎬佺殑澶辫触閮藉洖鍒?`queued`銆?
+瀹㈡埛绔ˉ鍏咃細绛夊搷搴旇秴鏃讹紙浠呭綋璇锋眰灏氭湭琚?ACK锛夆啋 閲嶅彂璇锋眰锛屾寚鏁伴€€閬匡紝璁?`resp_timeout_resend`銆?
+宸ョ▼淇锛氭湇鍔＄ ACK 浠庢姄鍖呯嚎绋嬬Щ鍒扮嫭绔?`ack_loop`锛岄伩鍏?`sendp` 闃诲瀵艰嚧 Npcap 婕忔敹锛堟鍓嶉€犳垚杩囦竴娆?閲嶄紶椋庢毚鈫掓紡鏀垛啋17%"鐨勫洖褰掞級銆?
+## 2. 缁撴灉
 
-客户端补充：等响应超时（仅当请求尚未被 ACK）→ 重发请求，指数退避，计 `resp_timeout_resend`。
-
-工程修正：服务端 ACK 从抓包线程移到独立 `ack_loop`，避免 `sendp` 阻塞导致 Npcap 漏收（此前造成过一次"重传风暴→漏收→17%"的回归）。
-
-## 2. 结果
-
-场景：100 个请求，服务端注入 40% ACK 丢失 + 40% 响应丢失。
-
-| 实现 | 送达 | 说明 |
+鍦烘櫙锛?00 涓姹傦紝鏈嶅姟绔敞鍏?40% ACK 涓㈠け + 40% 鍝嶅簲涓㈠け銆?
+| 瀹炵幇 | 閫佽揪 | 璇存槑 |
 |---|---|---|
-| 旧（登记在发送后、dup 直接 return） | 84/100 | 响应丢失后无可查记录，dup 请求被吞 |
-| **新（三态 + 登记前置 + dup 重发）** | **100/100** | 见 `evidence/feedback_20261125/server_drops3.json` |
+| 鏃э紙鐧昏鍦ㄥ彂閫佸悗銆乨up 鐩存帴 return锛?| 84/100 | 鍝嶅簲涓㈠け鍚庢棤鍙煡璁板綍锛宒up 璇锋眰琚悶 |
+| **鏂帮紙涓夋€?+ 鐧昏鍓嶇疆 + dup 閲嶅彂锛?* | **100/100** | 瑙?`evidence/feedback_20261125/server_drops3.json` |
 
-服务端机制计数器（同一轮）：
-
-| 计数器 | 值 | 含义 |
+鏈嶅姟绔満鍒惰鏁板櫒锛堝悓涓€杞級锛?
+| 璁℃暟鍣?| 鍊?| 鍚箟 |
 |---|---:|---|
-| requests_rx | 237 | 100 唯一 + 137 重复 |
-| requests_dup | 137 | 去重路径命中 |
-| resp_dup_resend | 57 | dup 黑洞已补（旧实现此处为 0） |
-| retx_timeout | 36 | 超时驱动的空中丢失恢复 |
-| resp_lost | 80 | 注入的响应丢失 |
-| ack_dropped | 110 | 注入的 ACK 丢失 |
-| responses_sent | 113 | **> 唯一请求 100**：一次推理、多次传输 |
-| done | 113 | ACK 确认完成 |
-| resend_cap_hit | 0 | 未触上限 |
+| requests_rx | 237 | 100 鍞竴 + 137 閲嶅 |
+| requests_dup | 137 | 鍘婚噸璺緞鍛戒腑 |
+| resp_dup_resend | 57 | dup 榛戞礊宸茶ˉ锛堟棫瀹炵幇姝ゅ涓?0锛?|
+| retx_timeout | 36 | 瓒呮椂椹卞姩鐨勭┖涓涪澶辨仮澶?|
+| resp_lost | 80 | 娉ㄥ叆鐨勫搷搴斾涪澶?|
+| ack_dropped | 110 | 娉ㄥ叆鐨?ACK 涓㈠け |
+| responses_sent | 113 | **> 鍞竴璇锋眰 100**锛氫竴娆℃帹鐞嗐€佸娆′紶杈?|
+| done | 113 | ACK 纭瀹屾垚 |
+| resend_cap_hit | 0 | 鏈Е涓婇檺 |
 
-单记录发送次数：最大 **4**、中位 **1**（≤ 8 上限）。
+鍗曡褰曞彂閫佹鏁帮細鏈€澶?**4**銆佷腑浣?**1**锛堚墹 8 涓婇檺锛夈€?
+## 3. 淇濈湡搴︾己鍙ｏ紙鍐欒繘鎶ュ憡锛?
+1. **鏃?MAC 灞?ACK**锛?x88B8 鏄?L4 浠?MAC"锛宮ac80211 鐨?BlockAck 瀵瑰簲鐢ㄤ笉鍙锛?2. **绌哄彛涓㈠寘鍙兘闈犺秴鏃?*锛?0 ms 绾э級鍙戠幇锛屼豢鐪熺殑 `DroppedMpdu` 鏄珛鍗宠Е鍙戔€斺€斾簨浠剁矑搴﹀樊涓€灞傦紱
+3. 鍥犳鏃跺欢鍒嗕袱妗ｏ細浜嬩欢椹卞姩 鈮?0 ms锛岃秴鏃堕┍鍔?鈮?80 ms锛汿TFT 鐨?p95 涓昏鏉ヨ嚜鍚庤€呫€?
+## 4. 鐜璁板綍锛堝奖鍝嶅悗缁疄楠岋級
 
-## 3. 保真度缺口（写进报告）
-
-1. **无 MAC 层 ACK**：0x88B8 是"L4 代 MAC"，mac80211 的 BlockAck 对应用不可见；
-2. **空口丢包只能靠超时**（80 ms 级）发现，仿真的 `DroppedMpdu` 是立即触发——事件粒度差一层；
-3. 因此时延分两档：事件驱动 ≈ 0 ms，超时驱动 ≈ 80 ms；TTFT 的 p95 主要来自后者。
-
-## 4. 环境记录（影响后续实验）
-
-- AP 对 MT7921AU 的 `tx failed` 约 **12%**（实测 138/1123），这是真实空口丢帧，不是软件问题；
-- 板载 Wi-Fi 已在 `/boot/firmware/config.txt` 加 `dtoverlay=disable-wifi`（**需重启生效**），避免同机自干扰与周期性扫描尖刺；
-- 重启后 NetworkManager 会把 wlan1 连到 `DianGroup103`，跑实验前必须先 `nmcli connection up rtc-media ifname wlan1` 切回 `BPI-R4-5G`；
-- 目前只有一个 USB 无线网卡（`0e8d:7961`），第二 STA 实验需再插一个 dongle。
-
-## 5. 复现
+- AP 瀵?MT7921AU 鐨?`tx failed` 绾?**12%**锛堝疄娴?138/1123锛夛紝杩欐槸鐪熷疄绌哄彛涓㈠抚锛屼笉鏄蒋浠堕棶棰橈紱
+- 鏉胯浇 Wi-Fi 宸插湪 `/boot/firmware/config.txt` 鍔?`dtoverlay=disable-wifi`锛?*闇€閲嶅惎鐢熸晥**锛夛紝閬垮厤鍚屾満鑷共鎵颁笌鍛ㄦ湡鎬ф壂鎻忓皷鍒猴紱
+- 閲嶅惎鍚?NetworkManager 浼氭妸 wlan1 杩炲埌 `DianGroup103`锛岃窇瀹為獙鍓嶅繀椤诲厛 `nmcli connection up rtc-media ifname wlan1` 鍒囧洖 `BPI-R4-5G`锛?- 鐩墠鍙湁涓€涓?USB 鏃犵嚎缃戝崱锛坄0e8d:7961`锛夛紝绗簩 STA 瀹為獙闇€鍐嶆彃涓€涓?dongle銆?
+## 5. 澶嶇幇
 
 ```bash
-# 服务端（笔记本，需 Npcap）
-python tools/l2_ai_server.py --mode fifo --seconds 18 --bulk-mbps 0 \
+# 鏈嶅姟绔紙绗旇鏈紝闇€ Npcap锛?python tools/l2_ai_server.py --mode fifo --seconds 18 --bulk-mbps 0 \
   --ack-drop 0.4 --resp-drop 0.4 --resp-timeout-ms 80 --out srv.json --csv srv.csv
 
-# 客户端（Pi）
-sudo python3 tools/l2_ai_client.py --dst-mac 40:c2:ba:52:70:95 \
+# 瀹㈡埛绔紙Pi锛?sudo python3 tools/l2_ai_client.py --dst-mac 40:c2:ba:52:70:95 \
   --seconds 10 --msg-base 80000 --resp-timeout-ms 120 --out cli.json
 ```
 
-## 6. 稳定性检测与零点（2026-11-25 14:00）
+## 6. 绋冲畾鎬ф娴嬩笌闆剁偣锛?026-11-25 14:00锛?
+### 6.1 纭欢浜嬩欢
 
-### 6.1 硬件事件
-
-- USB 网卡（MT7921AU）在重启后重枚举为 `wlan0`，期间出现多次 `USB disconnect` / `reset high-speed`，导致静态 IP 丢失、三次基线作废（39/100、80/100）；
-- 现直插 Bus001 Port002（根 hub、High Speed 480M），探测期间无新断连；
-- 设备本身是 USB 2.0（`bcdUSB 2.10`、`MaxPower 100mA`），换 3.0 口不会提速。
-
-### 6.2 稳定化措施
-
-- 板载 Wi-Fi 已禁用（`dtoverlay=disable-wifi`，重启生效）；
-- **关闭省电**：`iw dev wlan0 set power_save off`（preflight 会检查，on 则 FAIL）；
-- 客户端重传全部加指数退避（请求 ACK 与响应等待两路），避免重传风暴。
-
-### 6.3 稳定性结果
-
-| 项 | 关省电前 | 关省电后 |
+- USB 缃戝崱锛圡T7921AU锛夊湪閲嶅惎鍚庨噸鏋氫妇涓?`wlan0`锛屾湡闂村嚭鐜板娆?`USB disconnect` / `reset high-speed`锛屽鑷撮潤鎬?IP 涓㈠け銆佷笁娆″熀绾夸綔搴燂紙39/100銆?0/100锛夛紱
+- 鐜扮洿鎻?Bus001 Port002锛堟牴 hub銆丠igh Speed 480M锛夛紝鎺㈡祴鏈熼棿鏃犳柊鏂繛锛?- 璁惧鏈韩鏄?USB 2.0锛坄bcdUSB 2.10`銆乣MaxPower 100mA`锛夛紝鎹?3.0 鍙ｄ笉浼氭彁閫熴€?
+### 6.2 绋冲畾鍖栨帾鏂?
+- 鏉胯浇 Wi-Fi 宸茬鐢紙`dtoverlay=disable-wifi`锛岄噸鍚敓鏁堬級锛?- **鍏抽棴鐪佺數**锛歚iw dev wlan0 set power_save off`锛坧reflight 浼氭鏌ワ紝on 鍒?FAIL锛夛紱
+- 瀹㈡埛绔噸浼犲叏閮ㄥ姞鎸囨暟閫€閬匡紙璇锋眰 ACK 涓庡搷搴旂瓑寰呬袱璺級锛岄伩鍏嶉噸浼犻鏆淬€?
+### 6.3 绋冲畾鎬х粨鏋?
+| 椤?| 鍏崇渷鐢靛墠 | 鍏崇渷鐢靛悗 |
 |---|---:|---:|
-| idle ping 丢包 | 0/150 | 0/150 |
+| idle ping 涓㈠寘 | 0/150 | 0/150 |
 | idle avg / max / mdev | 8.7 / 116.5 / 21.5 ms | **4.2 / 62.8 / 8.8 ms** |
-| 负载期 ping（100M UDP 下行） | — | 0/100，avg 2.4 / max 25.8 ms |
-| AP→Pi 吞吐 | — | 100M offered → 95.3 Mbps (4.7% 丢)；200M → 179 Mbps (11% 丢) |
+| 璐熻浇鏈?ping锛?00M UDP 涓嬭锛?| 鈥?| 0/100锛宎vg 2.4 / max 25.8 ms |
+| AP鈫扨i 鍚炲悙 | 鈥?| 100M offered 鈫?95.3 Mbps (4.7% 涓?锛?00M 鈫?179 Mbps (11% 涓? |
 
-### 6.4 干净基线（无注入、无 bulk，10 s × 3 次）
+### 6.4 骞插噣鍩虹嚎锛堟棤娉ㄥ叆銆佹棤 bulk锛?0 s 脳 3 娆★級
 
-| 轮次 | 请求 | 送达 | TTFT p50 | TTFT p95 | 请求重传 |
+| 杞 | 璇锋眰 | 閫佽揪 | TTFT p50 | TTFT p95 | 璇锋眰閲嶄紶 |
 |---|---:|---:|---:|---:|---:|
 | clean1 | 100 | 100 | 16.0 ms | 44.9 ms | 28 |
 | clean2 | 100 | 100 | 25.5 ms | 144.0 ms | 38 |
 | clean3 | 100 | 100 | 15.5 ms | 49.1 ms | 36 |
 
-- 送达稳定 100/100；
-- p50 稳定在 15–26 ms；p95 45–144 ms；
-- 服务端内部 recv→send p50 = 0 µs，p95 约 15–46 ms → 剩余时延主要来自 Windows/Npcap 发送路径与空口，不是协议逻辑；
-- 与 ping 的 4.2 ms 相比，p50 16 ms 的差额有待用"AP 侧发送时间戳"进一步拆分（下一步）。
+- 閫佽揪绋冲畾 100/100锛?- p50 绋冲畾鍦?15鈥?6 ms锛沺95 45鈥?44 ms锛?- 鏈嶅姟绔唴閮?recv鈫抯end p50 = 0 碌s锛宲95 绾?15鈥?6 ms 鈫?鍓╀綑鏃跺欢涓昏鏉ヨ嚜 Windows/Npcap 鍙戦€佽矾寰勪笌绌哄彛锛屼笉鏄崗璁€昏緫锛?- 涓?ping 鐨?4.2 ms 鐩告瘮锛宲50 16 ms 鐨勫樊棰濇湁寰呯敤"AP 渚у彂閫佹椂闂存埑"杩涗竴姝ユ媶鍒嗭紙涓嬩竴姝ワ級銆?
 
-## 7. 埋点与定点注入（2026-11-25 下午）
+## 7. 鍩嬬偣涓庡畾鐐规敞鍏ワ紙2026-11-25 涓嬪崍锛?
+### 7.1 鏂板鑳藉姏
 
-### 7.1 新增能力
+- **閫愭秷鎭处鏈?*锛歚--ledger` 杈撳嚭 JSONL锛屾湇鍔＄瀛楁 `constructed / dup_requests / injected_drop / sends[{n,t,ack,sendp_us,injected}]`锛涘鎴风瀛楁 `t0/attempts/reasons/ttft/dup_resp/resp_from_attempt`锛?- **ACK 涓夋€?*锛歚ack: none|recv|timeout`锛堜笉鍐嶅啓"涓?锛?涓?鏄帹鏂級锛?- **鍝嶅簲鎼哄甫 attempt**锛歚flags` 瀛楁鍥炰紶绗嚑娆″彂閫侊紝瀹㈡埛绔嵁姝よ褰?`resp_from_attempt`锛?- **杩涚▼鍐呭畾鐐规敞鍏?*锛歚--drop-resp mid:n`锛堝亣瑁呭彂鍑轰絾涓㈠け鈫掕秴鏃舵。锛夈€乣--fail-resp mid:n`锛堢珛鍗冲け璐モ啋浜嬩欢妗ｏ級銆乣--drop-ack-req mid:n`銆乣--drop-req mid:n`銆乣--fail-req mid:n`銆乣--drop-ack-resp mid:n`锛?- **echo 鎺㈤拡 `0x88B9`**锛氬凡瀹炵幇浣?*鍒ゅ畾涓嶅彲鐢?*鈥斺€斿洖澶嶈蛋 scapy `sendp`锛屾瘡娆?20鈥?0 ms锛?0 涓帰閽堣嚜婵€鎺掗槦锛堢┖闂?p50 380 ms锛夛紝涓嶈兘褰撶┖鍙ｅ簳鍣€?
+### 7.2 宸叉祴缁撴灉
 
-- **逐消息账本**：`--ledger` 输出 JSONL，服务端字段 `constructed / dup_requests / injected_drop / sends[{n,t,ack,sendp_us,injected}]`；客户端字段 `t0/attempts/reasons/ttft/dup_resp/resp_from_attempt`；
-- **ACK 三态**：`ack: none|recv|timeout`（不再写"丢"，"丢"是推断）；
-- **响应携带 attempt**：`flags` 字段回传第几次发送，客户端据此记录 `resp_from_attempt`；
-- **进程内定点注入**：`--drop-resp mid:n`（假装发出但丢失→超时档）、`--fail-resp mid:n`（立即失败→事件档）、`--drop-ack-req mid:n`、`--drop-req mid:n`、`--fail-req mid:n`、`--drop-ack-resp mid:n`；
-- **echo 探针 `0x88B9`**：已实现但**判定不可用**——回复走 scapy `sendp`，每次 20–40 ms，20 个探针自激排队（空闲 p50 380 ms），不能当空口底噪。
-
-### 7.2 已测结果
-
-| 实验 | 结果 |
+| 瀹為獙 | 缁撴灉 |
 |---|---|
-| **E0 有线对照** | 80/80 送达，**TTFT p50 13.1 ms**、p95 36.8 ms → 工具底噪（Npcap+Python）就有 13 ms |
-| E1 WiFi | 100/100 送达，**TTFT p50 16.4 ms**、p95 55.0 ms → 空口只多约 3 ms |
-| E2 超时档 | mid 500000 账本：`n=1 injected:"drop"`、`n=2 ack:"recv"`；但该轮恢复走的是 dup 路径（客户端重发请求），需用大 ack-timeout 隔离 |
-| **E9 事件档** | mid 500000 账本：`n=1 injected:"fail"`、**`n=2` 与 `n=1` 同一时间戳**（≈0 ms 补发），`send_err_retry=1`，40/40 送达 |
+| **E0 鏈夌嚎瀵圭収** | 80/80 閫佽揪锛?*TTFT p50 13.1 ms**銆乸95 36.8 ms 鈫?宸ュ叿搴曞櫔锛圢pcap+Python锛夊氨鏈?13 ms |
+| E1 WiFi | 100/100 閫佽揪锛?*TTFT p50 16.4 ms**銆乸95 55.0 ms 鈫?绌哄彛鍙绾?3 ms |
+| E2 瓒呮椂妗?| mid 500000 璐︽湰锛歚n=1 injected:"drop"`銆乣n=2 ack:"recv"`锛涗絾璇ヨ疆鎭㈠璧扮殑鏄?dup 璺緞锛堝鎴风閲嶅彂璇锋眰锛夛紝闇€鐢ㄥぇ ack-timeout 闅旂 |
+| **E9 浜嬩欢妗?* | mid 500000 璐︽湰锛歚n=1 injected:"fail"`銆?*`n=2` 涓?`n=1` 鍚屼竴鏃堕棿鎴?*锛堚増0 ms 琛ュ彂锛夛紝`send_err_retry=1`锛?0/40 閫佽揪 |
 
-### 7.3 发现的放大器问题
+### 7.3 鍙戠幇鐨勬斁澶у櫒闂
 
-用 runner 跑 E1（60 请求 / 6 s）时出现 0 送达、`requests_rx=578`（9.6 倍放大）：客户端因 ACK 超时重发请求，服务端**每个 dup 都重发一次响应**，两者叠加形成风暴，最终客户端收不到任何响应。修法（下一步）：dup 重发加最小间隔（如 `resp_timeout/2`）或只在"从未发出"时才补发。
+鐢?runner 璺?E1锛?0 璇锋眰 / 6 s锛夋椂鍑虹幇 0 閫佽揪銆乣requests_rx=578`锛?.6 鍊嶆斁澶э級锛氬鎴风鍥?ACK 瓒呮椂閲嶅彂璇锋眰锛屾湇鍔＄**姣忎釜 dup 閮介噸鍙戜竴娆″搷搴?*锛屼袱鑰呭彔鍔犲舰鎴愰鏆达紝鏈€缁堝鎴风鏀朵笉鍒颁换浣曞搷搴斻€備慨娉曪紙涓嬩竴姝ワ級锛歞up 閲嶅彂鍔犳渶灏忛棿闅旓紙濡?`resp_timeout/2`锛夋垨鍙湪"浠庢湭鍙戝嚭"鏃舵墠琛ュ彂銆?
 
-## 8. 定点注入矩阵结果（2026-11-25 下午）
-
-参数统一：40 请求/4 s，`--ledger` 开启；时间档测试把客户端 ack-timeout 设为 5000 ms 以隔离。
-
-| 实验 | 注入 | 服务端账本（目标 mid） | 客户端 | 结论 |
+## 8. 瀹氱偣娉ㄥ叆鐭╅樀缁撴灉锛?026-11-25 涓嬪崍锛?
+鍙傛暟缁熶竴锛?0 璇锋眰/4 s锛宍--ledger` 寮€鍚紱鏃堕棿妗ｆ祴璇曟妸瀹㈡埛绔?ack-timeout 璁句负 5000 ms 浠ラ殧绂汇€?
+| 瀹為獙 | 娉ㄥ叆 | 鏈嶅姟绔处鏈紙鐩爣 mid锛?| 瀹㈡埛绔?| 缁撹 |
 |---|---|---|---|---|
-| E2 | 响应第 1 次不发 | `n=1 injected:drop(ack:timeout)` → `n=2 recv, ack_after=78ms` | 40/40 | 超时档：约 80 ms 后补发 |
-| E3 | 连续 4 次不发 | `n=1..4 drop` → `n=5 recv` | 40/40 | 多次超时后恢复 |
-| E4 | 连续 9 次不发 | `n=1..8 drop`，`final:inflight` | 39/40 | 8 次上限生效，该条放弃 |
-| E5 | 请求 ACK 丢 2 次 | `constructed=40`（=唯一请求），`requests_dup=25` | 40/40 | **去重=只推理一次**，dup 不重复构造 |
-| E6 | 响应 ACK 丢 1 次 | `retx_timeout=10`，`responses_sent=50` | 40/40，`dup_resp=10` | 重复响应不重复计数 |
+| E2 | 鍝嶅簲绗?1 娆′笉鍙?| `n=1 injected:drop(ack:timeout)` 鈫?`n=2 recv, ack_after=78ms` | 40/40 | 瓒呮椂妗ｏ細绾?80 ms 鍚庤ˉ鍙?|
+| E3 | 杩炵画 4 娆′笉鍙?| `n=1..4 drop` 鈫?`n=5 recv` | 40/40 | 澶氭瓒呮椂鍚庢仮澶?|
+| E4 | 杩炵画 9 娆′笉鍙?| `n=1..8 drop`锛宍final:inflight` | 39/40 | 8 娆′笂闄愮敓鏁堬紝璇ユ潯鏀惧純 |
+| E5 | 璇锋眰 ACK 涓?2 娆?| `constructed=40`锛?鍞竴璇锋眰锛夛紝`requests_dup=25` | 40/40 | **鍘婚噸=鍙帹鐞嗕竴娆?*锛宒up 涓嶉噸澶嶆瀯閫?|
+| E6 | 鍝嶅簲 ACK 涓?1 娆?| `retx_timeout=10`锛宍responses_sent=50` | 40/40锛宍dup_resp=10` | 閲嶅鍝嶅簲涓嶉噸澶嶈鏁?|
 
-### 8.1 仍未闭合的两项
-
-- **E8（请求首发不发）**：客户端正确重传（`injected_drop=1`），但负载下服务端 `max_queue_depth=21`、`ack_resp_recv=34/112`，送达 25/40。说明**基于定时器的请求重传在丢包叠加时会过触发**（仿真用的是 MAC 丢包事件，不是超时），反馈环路仍会自激。
-- **E10（队列拒绝）**：客户端进程未产生结果（stderr 被 runner 丢弃），需单独重跑。
-
-### 8.2 与仿真的差异（已确认）
-
-| 仿真 | 真机 | 影响 |
+### 8.1 浠嶆湭闂悎鐨勪袱椤?
+- **E8锛堣姹傞鍙戜笉鍙戯級**锛氬鎴风姝ｇ‘閲嶄紶锛坄injected_drop=1`锛夛紝浣嗚礋杞戒笅鏈嶅姟绔?`max_queue_depth=21`銆乣ack_resp_recv=34/112`锛岄€佽揪 25/40銆傝鏄?*鍩轰簬瀹氭椂鍣ㄧ殑璇锋眰閲嶄紶鍦ㄤ涪鍖呭彔鍔犳椂浼氳繃瑙﹀彂**锛堜豢鐪熺敤鐨勬槸 MAC 涓㈠寘浜嬩欢锛屼笉鏄秴鏃讹級锛屽弽棣堢幆璺粛浼氳嚜婵€銆?- **E10锛堥槦鍒楁嫆缁濓級**锛氬鎴风杩涚▼鏈骇鐢熺粨鏋滐紙stderr 琚?runner 涓㈠純锛夛紝闇€鍗曠嫭閲嶈窇銆?
+### 8.2 涓庝豢鐪熺殑宸紓锛堝凡纭锛?
+| 浠跨湡 | 鐪熸満 | 褰卞搷 |
 |---|---|---|
-| 重发由 `DroppedMpdu`/`DropBeforeEnqueue` 触发（事件，≈0 ms） | 事件只能覆盖"入队拒绝/发送失败"；空中丢包只能靠 **ACK 超时** | 超时档 78 ms；定时器在延迟抖动下会过触发（E8 的自激） |
-| 每次丢包才重发 | 定时器到期就重发 | 需要 RTT 自适应超时 + 每秒重发上限 |
+| 閲嶅彂鐢?`DroppedMpdu`/`DropBeforeEnqueue` 瑙﹀彂锛堜簨浠讹紝鈮? ms锛?| 浜嬩欢鍙兘瑕嗙洊"鍏ラ槦鎷掔粷/鍙戦€佸け璐?锛涚┖涓涪鍖呭彧鑳介潬 **ACK 瓒呮椂** | 瓒呮椂妗?78 ms锛涘畾鏃跺櫒鍦ㄥ欢杩熸姈鍔ㄤ笅浼氳繃瑙﹀彂锛圗8 鐨勮嚜婵€锛?|
+| 姣忔涓㈠寘鎵嶉噸鍙?| 瀹氭椂鍣ㄥ埌鏈熷氨閲嶅彂 | 闇€瑕?RTT 鑷€傚簲瓒呮椂 + 姣忕閲嶅彂涓婇檺 |
 
-下一步修法：客户端 ack-timeout 改为 **RTT 自适应**（`max(150ms, 3×ack_rtt_p95)`）+ 全局重发速率上限，然后重跑 E8/E10。
+涓嬩竴姝ヤ慨娉曪細瀹㈡埛绔?ack-timeout 鏀逛负 **RTT 鑷€傚簲**锛坄max(150ms, 3脳ack_rtt_p95)`锛? 鍏ㄥ眬閲嶅彂閫熺巼涓婇檺锛岀劧鍚庨噸璺?E8/E10銆?
 
-## 9. USB 3.0 修正与最终矩阵（2026-11-25 晚）
+## 9. USB 3.0 淇涓庢渶缁堢煩闃碉紙2026-11-25 鏅氾級
 
-### 9.1 我此前的一个错误结论
-
-之前读 `lsusb -v` 得到 `bcdUSB 2.10 / High Speed 480M`，据此判断"网卡是 USB 2.0、换 3.0 口不会提速"——**这是错的**。那块卡实际是 **USB 3.x（bcdUSB 3.20）**，当时它已从 3.0 口降级到 2.0 口（dmesg 里有 `4-1.4` SuperSpeed → `-71 EPROTO` → disconnect → `1-2` 480M 的搬迁记录）。换回 3.0 口后：
-
-| 项 | USB 2.0（480M） | USB 3.0（5000M） |
+### 9.1 鎴戞鍓嶇殑涓€涓敊璇粨璁?
+涔嬪墠璇?`lsusb -v` 寰楀埌 `bcdUSB 2.10 / High Speed 480M`锛屾嵁姝ゅ垽鏂?缃戝崱鏄?USB 2.0銆佹崲 3.0 鍙ｄ笉浼氭彁閫?鈥斺€?*杩欐槸閿欑殑**銆傞偅鍧楀崱瀹為檯鏄?**USB 3.x锛坆cdUSB 3.20锛?*锛屽綋鏃跺畠宸蹭粠 3.0 鍙ｉ檷绾у埌 2.0 鍙ｏ紙dmesg 閲屾湁 `4-1.4` SuperSpeed 鈫?`-71 EPROTO` 鈫?disconnect 鈫?`1-2` 480M 鐨勬惉杩佽褰曪級銆傛崲鍥?3.0 鍙ｅ悗锛?
+| 椤?| USB 2.0锛?80M锛?| USB 3.0锛?000M锛?|
 |---|---|---|
-| 100M offered 丢包 | 4.7% | **0.11%** |
-| 200M offered 丢包 | 11% | **1.3%** |
+| 100M offered 涓㈠寘 | 4.7% | **0.11%** |
+| 200M offered 涓㈠寘 | 11% | **1.3%** |
 | ping avg / mdev | 4.2 / 8.8 ms | **2.6 / 0.04 ms** |
 
-结论：**之前 12% 的 `tx failed` 与"215 Mbps 容量"至少部分是 USB 2.0 造成的**，相关拥塞结论需以新链路重测为准。
+缁撹锛?*涔嬪墠 12% 鐨?`tx failed` 涓?215 Mbps 瀹归噺"鑷冲皯閮ㄥ垎鏄?USB 2.0 閫犳垚鐨?*锛岀浉鍏虫嫢濉炵粨璁洪渶浠ユ柊閾捐矾閲嶆祴涓哄噯銆?
+### 9.2 鎺ュ彛涓庣綉缁滈厤缃紙鍐冲畾锛氫笉鏀瑰悕锛?
+- **涓嶆敼鍚?*锛坵lan0锛夛紝鍥犱负鎵€鏈夎剼鏈凡鍙傛暟鍖栵紱鏀瑰悕鐨勬敹鐩婂彧鏄渷涓€娆″弬鏁拌皟鏁达紝鎴愭湰鏄?systemd .link + 閲嶅惎銆?- 鎶?wlan0 浜ょ粰 **NetworkManager** 鎵樼锛歚rtc-media` profile 缁戝畾 `interface-name wlan0`銆侀潤鎬?`192.168.240.126/24`銆乣ipv4.never-default yes`銆乣wifi.powersave 2`锛?- 鍒犻櫎褰撳垵涓烘澘杞藉啓鐨?`/etc/NetworkManager/conf.d/99-rtc-unmanaged-wlan0.conf`锛堝畠璇激浜嗛《鏇夸笂鏉ョ殑 USB 鍗★級锛?- 鎸佷箙鍖?ARP 绛栫暐 `arp_ignore=1 / arp_announce=2`锛堣В鍐?AP鈫扨i 鐨?`INCOMPLETE`锛夛紱
+- 缁撴灉锛歅i鈫扐P 1.7 ms銆?*AP鈫扨i 0.72鈥?.43 ms锛圓RP REACHABLE锛?*锛孶SB 閲嶆彃鍚?NM 鑷姩鎭㈠鍦板潃銆?
+### 9.3 鏈€缁堟満鍒剁煩闃碉紙鍏ㄩ儴鍙牳瀵癸級
 
-### 9.2 接口与网络配置（决定：不改名）
-
-- **不改名**（wlan0），因为所有脚本已参数化；改名的收益只是省一次参数调整，成本是 systemd .link + 重启。
-- 把 wlan0 交给 **NetworkManager** 托管：`rtc-media` profile 绑定 `interface-name wlan0`、静态 `192.168.240.126/24`、`ipv4.never-default yes`、`wifi.powersave 2`；
-- 删除当初为板载写的 `/etc/NetworkManager/conf.d/99-rtc-unmanaged-wlan0.conf`（它误伤了顶替上来的 USB 卡）；
-- 持久化 ARP 策略 `arp_ignore=1 / arp_announce=2`（解决 AP→Pi 的 `INCOMPLETE`）；
-- 结果：Pi→AP 1.7 ms、**AP→Pi 0.72–1.43 ms（ARP REACHABLE）**，USB 重插后 NM 自动恢复地址。
-
-### 9.3 最终机制矩阵（全部可核对）
-
-| 实验 | 注入 | 结果 | 断言 |
+| 瀹為獙 | 娉ㄥ叆 | 缁撴灉 | 鏂█ |
 |---|---|---|---|
-| E1 | 无 | 80/80，p50 14.6 ms，p95 49.0 ms | 基线 |
-| E2 | 响应第 1 次不发 | n=1 `drop(ack:timeout)` → n=2 `recv`（78 ms） | 超时档 ≈ tmo |
-| E3 | 连续 4 次不发 | n=1..4 drop → n=5 recv | 多次超时后恢复 |
-| E4 | 连续 9 次不发 | n=1..8 全 drop，`final:inflight` | 8 次上限生效 |
-| E5 | 请求 ACK 丢 | `constructed=40`（=唯一），`requests_dup=25` | 只推理一次 |
-| E6 | 响应 ACK 丢 | `dup_resp=10`，送达仍 40/40 | 重复响应不重计 |
-| E8 | 请求首发不发 | `injected_drop=1` → 重传 → 40/40，`constructed=40` | 上行方向可恢复 |
-| E9 | 发送失败 | n=1 `inject:fail` → **n=2 同一时间戳**（0 ms） | 事件档 ≈ 0 ms |
-| E10 | `capacity=1` + 0.05 Mbps | `enqueue_reject=29`，`drops_by_flow{0:29}` | 入队拒绝路径被触发 |
+| E1 | 鏃?| 80/80锛宲50 14.6 ms锛宲95 49.0 ms | 鍩虹嚎 |
+| E2 | 鍝嶅簲绗?1 娆′笉鍙?| n=1 `drop(ack:timeout)` 鈫?n=2 `recv`锛?8 ms锛?| 瓒呮椂妗?鈮?tmo |
+| E3 | 杩炵画 4 娆′笉鍙?| n=1..4 drop 鈫?n=5 recv | 澶氭瓒呮椂鍚庢仮澶?|
+| E4 | 杩炵画 9 娆′笉鍙?| n=1..8 鍏?drop锛宍final:inflight` | 8 娆′笂闄愮敓鏁?|
+| E5 | 璇锋眰 ACK 涓?| `constructed=40`锛?鍞竴锛夛紝`requests_dup=25` | 鍙帹鐞嗕竴娆?|
+| E6 | 鍝嶅簲 ACK 涓?| `dup_resp=10`锛岄€佽揪浠?40/40 | 閲嶅鍝嶅簲涓嶉噸璁?|
+| E8 | 璇锋眰棣栧彂涓嶅彂 | `injected_drop=1` 鈫?閲嶄紶 鈫?40/40锛宍constructed=40` | 涓婅鏂瑰悜鍙仮澶?|
+| E9 | 鍙戦€佸け璐?| n=1 `inject:fail` 鈫?**n=2 鍚屼竴鏃堕棿鎴?*锛? ms锛?| 浜嬩欢妗?鈮?0 ms |
+| E10 | `capacity=1` + 0.05 Mbps | `enqueue_reject=29`锛宍drops_by_flow{0:29}` | 鍏ラ槦鎷掔粷璺緞琚Е鍙?|
 
-### 9.4 修复的两个自激 bug
+### 9.4 淇鐨勪袱涓嚜婵€ bug
 
-1. `attempts` 在 retx 与 send 两处各加一次 → 注入编号跳号（1→3→5）；改为只在 send 处递增；
-2. 客户端无界重传 + 服务端"每 dup 必发" → 9.6 倍放大；加两道闸：dup 重发最小间隔 `resp_timeout/2`、客户端**全局重发令牌桶**（默认 20 pkt/s）。
+1. `attempts` 鍦?retx 涓?send 涓ゅ鍚勫姞涓€娆?鈫?娉ㄥ叆缂栧彿璺冲彿锛?鈫?鈫?锛夛紱鏀逛负鍙湪 send 澶勯€掑锛?2. 瀹㈡埛绔棤鐣岄噸浼?+ 鏈嶅姟绔?姣?dup 蹇呭彂" 鈫?9.6 鍊嶆斁澶э紱鍔犱袱閬撻椄锛歞up 閲嶅彂鏈€灏忛棿闅?`resp_timeout/2`銆佸鎴风**鍏ㄥ眬閲嶅彂浠ょ墝妗?*锛堥粯璁?20 pkt/s锛夈€?
+### 9.5 涓庝豢鐪熺殑鍓╀綑宸紓
 
-### 9.5 与仿真的剩余差异
+- 8 娆′笂闄愶細浠跨湡鏄?鍒濆 + 8 娆￠噸鍙?锛坄kMaxResendsPerChunk=8`锛夛紝褰撳墠瀹炵幇鏄?*鎬诲叡 8 娆″彂閫?*锛屽樊涓€娆★紝闇€鎸夋姤鍛婂彛寰勮鏄庢垨鏀逛负 9锛?- 绌轰腑涓㈠寘浠嶅彧鑳介潬 ACK 瓒呮椂锛?8 ms锛夊彂鐜帮紱浜嬩欢妗ｏ紙鍏ラ槦鎷掔粷/鍙戦€佸け璐ワ級鍙仛鍒?鈮? ms锛?- 瀹㈡埛绔噸浼犱笂闄?8銆佹寚鏁伴€€閬裤€佷护鐗屾《鏄‖浠朵晶鏂板锛屼豢鐪熸棤瀵瑰簲鐗┿€?
 
-- 8 次上限：仿真是"初始 + 8 次重发"（`kMaxResendsPerChunk=8`），当前实现是**总共 8 次发送**，差一次，需按报告口径说明或改为 9；
-- 空中丢包仍只能靠 ACK 超时（78 ms）发现；事件档（入队拒绝/发送失败）可做到 ≈0 ms；
-- 客户端重传上限 8、指数退避、令牌桶是硬件侧新增，仿真无对应物。

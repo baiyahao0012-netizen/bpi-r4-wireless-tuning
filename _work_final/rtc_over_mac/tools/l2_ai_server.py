@@ -149,7 +149,7 @@ class Server:
                     now_ns = time.monotonic_ns()
                     rate_ok = (rec["attempts"] == 0 or
                                (now_ns - rec["last_send_ns"]) >= self.a.resp_timeout_ms * 0.5 * 1e6)
-                    need = rec["attempts"] < self.a.max_resend and rate_ok
+                    need = rec["attempts"] <= self.a.max_resend and rate_ok
                     if not rate_ok and rec["attempts"] < self.a.max_resend:
                         self.stats["dup_resend_limited"] = self.stats.get("dup_resend_limited", 0) + 1
                     if need:
@@ -301,7 +301,7 @@ class Server:
                 for mid, rec in self.records.items():
                     if rec["state"] != "inflight":
                         continue
-                    if rec["attempts"] >= self.a.max_resend:
+                    if rec["attempts"] > self.a.max_resend:
                         continue
                     if (now - rec["last_ns"]) / 1e6 >= self.a.resp_timeout_ms:
                         for s in reversed(rec["sends"]):
@@ -400,6 +400,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
