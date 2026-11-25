@@ -12,6 +12,7 @@ import collections
 import json
 import os
 import queue
+import random
 import sys
 import threading
 import time
@@ -20,7 +21,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fast_tx import PcapTx
 from pcap_rx import PcapRx
-from video_proto import FRAME_MAX, answer, mac, parse, question
+from video_proto import FRAME_MAX, ack, answer, mac, parse, question
 
 HTML = """<!doctype html><html><head><meta charset="utf-8"><title>RTC VLM</title>
 <style>
@@ -39,13 +40,14 @@ body{background:#111;color:#ddd;font-family:system-ui;margin:0;display:flex;flex
 .a{color:#8fd694;white-space:pre-wrap}
 </style></head><body>
 <div id="top"><button id="btn">开始测试</button><span id="st">空闲</span>
- <span id="met">frames 0 | lost 0 | queue 0</span></div>
+ <label style="font-size:13px;color:#ccc"><input type="checkbox" id="loss"> 模拟丢包30%</label><span id="met">frames 0 | lost 0 | queue 0</span></div>
 <div id="main">
  <div id="left"><img id="v" src="/stream.mjpg"></div>
  <div id="right"><h3>Q/A（按时间追加）</h3><div id="log"></div></div>
 </div>
 <script>
-const log=document.getElementById('log'),btn=document.getElementById('btn'),st=document.getElementById('st'),met=document.getElementById('met');
+const log=document.getElementById('log'),btn=document.getElementById('btn'),st=document.getElementById('st'),met=document.getElementById('met'),loss=document.getElementById('loss');
+loss.onchange=()=>{fetch('/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({loss:loss.checked?0.3:0})});};
 const es=new EventSource('/events');
 es.onmessage=e=>{const d=JSON.parse(e.data);
   if(d.phase==='reset'){log.innerHTML='';window._cur=null;
@@ -61,7 +63,7 @@ es.onmessage=e=>{const d=JSON.parse(e.data);
     const m=window._cur?window._cur.querySelector('.meta'):null;
     if(m)m.textContent+=` | model ${d.model_ms}ms | prompt ${d.prompt_eval_ms}ms/${d.prompt_eval_count}tok | gen ${d.eval_ms}ms/${d.eval_count}tok`;}
     if(d.empty){const el=document.getElementById('a'+d.qid);if(el)el.textContent='[EMPTY/截断] '+(d.answer||'');}
-  else if(d.phase==='stats'){met.textContent=`frames ${d.frames} | lost ${d.lost} | queue ${d.queue} | 已答 ${d.answers||0}`;
+  else if(d.phase==='stats'){met.textContent=`frames ${d.frames} | lost ${d.lost} | 已答 ${d.answers||0} | 丢/重传/确认 ${d.ans_dropped||0}/${d.ans_retx||0}/${d.ans_acked||0}`;
     if(d.running){st.textContent=`运行中 ${d.elapsed_s||0}s`;btn.disabled=true;}
     else{st.textContent=d.last_msg||'空闲';btn.disabled=false;}}
 };
@@ -82,8 +84,12 @@ class State:
         self.latest = None
         self.latest_seq = 0
         self.stats = {"frames": 0, "frames_total": 0, "lost": 0, "frags": 0,
-                      "questions": 0, "answers": 0, "empty": 0}
+                      "questions": 0, "answers": 0, "empty": 0,
+                      "ans_sent": 0, "ans_dropped": 0, "ans_retx": 0,
+                      "ans_acked": 0, "ans_failed": 0}
         self.lost_ids = set()
+        self.loss = a.loss
+        self.outstanding = {}
         self.q = queue.Queue()
         self.clients = []
         self.lock = threading.RLock()
@@ -105,6 +111,15 @@ class State:
     def handle(self, raw):
         p = parse(raw)
         if not p:
+            return
+        if p["type"] == "ack":
+            qid, seq = p["qid"], p["seq"]
+            with self.run_lock:
+                for key in [k for k in self.outstanding
+                            if k[0] == qid and k[1] <= seq]:
+                    self.outstanding.pop(key, None)
+                    with self.lock:
+                        self.stats["ans_acked"] += 1
             return
         if p["type"] == "video":
             self.stats["frags"] += 1
@@ -133,6 +148,47 @@ class State:
             self.q.put(p)
 
 
+    def send_answer(self, qid, seq, flags, t2, text):
+        frame = answer(self.dst, self.src, qid, seq, flags, t2, text)
+        key = (qid, seq)
+        with self.run_lock:
+            self.outstanding[key] = {"frame": frame, "attempts": 0,
+                                     "last": time.monotonic()}
+        self._emit_answer(key)
+
+    def _emit_answer(self, key):
+        rec = self.outstanding.get(key)
+        if rec is None:
+            return
+        rec["attempts"] += 1
+        rec["last"] = time.monotonic()
+        if random.random() < self.loss:
+            with self.lock:
+                self.stats["ans_dropped"] += 1
+            return
+        try:
+            self.tx.send(rec["frame"])
+            with self.lock:
+                self.stats["ans_sent"] += 1
+        except Exception:
+            pass
+
+    def retx_loop(self):
+        while self.running:
+            now = time.monotonic()
+            for key, rec in list(self.outstanding.items()):
+                if now - rec["last"] < self.a.answer_timeout_ms / 1000.0:
+                    continue
+                if rec["attempts"] > self.a.max_resend:
+                    self.outstanding.pop(key, None)
+                    with self.lock:
+                        self.stats["ans_failed"] += 1
+                    continue
+                with self.lock:
+                    self.stats["ans_retx"] += 1
+                self._emit_answer(key)
+            time.sleep(0.02)
+
     def reset_for_run(self):
         """Clear the Q/A panel and all per-run counters; drop queued questions."""
         with self.lock:
@@ -142,7 +198,10 @@ class State:
                 except queue.Empty:
                     break
             self.stats.update({"questions": 0, "answers": 0, "empty": 0,
-                               "frames_total": 0, "lost": 0, "frags": 0})
+                               "frames_total": 0, "lost": 0, "frags": 0,
+                               "ans_sent": 0, "ans_dropped": 0, "ans_retx": 0,
+                               "ans_acked": 0, "ans_failed": 0})
+            self.outstanding.clear()
             self.lost_ids = set()
         self.push({"phase": "reset"})
 
@@ -253,7 +312,7 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
     t0_ns = p.get("t0_ns")
     frame_age_ms = round(t1_ns / 1e9 - fr["t_recv"], 3) * 1000 if fr else None
     # no_think + short answer: keep the generation budget for visible tokens
-    prompt = ("只回答一句，不超过15个字。问题：%s /no_think" % text)
+    prompt = ("/no_think 请仔细观察图片，用2到3句话回答下面的问题，并说明判断依据，总字数40到80字。问题：%s" % text)
     payload = {"model": a.model, "prompt": prompt, "images": [b64], "stream": True,
                "think": False,
                "options": {"num_predict": a.num_predict, "temperature": 0},
@@ -279,7 +338,7 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
                 if delta and t2 is None:
                     t2 = now
                     full += delta
-                    st.tx.send(answer(st.dst, st.src, qid, seq, 1, t2, delta))
+                    st.send_answer(qid, seq, 1, t2, delta)
                     seq += 1
                     st.push({"phase": "first", "qid": qid, "text": delta,
                              "ttft_ms": round((t2 - t1_ns) / 1e6, 1)})
@@ -287,7 +346,7 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
                     full += delta
                     buf += delta
                     if time.monotonic() - last_flush > 0.03:
-                        st.tx.send(answer(st.dst, st.src, qid, seq, 0, t2, buf))
+                        st.send_answer(qid, seq, 0, t2, buf)
                         seq += 1
                         st.push({"phase": "delta", "qid": qid, "text": buf})
                         buf = ""
@@ -305,7 +364,7 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
         st.tx.send(answer(st.dst, st.src, qid, seq, 0, t2 or 0, buf))
         seq += 1
         st.push({"phase": "delta", "qid": qid, "text": buf})
-    st.tx.send(answer(st.dst, st.src, qid, seq, 2, t2 or 0, ""))
+    st.send_answer(qid, seq, 2, t2 or 0, "")
     mj = {k: (round(v / 1e6, 1) if isinstance(v, int) and k.endswith("duration") else v)
           for k, v in metrics.items()}
     empty = not full.strip()
@@ -363,6 +422,20 @@ def make_handler(st):
             pass
 
         def do_POST(self):
+            if self.path == "/config":
+                try:
+                    n = int(self.headers.get("Content-Length", "0"))
+                    cfg = json.loads(self.rfile.read(n) or b"{}")
+                    st.loss = float(cfg.get("loss", st.loss))
+                except Exception as exc:
+                    st.loss = 0.0
+                body = json.dumps({"loss": st.loss}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             if self.path == "/start":
                 ok, msg = st.start_run()
                 body = json.dumps({"ok": ok, "msg": msg}, ensure_ascii=False).encode()
@@ -424,7 +497,12 @@ def make_handler(st):
                                  "lost": st.stats["lost"],
                                  "queue": st.q.qsize(),
                                  "answers": st.stats["answers"],
-                                 "empty": st.stats["empty"],
+                                 "empty": st.stats["empty"], "loss": st.loss,
+                                 "ans_sent": st.stats["ans_sent"],
+                                 "ans_dropped": st.stats["ans_dropped"],
+                                 "ans_retx": st.stats["ans_retx"],
+                                 "ans_acked": st.stats["ans_acked"],
+                                 "ans_failed": st.stats["ans_failed"],
                                  "running": st.run["running"],
                                  "elapsed_s": int(time.monotonic() - st.run["started"]) if st.run["running"] else 0,
                                  "last_msg": st.run["last_msg"]}) + "\n\n"
@@ -449,7 +527,10 @@ def main():
     ap.add_argument("--dst-mac", default="90:de:80:1c:6a:7a")
     ap.add_argument("--ollama", default="http://127.0.0.1:11434")
     ap.add_argument("--model", default="qwen3-vl:2b")
-    ap.add_argument("--num-predict", type=int, default=160)
+    ap.add_argument("--num-predict", type=int, default=400)
+    ap.add_argument("--loss", type=float, default=0.0)
+    ap.add_argument("--answer-timeout-ms", type=float, default=400.0)
+    ap.add_argument("--max-resend", type=int, default=8)
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--bind", default="127.0.0.1")
     ap.add_argument("--ledger", default="")
@@ -473,10 +554,11 @@ def main():
         print("WARMUP %.1fs" % (time.monotonic() - t_w), flush=True)
     except Exception as exc:
         print("WARMUP_FAIL %s" % exc, flush=True)
-    rx = PcapRx(a.ip, bpf="ether proto 0x88b5 or ether proto 0x88b6")
+    rx = PcapRx(a.ip, bpf="ether proto 0x88b5 or ether proto 0x88b6 or ether proto 0x88b8")
     ts = [threading.Thread(target=capture_loop, args=(st, rx), daemon=True),
           threading.Thread(target=expire_loop, args=(st,), daemon=True),
-          threading.Thread(target=question_loop, args=(st,), daemon=True)]
+          threading.Thread(target=question_loop, args=(st,), daemon=True),
+          threading.Thread(target=st.retx_loop, daemon=True)]
     for t in ts:
         t.start()
     srv = ThreadingHTTPServer((a.bind, a.port), make_handler(st))

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """L2 video/QA protocol shared by the Pi sender and the laptop receiver.
 
@@ -13,6 +13,8 @@ Video fragment body:
 import struct
 
 ETH_VIDEO = 0x88B5
+ETH_ACK = 0x88B8
+MAGIC_K = b"K01"
 ETH_QA = 0x88B6
 MAGIC_Q = b"Q01"
 MAGIC_A = b"A01"
@@ -20,6 +22,7 @@ MAGIC_A = b"A01"
 VI = struct.Struct("!IQHHH")   # frame_idx, pts_us, frag_idx, frag_total, plen
 QH = struct.Struct("!IIQQH")   # qid, frame_idx, pts_us, t0_ns, tlen
 AH = struct.Struct("!IIBQH")   # qid, seq, flags, t2_ns, tlen
+ACKH = struct.Struct("!II")    # qid, seq
 
 ETH_HDR = 14
 FRAME_MAX = 1500
@@ -47,6 +50,11 @@ def answer(dst, src, qid, seq, flags, t2_ns, text):
     return dst + src + struct.pack("!H", ETH_QA) + body
 
 
+def ack(dst, src, qid, seq):
+    body = MAGIC_K + ACKH.pack(qid, seq)
+    return dst + src + struct.pack("!H", ETH_ACK) + body
+
+
 def parse(raw):
     """Return dict for QA frames or video fragments; None if not ours."""
     if len(raw) < ETH_HDR + 2:
@@ -60,6 +68,11 @@ def parse(raw):
         return {"type": "video", "frame_idx": idx, "pts_us": pts,
                 "frag_idx": fi, "frag_total": ft,
                 "payload": body[VI.size:VI.size + plen]}
+    if et == ETH_ACK:
+        if body[:3] == MAGIC_K and len(body) >= 3 + ACKH.size:
+            qid, seq = ACKH.unpack(body[3:3 + ACKH.size])
+            return {"type": "ack", "qid": qid, "seq": seq}
+        return None
     if et == ETH_QA:
         if body[:3] == MAGIC_Q and len(body) >= 3 + QH.size:
             qid, idx, pts, t0, tlen = QH.unpack(body[3:3 + QH.size])
@@ -72,3 +85,4 @@ def parse(raw):
             return {"type": "answer", "qid": qid, "seq": seq, "flags": flags,
                     "t2_ns": t2, "text": txt.decode("utf-8", "replace")}
     return None
+

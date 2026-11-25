@@ -18,7 +18,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from video_proto import (ETH_QA, ETH_VIDEO, FRAME_MAX, VID_PAYLOAD, VI,
-                         answer, mac, parse, question, video_frag)
+                         ack, answer, mac, parse, question, video_frag)
 
 
 class Sender:
@@ -29,7 +29,11 @@ class Sender:
         self.sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW,
                                   socket.htons(0x0003))
         self.sock.bind((a.iface, 0))
-        self.sock.settimeout(0.05)
+        self.sock.settimeout(0.05)          # RX only: answers
+        self.tx = socket.socket(socket.AF_PACKET, socket.SOCK_RAW,
+                                socket.htons(0x0003))
+        self.tx.bind((a.iface, 0))
+        self.tx.settimeout(None)            # TX must block, not raise
         self.stop = False
         self.lock = threading.RLock()
         self.frames = sorted(glob.glob(os.path.join(a.frames, "*.jpg")))
@@ -57,6 +61,9 @@ class Sender:
         self.frags_sent = 0
         self.late = 0
         self.questions_sent = 0
+        self.acks_sent = 0
+        self.ack_max = {}
+        self.ack_last = {}
         self.preload = {}
         if a.preload:
             for p in self.frames:
@@ -79,6 +86,8 @@ class Sender:
             if not p or p["type"] != "answer":
                 continue
             qid = p["qid"]
+            with self.lock:
+                self.ack_max[qid] = max(self.ack_max.get(qid, -1), p["seq"])
             now = time.monotonic_ns()
             with self.lock:
                 t0 = self.pending.get(qid)
@@ -99,15 +108,34 @@ class Sender:
 
     def send_question(self, qid, idx, pts_us, t0_ns, text):
         frame = question(self.dst, self.src, qid, idx, pts_us, t0_ns, text)
-        self.sock.send(frame)
+        self.tx.send(frame)
         with self.lock:
             self.pending[qid] = t0_ns
             self.questions_sent += 1
         self.log("question", qid, "idx=%d" % idx)
 
+    def ack_loop(self):
+        while not self.stop:
+            with self.lock:
+                pending = [(q, s) for q, s in self.ack_max.items()
+                           if self.ack_last.get(q) != s]
+            for q, s in pending:
+                try:
+                    for _ in range(3):
+                        self.tx.send(ack(self.dst, self.src, q, s))
+                        with self.lock:
+                            self.acks_sent += 1
+                        time.sleep(0.002)
+                    with self.lock:
+                        self.ack_last[q] = s
+                except OSError:
+                    pass
+            time.sleep(0.02)
+
     def run(self):
         th = threading.Thread(target=self.rx_loop, daemon=True)
         th.start()
+        threading.Thread(target=self.ack_loop, daemon=True).start()
         n = len(self.frames)
         if n == 0:
             raise SystemExit("no frames in %s" % self.a.frames)
@@ -135,8 +163,8 @@ class Sender:
                 raise SystemExit("frame too large: %d" % len(data))
             for fi in range(nfrag):
                 chunk = data[fi * VID_PAYLOAD:(fi + 1) * VID_PAYLOAD]
-                self.sock.send(video_frag(self.dst, self.src, idx, pts_us, fi,
-                                          nfrag, chunk))
+                self.tx.send(video_frag(self.dst, self.src, idx, pts_us, fi,
+                                        nfrag, chunk))
                 self.frags_sent += 1
             self.frames_sent += 1
             sent += 1
@@ -166,6 +194,7 @@ class Sender:
                "loops": self.a.loop, "frames_sent": self.frames_sent,
                "frags_sent": self.frags_sent, "late_frames": self.late,
                "questions_sent": self.questions_sent,
+               "acks_sent": self.acks_sent,
                "answers_first": len(self.e2e_us),
                "e2e_p50_us": round(e2e[len(e2e) // 2], 1) if e2e else None,
                "e2e_p95_us": round(e2e[int(len(e2e) * 0.95)], 1) if e2e else None,
@@ -195,5 +224,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
 
 
