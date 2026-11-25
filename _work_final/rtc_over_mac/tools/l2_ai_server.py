@@ -243,14 +243,13 @@ class Server:
             batch = []
             with self.lock:
                 for _ in range(self.a.send_batch):
-                    item = self.sched.pop()
-                    if item is None:
+                    head = self.sched.peek()
+                    if head is None:
                         break
-                    if tokens < item.nbytes + 12:
-                        self.sched._plain(item)
+                    if tokens < head.nbytes + 12:
                         break
-                    tokens -= item.nbytes + 12
-                    batch.append(item)
+                    tokens -= head.nbytes + 12
+                    batch.append(self.sched.pop())
             for item in batch:
                 if item.kind != KIND_RESP:
                     try:
@@ -313,6 +312,7 @@ class Server:
                                          "sendp_us": sendp_us})
                     self.stats["responses_sent"] += 1
                     self.stats["sendp_calls"] += 1
+                    self.sched.note_served(item)
 
     # ---------- retransmit ----------
     def retx_loop(self):
@@ -448,6 +448,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
 
 
 
