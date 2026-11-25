@@ -69,3 +69,39 @@ python tools/l2_ai_server.py --mode fifo --seconds 18 --bulk-mbps 0 \
 sudo python3 tools/l2_ai_client.py --dst-mac 40:c2:ba:52:70:95 \
   --seconds 10 --msg-base 80000 --resp-timeout-ms 120 --out cli.json
 ```
+
+## 6. 稳定性检测与零点（2026-11-25 14:00）
+
+### 6.1 硬件事件
+
+- USB 网卡（MT7921AU）在重启后重枚举为 `wlan0`，期间出现多次 `USB disconnect` / `reset high-speed`，导致静态 IP 丢失、三次基线作废（39/100、80/100）；
+- 现直插 Bus001 Port002（根 hub、High Speed 480M），探测期间无新断连；
+- 设备本身是 USB 2.0（`bcdUSB 2.10`、`MaxPower 100mA`），换 3.0 口不会提速。
+
+### 6.2 稳定化措施
+
+- 板载 Wi-Fi 已禁用（`dtoverlay=disable-wifi`，重启生效）；
+- **关闭省电**：`iw dev wlan0 set power_save off`（preflight 会检查，on 则 FAIL）；
+- 客户端重传全部加指数退避（请求 ACK 与响应等待两路），避免重传风暴。
+
+### 6.3 稳定性结果
+
+| 项 | 关省电前 | 关省电后 |
+|---|---:|---:|
+| idle ping 丢包 | 0/150 | 0/150 |
+| idle avg / max / mdev | 8.7 / 116.5 / 21.5 ms | **4.2 / 62.8 / 8.8 ms** |
+| 负载期 ping（100M UDP 下行） | — | 0/100，avg 2.4 / max 25.8 ms |
+| AP→Pi 吞吐 | — | 100M offered → 95.3 Mbps (4.7% 丢)；200M → 179 Mbps (11% 丢) |
+
+### 6.4 干净基线（无注入、无 bulk，10 s × 3 次）
+
+| 轮次 | 请求 | 送达 | TTFT p50 | TTFT p95 | 请求重传 |
+|---|---:|---:|---:|---:|---:|
+| clean1 | 100 | 100 | 16.0 ms | 44.9 ms | 28 |
+| clean2 | 100 | 100 | 25.5 ms | 144.0 ms | 38 |
+| clean3 | 100 | 100 | 15.5 ms | 49.1 ms | 36 |
+
+- 送达稳定 100/100；
+- p50 稳定在 15–26 ms；p95 45–144 ms；
+- 服务端内部 recv→send p50 = 0 µs，p95 约 15–46 ms → 剩余时延主要来自 Windows/Npcap 发送路径与空口，不是协议逻辑；
+- 与 ping 的 4.2 ms 相比，p50 16 ms 的差额有待用"AP 侧发送时间戳"进一步拆分（下一步）。

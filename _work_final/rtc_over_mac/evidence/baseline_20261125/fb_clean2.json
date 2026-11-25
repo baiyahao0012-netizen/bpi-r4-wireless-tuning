@@ -1,0 +1,1 @@
+RESULT {"role": "client", "mode": "client", "requests": 100, "delivered": 100, "resends": 38, "resp_timeout_resend": 0, "bulk_rx": 0, "acks_rx": 138, "delivery_ratio": 1.0, "ttft_p50_us": 25521.4, "ttft_p95_us": 144020.7}
