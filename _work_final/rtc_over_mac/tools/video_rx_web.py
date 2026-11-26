@@ -49,26 +49,26 @@ input[type=checkbox]{accent-color:var(--accent)}
 .group{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
 select,input[type=number]{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit}
 input[type=number]{width:58px}
-#main{flex:1;display:grid;grid-template-columns:minmax(0,58%) minmax(0,42%);min-height:0}
-#left{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
+#main{flex:1;display:grid;grid-template-columns:minmax(0,58%) minmax(0,42%);grid-template-rows:minmax(0,1fr);min-height:0;overflow:hidden}
+#left{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;border-right:1px solid var(--line)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:10px 10px 0;overflow:hidden}
-.panel.video{flex:0 0 52%;position:relative;background:#000;display:flex;align-items:center;justify-content:center}
-.panel.video img{width:100%;height:100%;object-fit:contain}
+.panel.video{flex:0 0 auto;position:relative;background:#000;display:flex;align-items:center;justify-content:center;padding:0}
+.panel.video img{display:block;max-width:none;max-height:none}
 .badge{position:absolute;left:10px;top:10px;font-size:11px;color:#cfd6e2;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.08);padding:4px 8px;border-radius:6px;backdrop-filter:blur(4px)}
-.panel.charts{flex:1;margin-bottom:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-height:0}
+.panel.charts{flex:1 1 auto;margin-bottom:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-height:0;overflow:hidden}
 .chart-head{display:flex;align-items:baseline;justify-content:space-between}
 .chart-head h3{margin:0;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
 .chart-head span{font-size:12px;color:var(--accent2);font-variant-numeric:tabular-nums}
-canvas{width:100%;display:block;background:#0b0d10;border-radius:6px}
+canvas{width:100%;max-width:100%;display:block;background:#0b0d10;border-radius:6px}
 #fps{height:64px}#ttft{height:54px}
 .metrics{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
 .m{font-size:11px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 8px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .m b{color:var(--txt);font-weight:600}
-#right{display:flex;flex-direction:column;min-width:0}
+#right{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
 .right-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 6px}
 .right-head h3{margin:0;font-size:14px}
 #met{font-size:11px;color:var(--muted);white-space:nowrap}
-#log{flex:1;overflow-y:auto;padding:4px 14px 16px;scroll-behavior:smooth}
+#log{flex:1;min-height:0;overflow-y:auto;padding:4px 14px 16px;scroll-behavior:smooth}
 #log::-webkit-scrollbar,body::-webkit-scrollbar{width:8px;height:8px}
 #log::-webkit-scrollbar-thumb,body::-webkit-scrollbar-thumb{background:#2c333d;border-radius:4px}
 .q{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;margin:0 0 10px;padding:10px 12px}
@@ -135,6 +135,25 @@ function fmt(v){return v===undefined||v===null?'-':v;}
 const gaps={};
 const vid=$('v');
 if(vid){setInterval(()=>{const im=new Image();im.onload=()=>{vid.src=im.src;};im.src='/frame.jpg?t='+Date.now();},50);}
+
+function layout(){
+  const left=document.getElementById('left');
+  const vp=document.querySelector('.panel.video');
+  const ch=document.querySelector('.panel.charts');
+  const im=document.getElementById('v');
+  if(!left||!vp||!ch||!im)return;
+  const m=10, chartsMin=268;
+  const availW=Math.max(160,left.clientWidth-2*m);
+  const availH=Math.max(90,left.clientHeight-2*m-chartsMin);
+  let w=availW, h=Math.round(w*9/16);
+  if(h>availH){ h=availH; w=Math.round(h*16/9); }
+  vp.style.height=h+'px';
+  im.style.width=w+'px'; im.style.height=h+'px';
+  ch.style.height=Math.max(chartsMin,left.clientHeight-h-2*m)+'px';
+}
+window.addEventListener('resize',layout);
+setTimeout(layout,60);
+setInterval(layout,1000);
 btn.onclick=()=>{const running=btn.textContent.indexOf('停止')>=0;btn.disabled=true;st.textContent=running?'停止中…':'启动中…';
   fetch(running?'/stop':'/start',{method:'POST'}).then(r=>r.json()).then(d=>{st.textContent=d.msg||'';btn.disabled=false;})
    .catch(e=>{st.textContent='失败 '+e;btn.disabled=false;});};
