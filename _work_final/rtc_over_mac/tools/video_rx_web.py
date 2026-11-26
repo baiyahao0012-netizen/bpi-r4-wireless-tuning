@@ -125,7 +125,9 @@ function drawLine(cv,cx,arr,color,fill){const d=fit(cv),W=cv.width,H=cv.height;c
     arr.forEach((v,i)=>{i?cx.lineTo(X(i),Y(v)):cx.moveTo(X(i),Y(v));});}
   cx.strokeStyle=color;cx.lineWidth=2*d;cx.stroke();}
 function drawSpark(cv,arr){const d=fit(cv),cx=cv.getContext('2d'),W=cv.width,H=cv.height;cx.clearRect(0,0,W,H);
-  if(!arr||!arr.length)return;const mx=Math.max(1,...arr),bw=Math.max(1,(W-4)/arr.length);
+  const lab0=cv.parentElement.querySelector('.sparklab');
+  if(!arr||!arr.length){if(lab0)lab0.textContent='单块输出（无块间隔）';return;}
+  const mx=Math.max(1,...arr),bw=Math.max(1,(W-4)/arr.length);
   for(let i=0;i<arr.length;i++){const h=(arr[i]/mx)*(H-4);cx.fillStyle=arr[i]>mx*0.66?'#e8a04c':(arr[i]>mx*0.33?'#4c9be8':'#38a169');
     cx.fillRect(2+i*bw,H-2-h,Math.max(1,bw-1),h);}
   const lab=cv.parentElement.querySelector('.sparklab');
@@ -660,7 +662,8 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
     if not full.strip():
         retried = True
         p2 = dict(payload)
-        p2["prompt"] = ("/no_think 只输出答案，不要思考过程，不超过30个字。问题：%s" % text)
+        p2["model"] = a.retry_model
+        p2["prompt"] = ("/no_think 用一句话回答，不要思考过程，不超过30个字。问题：%s" % text)
         p2["options"] = {"num_predict": 200, "temperature": 0}
         print("ollama retry qid=%s (empty answer)" % qid, flush=True)
         try:
@@ -714,6 +717,7 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
     gaps = [round(arrivals[i] - arrivals[i - 1], 1) for i in range(1, len(arrivals))][:200]
     st.push({"phase": "final", "qid": qid, "answer": full, "empty": empty,
              "gaps_ms": gaps, "hit_cap": hit_cap, "retried": retried,
+             "retry_model": (a.retry_model if retried else None),
              "model_ms": model_ms,
              "thinking_chars": len(think_txt),
              "prompt_eval_ms": mj.get("prompt_eval_duration"),
@@ -732,6 +736,7 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
             "t0_ns": t0_ns, "t1_ns": t1_ns, "t2_ns": t2,
             "ttft_ms": round((t2 - t1_ns) / 1e6, 1) if t2 else None,
             "model_ms": model_ms, "empty": empty, "hit_cap": hit_cap, "retried": retried,
+            "retry_model": (a.retry_model if retried else None),
             "thinking_chars": len(think_txt), "answer": full,
             "metrics": mj}, ensure_ascii=False) + "\n")
 
@@ -934,6 +939,7 @@ def main():
     ap.add_argument("--ollama", default="http://127.0.0.1:11434")
     ap.add_argument("--model", default="qwen3-vl:2b")
     ap.add_argument("--num-predict", type=int, default=640)
+    ap.add_argument("--retry-model", default="qwen3-vl:4b")
     ap.add_argument("--loss", type=float, default=0.0)
     ap.add_argument("--answer-timeout-ms", type=float, default=400.0)
     ap.add_argument("--max-resend", type=int, default=8)
@@ -962,6 +968,14 @@ def main():
                 "images": [png], "stream": False, "options": {"num_predict": 1}},
                 timeout=300)
         print("WARMUP %.1fs" % (time.monotonic() - t_w), flush=True)
+        try:
+            t_w2 = time.monotonic()
+            _rq.post(a.ollama + "/api/generate", json={"model": a.retry_model,
+                     "prompt": "warmup", "images": [png], "stream": False,
+                     "options": {"num_predict": 1}}, timeout=300)
+            print("WARMUP_RETRY %.1fs" % (time.monotonic() - t_w2), flush=True)
+        except Exception as exc:
+            print("WARMUP_RETRY_FAIL %s" % exc, flush=True)
     except Exception as exc:
         print("WARMUP_FAIL %s" % exc, flush=True)
     rx = PcapRx(a.ip, bpf="ether proto 0x88b5 or ether proto 0x88b6 or ether proto 0x88b8")
