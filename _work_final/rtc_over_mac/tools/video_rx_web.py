@@ -180,7 +180,8 @@ es.onmessage=e=>{const d=JSON.parse(e.data);
       m.innerHTML=`<span class="tag">#${d.qid}</span><span class="tag">t=${ds.t}s</span><span class="tag">frame ${ds.idx}</span>`+
         `<span class="tag">TTFT <b>${fmt(d.ttft_ms)}</b>ms</span><span class="tag">model ${fmt(d.model_ms)}ms</span>`+
         `<span class="tag">prompt ${fmt(d.prompt_eval_ms)}ms/${fmt(d.prompt_eval_count)}tok</span>`+
-        `<span class="tag">gen ${fmt(d.eval_ms)}ms/${fmt(d.eval_count)}tok</span>`;}
+        `<span class="tag">gen ${fmt(d.eval_ms)}ms/${fmt(d.eval_count)}tok</span>`+
+        (d.hit_cap?'<span class="tag" style="color:#e8a04c">截断</span>':'');}
     const cv=$('s'+d.qid);if(cv)drawSpark(cv,d.gaps_ms||[]);}
   else if(d.phase==='stats'){
     fpsnow.textContent=(d.fps||0)+' fps';
@@ -655,20 +656,64 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
         import traceback
         traceback.print_exc()
         metrics = {"error": str(exc)}
+    retried = False
+    if not full.strip():
+        retried = True
+        p2 = dict(payload)
+        p2["prompt"] = ("/no_think 只输出答案，不要思考过程，不超过30个字。问题：%s" % text)
+        p2["options"] = {"num_predict": 200, "temperature": 0}
+        print("ollama retry qid=%s (empty answer)" % qid, flush=True)
+        try:
+            with requests.post(a.ollama + "/api/generate", json=p2, stream=True,
+                               timeout=180) as r2:
+                for line in r2.iter_lines(decode_unicode=True):
+                    if not line:
+                        continue
+                    d2 = json.loads(line)
+                    delta2 = d2.get("response") or ""
+                    now2 = time.monotonic_ns()
+                    if delta2 and t2 is None:
+                        t2 = now2
+                        arrivals.append(0.0)
+                        full += delta2
+                        st.send_answer(qid, seq, 1, t2, delta2)
+                        seq += 1
+                        st.push({"phase": "first", "qid": qid, "text": delta2,
+                                 "ttft_ms": round((t2 - t1_ns) / 1e6, 1)})
+                    elif delta2:
+                        full += delta2
+                        arrivals.append(round((now2 - t2) / 1e6, 1))
+                        buf += delta2
+                        if time.monotonic() - last_flush > 0.03:
+                            st.send_answer(qid, seq, 0, t2, buf)
+                            seq += 1
+                            st.push({"phase": "delta", "qid": qid, "text": buf})
+                            buf = ""
+                            last_flush = time.monotonic()
+                    if d2.get("done"):
+                        metrics = {k: d2.get(k) for k in (
+                            "total_duration", "load_duration", "prompt_eval_count",
+                            "prompt_eval_duration", "eval_count", "eval_duration")}
+                        break
+        except Exception as exc:
+            print("ollama retry failed %s" % exc, flush=True)
+
     if buf:
-        st.tx.send(answer(st.dst, st.src, qid, seq, 0, t2 or 0, buf))
+        st.send_answer(qid, seq, 0, t2 or 0, buf)
         seq += 1
         st.push({"phase": "delta", "qid": qid, "text": buf})
     st.send_answer(qid, seq, 2, t2 or 0, "")
     mj = {k: (round(v / 1e6, 1) if isinstance(v, int) and k.endswith("duration") else v)
           for k, v in metrics.items()}
+    hit_cap = bool(mj.get("eval_count") and
+                   mj.get("eval_count") >= a.num_predict - 2)
     empty = not full.strip()
     model_ms = round((time.monotonic_ns() - t1_ns) / 1e6, 1)
     if empty:
         st.stats["empty"] += 1
     gaps = [round(arrivals[i] - arrivals[i - 1], 1) for i in range(1, len(arrivals))][:200]
     st.push({"phase": "final", "qid": qid, "answer": full, "empty": empty,
-             "gaps_ms": gaps,
+             "gaps_ms": gaps, "hit_cap": hit_cap, "retried": retried,
              "model_ms": model_ms,
              "thinking_chars": len(think_txt),
              "prompt_eval_ms": mj.get("prompt_eval_duration"),
@@ -686,7 +731,7 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
             "frame_miss": miss, "frame_age_ms": frame_age_ms,
             "t0_ns": t0_ns, "t1_ns": t1_ns, "t2_ns": t2,
             "ttft_ms": round((t2 - t1_ns) / 1e6, 1) if t2 else None,
-            "model_ms": model_ms, "empty": empty,
+            "model_ms": model_ms, "empty": empty, "hit_cap": hit_cap, "retried": retried,
             "thinking_chars": len(think_txt), "answer": full,
             "metrics": mj}, ensure_ascii=False) + "\n")
 
@@ -888,7 +933,7 @@ def main():
     ap.add_argument("--dst-mac", default="90:de:80:1c:6a:7a")
     ap.add_argument("--ollama", default="http://127.0.0.1:11434")
     ap.add_argument("--model", default="qwen3-vl:2b")
-    ap.add_argument("--num-predict", type=int, default=400)
+    ap.add_argument("--num-predict", type=int, default=640)
     ap.add_argument("--loss", type=float, default=0.0)
     ap.add_argument("--answer-timeout-ms", type=float, default=400.0)
     ap.add_argument("--max-resend", type=int, default=8)
