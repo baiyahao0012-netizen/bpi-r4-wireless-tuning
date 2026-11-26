@@ -128,10 +128,10 @@ function drawSpark(cv,arr){const d=fit(cv),cx=cv.getContext('2d'),W=cv.width,H=c
   const lab0=cv.parentElement.querySelector('.sparklab');
   if(!arr||!arr.length){if(lab0)lab0.textContent='单块输出（无块间隔）';return;}
   const mx=Math.max(1,...arr),bw=Math.max(1,(W-4)/arr.length);
-  for(let i=0;i<arr.length;i++){const h=(arr[i]/mx)*(H-4);cx.fillStyle=arr[i]>mx*0.66?'#e8a04c':(arr[i]>mx*0.33?'#4c9be8':'#38a169');
+  for(let i=0;i<arr.length;i++){const h=(arr[i]/mx)*(H-4);cx.fillStyle=arr[i]>=200?'#e05c5c':(arr[i]>=80?'#e8a04c':(arr[i]>=40?'#4c9be8':'#38a169'));
     cx.fillRect(2+i*bw,H-2-h,Math.max(1,bw-1),h);}
   const lab=cv.parentElement.querySelector('.sparklab');
-  if(lab)lab.textContent=`块间隔 n=${arr.length} · 中位 ${median(arr).toFixed(1)}ms · 最大 ${mx.toFixed(1)}ms`;}
+  if(lab)lab.textContent=`块间隔 n=${arr.length} · 中位 ${median(arr).toFixed(1)}ms · 最大 ${mx.toFixed(1)}ms（同 2ms 内合并；绿<40 蓝<80 橙<200 红≥200）`;}
 function median(a){const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;}
 function fmt(v){return v===undefined||v===null?'-':v;}
 const gaps={};
@@ -714,7 +714,11 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
     model_ms = round((time.monotonic_ns() - t1_ns) / 1e6, 1)
     if empty:
         st.stats["empty"] += 1
-    gaps = [round(arrivals[i] - arrivals[i - 1], 1) for i in range(1, len(arrivals))][:200]
+    bursts = []
+    for t in arrivals:
+        if not bursts or t - bursts[-1] >= 2.0:
+            bursts.append(t)
+    gaps = [round(bursts[i] - bursts[i - 1], 1) for i in range(1, len(bursts))][:200]
     st.push({"phase": "final", "qid": qid, "answer": full, "empty": empty,
              "gaps_ms": gaps, "hit_cap": hit_cap, "retried": retried,
              "retry_model": (a.retry_model if retried else None),
@@ -736,6 +740,7 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
             "t0_ns": t0_ns, "t1_ns": t1_ns, "t2_ns": t2,
             "ttft_ms": round((t2 - t1_ns) / 1e6, 1) if t2 else None,
             "model_ms": model_ms, "empty": empty, "hit_cap": hit_cap, "retried": retried,
+            "gaps_ms": gaps,
             "retry_model": (a.retry_model if retried else None),
             "thinking_chars": len(think_txt), "answer": full,
             "metrics": mj}, ensure_ascii=False) + "\n")
