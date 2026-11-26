@@ -24,62 +24,160 @@ from reliable import ReliableBuffer
 from pcap_rx import PcapRx
 from video_proto import FRAME_MAX, ack, answer, mac, parse, question
 
-HTML = """<!doctype html><html><head><meta charset="utf-8"><title>RTC VLM</title>
+HTML = """<!doctype html><html><head><meta charset="utf-8"><title>RTC-VLM</title>
 <style>
-body{background:#111;color:#ddd;font-family:system-ui;margin:0;display:flex;flex-direction:column;height:100vh}
-#top{display:flex;align-items:center;gap:14px;padding:10px 14px;border-bottom:1px solid #333;background:#181818}
-#btn{font-size:16px;padding:8px 22px;border-radius:6px;border:0;background:#2d8f4e;color:#fff;cursor:pointer}
-#btn:disabled{background:#444;cursor:default}
-#st{font-size:14px;color:#9ad}
-#met{font-size:12px;color:#888;margin-left:auto}
-#main{flex:1;display:flex;min-height:0}
-#left{flex:1;display:flex;align-items:center;justify-content:center;border-right:1px solid #333}
-#left img{max-width:100%;max-height:100%}
-#right{width:44%;overflow-y:auto;padding:10px;font-size:13px}
-.q{border:1px solid #444;border-radius:6px;margin:8px 0;padding:8px;background:#1a1a1a}
-.meta{color:#888;font-size:11px}
-.a{color:#8fd694;white-space:pre-wrap}
+:root{--bg:#0e1013;--panel:#15181d;--panel2:#1b1f26;--line:#262b33;--txt:#e6e9ef;
+      --muted:#8b93a1;--accent:#38a169;--accent2:#4c9be8;--warn:#e8a04c;--bad:#e05c5c}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:"Segoe UI",system-ui,-apple-system,"Microsoft YaHei",sans-serif;display:flex;flex-direction:column;overflow:hidden}
+#top{display:flex;align-items:center;gap:14px;padding:10px 18px;background:linear-gradient(180deg,#191d23,#14171c);border-bottom:1px solid var(--line);white-space:nowrap;overflow-x:auto}
+.brand{font-weight:700;font-size:16px;letter-spacing:.3px;display:flex;align-items:baseline;gap:8px}
+.brand span{font-weight:400;font-size:11px;color:var(--muted)}
+.controls{display:flex;align-items:center;gap:12px;margin-left:auto}
+button{font-family:inherit;cursor:pointer;border:0;border-radius:8px;transition:.15s}
+#btn{min-width:118px;padding:9px 20px;font-size:14px;font-weight:600;color:#fff;background:var(--accent);white-space:nowrap;box-shadow:0 2px 8px rgba(56,161,105,.25)}
+#btn:hover{filter:brightness(1.08)}
+#btn.stop{background:var(--bad);box-shadow:0 2px 8px rgba(224,92,92,.25)}
+#btn:disabled{opacity:.55;cursor:default}
+.ghost{background:var(--panel2);color:var(--txt);border:1px solid var(--line);padding:7px 14px;font-size:12px}
+.ghost:hover{border-color:#3a4150}
+.chip{font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);padding:6px 10px;border-radius:999px;white-space:nowrap}
+.chip.on{color:var(--accent)}
+label.chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+input[type=checkbox]{accent-color:var(--accent)}
+.group{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+select,input[type=number]{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit}
+input[type=number]{width:58px}
+#main{flex:1;display:grid;grid-template-columns:minmax(0,58%) minmax(0,42%);min-height:0}
+#left{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:10px 10px 0;overflow:hidden}
+.panel.video{flex:0 0 52%;position:relative;background:#000;display:flex;align-items:center;justify-content:center}
+.panel.video img{width:100%;height:100%;object-fit:contain}
+.badge{position:absolute;left:10px;top:10px;font-size:11px;color:#cfd6e2;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.08);padding:4px 8px;border-radius:6px;backdrop-filter:blur(4px)}
+.panel.charts{flex:1;margin-bottom:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-height:0}
+.chart-head{display:flex;align-items:baseline;justify-content:space-between}
+.chart-head h3{margin:0;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
+.chart-head span{font-size:12px;color:var(--accent2);font-variant-numeric:tabular-nums}
+canvas{width:100%;display:block;background:#0b0d10;border-radius:6px}
+#fps{height:64px}#ttft{height:54px}
+.metrics{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.m{font-size:11px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.m b{color:var(--txt);font-weight:600}
+#right{display:flex;flex-direction:column;min-width:0}
+.right-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 6px}
+.right-head h3{margin:0;font-size:14px}
+#met{font-size:11px;color:var(--muted);white-space:nowrap}
+#log{flex:1;overflow-y:auto;padding:4px 14px 16px;scroll-behavior:smooth}
+#log::-webkit-scrollbar,body::-webkit-scrollbar{width:8px;height:8px}
+#log::-webkit-scrollbar-thumb,body::-webkit-scrollbar-thumb{background:#2c333d;border-radius:4px}
+.q{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;margin:0 0 10px;padding:10px 12px}
+.q .meta{font-size:11px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px;font-variant-numeric:tabular-nums}
+.q .meta .tag{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.qq{font-size:13px;color:#dfe6f0;margin:2px 0 6px}
+.a{font-size:13px;line-height:1.55;color:#9fe0b0;white-space:pre-wrap;min-height:18px}
+.a.streaming::after{content:"▋";color:var(--accent);margin-left:2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.sparkwrap{margin-top:8px}
+.sparklab{font-size:10px;color:var(--muted);margin-bottom:2px;font-variant-numeric:tabular-nums}
+.spark{height:34px}
 </style></head><body>
-<div id="top"><button id="btn">开始测试</button><span id="st">空闲</span>
- <label style="font-size:13px;color:#ccc"><input type="checkbox" id="loss"> 模拟丢包30%</label><select id="smode" style="font-size:13px"><option value="off">调度:关</option><option value="fifo">fifo</option><option value="ai-first">ai-first</option><option value="quota">quota</option></select><input id="sbulk" type="number" value="20" style="width:52px" title="背景流 Mbps"><button id="sapply" style="font-size:12px">应用</button><canvas id="fps" width="420" height="70" style="background:#0b0b0b"></canvas><span id="met">frames 0 | lost 0 | queue 0</span></div>
+<div id="top">
+  <div class="brand">RTC·VLM <span>L2 实时视觉问答</span></div>
+  <div class="controls">
+    <button id="btn">开始测试</button>
+    <span id="st" class="chip">空闲</span>
+    <label class="chk"><input type="checkbox" id="loss"> 模拟丢包 30%</label>
+    <span class="group">调度<select id="smode"><option value="off">关</option><option value="fifo">fifo</option><option value="ai-first">ai-first</option><option value="quota">quota</option></select></span>
+    <span class="group">背景流<input id="sbulk" type="number" value="20"><span>Mbps</span></span>
+    <button id="sapply" class="ghost">应用</button>
+  </div>
+</div>
 <div id="main">
- <div id="left"><img id="v" src="/frame.jpg"></div>
- <div id="right"><h3>Q/A（按时间追加）</h3><div id="log"></div></div>
+  <section id="left">
+    <div class="panel video"><img id="v" src="/frame.jpg"><div class="badge" id="vbadge">等待视频</div></div>
+    <div class="panel charts">
+      <div class="chart-head"><h3>帧率 FPS</h3><span id="fpsnow">–</span></div>
+      <canvas id="fps" width="900" height="64"></canvas>
+      <div class="chart-head"><h3>首块时延 TTFT</h3><span id="ttftnow">–</span></div>
+      <canvas id="ttft" width="900" height="54"></canvas>
+      <div class="metrics" id="met2"></div>
+    </div>
+  </section>
+  <section id="right">
+    <div class="right-head"><h3>问答流</h3><span id="met">—</span></div>
+    <div id="log"></div>
+  </section>
 </div>
 <script>
-const vid=document.getElementById('v');
+const $=id=>document.getElementById(id);
+const btn=$('btn'),st=$('st'),met=$('met'),met2=$('met2'),loss=$('loss'),smode=$('smode'),sbulk=$('sbulk'),sapply=$('sapply'),
+      vbadge=$('vbadge'),fpsnow=$('fpsnow'),ttftnow=$('ttftnow'),
+      cvF=$('fps'),cxF=cvF.getContext('2d'),cvT=$('ttft'),cxT=cvT.getContext('2d');
+function fit(cv){const r=cv.getBoundingClientRect(),d=window.devicePixelRatio||1;
+  if(cv.width!==Math.round(r.width*d)||cv.height!==Math.round(r.height*d)){cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);}return d;}
+function drawLine(cv,cx,arr,color,fill){const d=fit(cv),W=cv.width,H=cv.height;cx.clearRect(0,0,W,H);
+  cx.strokeStyle='#1f242c';cx.lineWidth=1;for(let i=1;i<4;i++){const y=H*i/4;cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();}
+  if(!arr||!arr.length)return;const mx=Math.max(1,...arr);
+  const X=i=>i*(W-4)/Math.max(1,arr.length-1)+2, Y=v=>H-3-(v/mx)*(H-8);
+  cx.beginPath();arr.forEach((v,i)=>{i?cx.lineTo(X(i),Y(v)):cx.moveTo(X(i),Y(v));});
+  if(fill){cx.lineTo(X(arr.length-1),H);cx.lineTo(X(0),H);cx.closePath();cx.fillStyle=fill;cx.fill();cx.beginPath();
+    arr.forEach((v,i)=>{i?cx.lineTo(X(i),Y(v)):cx.moveTo(X(i),Y(v));});}
+  cx.strokeStyle=color;cx.lineWidth=2*d;cx.stroke();}
+function drawSpark(cv,arr){const d=fit(cv),cx=cv.getContext('2d'),W=cv.width,H=cv.height;cx.clearRect(0,0,W,H);
+  if(!arr||!arr.length)return;const mx=Math.max(1,...arr),bw=Math.max(1,(W-4)/arr.length);
+  for(let i=0;i<arr.length;i++){const h=(arr[i]/mx)*(H-4);cx.fillStyle=arr[i]>mx*0.66?'#e8a04c':(arr[i]>mx*0.33?'#4c9be8':'#38a169');
+    cx.fillRect(2+i*bw,H-2-h,Math.max(1,bw-1),h);}
+  const lab=cv.parentElement.querySelector('.sparklab');
+  if(lab)lab.textContent=`块间隔 n=${arr.length} · 中位 ${median(arr).toFixed(1)}ms · 最大 ${mx.toFixed(1)}ms`;}
+function median(a){const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function fmt(v){return v===undefined||v===null?'-':v;}
+const gaps={};
+const vid=$('v');
 if(vid){setInterval(()=>{const im=new Image();im.onload=()=>{vid.src=im.src;};im.src='/frame.jpg?t='+Date.now();},50);}
-const smode=document.getElementById('smode'),sbulk=document.getElementById('sbulk'),sapply=document.getElementById('sapply');
-sapply.onclick=()=>{fetch('/sched',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:smode.value,rate:50,bulk:parseFloat(sbulk.value||'0')})});};
-const log=document.getElementById('log'),btn=document.getElementById('btn'),st=document.getElementById('st'),met=document.getElementById('met'),loss=document.getElementById('loss'),cv=document.getElementById('fps'),ctx=cv.getContext('2d');
-function drawFps(h){ctx.clearRect(0,0,cv.width,cv.height);if(!h||!h.length)return;const mx=Math.max(1,...h);
- ctx.strokeStyle='#2d8f4e';ctx.beginPath();h.forEach((v,i)=>{const x=i*(cv.width-2)/Math.max(1,h.length-1)+1,y=cv.height-2-(v/mx)*(cv.height-6);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
- ctx.fillStyle='#888';ctx.font='10px monospace';ctx.fillText(mx+' fps',4,10);}
-loss.onchange=()=>{fetch('/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({loss:loss.checked?0.3:0})});};
-const es=new EventSource('/events');
-es.onmessage=e=>{const d=JSON.parse(e.data);
-  if(d.phase==='reset'){log.innerHTML='';window._cur=null;
-    const v=document.getElementById('v');if(v)v.src='/frame.jpg?t='+Date.now();
-    st.textContent='新一轮（模型已重置）';met.textContent='frames 0 | lost 0 | queue 0 | 已答 0';}
-  else if(d.phase==='start'){window._cur=document.createElement('div');window._cur.className='q';
-    window._cur.innerHTML=`<div class="meta">#${d.qid} t=${d.t}s frame=${d.idx} ${d.miss?'(frame miss)':''}</div>
-    <div><b>问：</b>${d.question}</div><div class="a" id="a${d.qid}"></div>`;
-    log.appendChild(window._cur);}
-  else if(d.phase==='first'){const el=document.getElementById('a'+d.qid);if(el)el.textContent=d.text;
-    const m=window._cur?window._cur.querySelector('.meta'):null;if(m)m.textContent+=` | TTFT ${d.ttft_ms}ms`;}
-  else if(d.phase==='delta'){const el=document.getElementById('a'+d.qid);if(el)el.textContent=(el.textContent||'')+d.text;}
-  else if(d.phase==='final'){const el=document.getElementById('a'+d.qid);if(el)el.textContent=d.answer;
-    const m=window._cur?window._cur.querySelector('.meta'):null;
-    if(m)m.textContent+=` | model ${d.model_ms}ms | prompt ${d.prompt_eval_ms}ms/${d.prompt_eval_count}tok | gen ${d.eval_ms}ms/${d.eval_count}tok`;}
-    if(d.empty){const el=document.getElementById('a'+d.qid);if(el)el.textContent='[EMPTY/截断] '+(d.answer||'');}
-  else if(d.phase==='stats'){met.textContent=`[${d.sched_mode||'off'} 深${d.sched_depth||0} 越队${d.ai_jump||0} 驱逐${d.evicted||0} ai/bulk ${d.sent_ai||0}/${d.sent_bulk||0}] `+`帧率 ${d.fps||0} | 帧 ${d.frames} 丢 ${d.lost} | 包 发${d.ans_sent||0} 丢${d.ans_dropped||0} 重传${d.ans_retx||0} 确认${d.ans_acked||0} 过期${d.ans_failed||0} 补救${d.recovery||0}% | TTFT ${d.ttft_p50||'-'}ms`;
-  drawFps(d.fps_hist||[]);
-    if(d.running){st.textContent=`运行中 ${d.elapsed_s||0}s`;btn.disabled=false;btn.textContent='停止测试';}
-    else{st.textContent=d.last_msg||'空闲';btn.disabled=false;btn.textContent='开始测试';}}
-};
 btn.onclick=()=>{const running=btn.textContent.indexOf('停止')>=0;btn.disabled=true;st.textContent=running?'停止中…':'启动中…';
   fetch(running?'/stop':'/start',{method:'POST'}).then(r=>r.json()).then(d=>{st.textContent=d.msg||'';btn.disabled=false;})
-   .catch(e=>{st.textContent='启动失败 '+e;btn.disabled=false;});};
+   .catch(e=>{st.textContent='失败 '+e;btn.disabled=false;});};
+loss.onchange=()=>{fetch('/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({loss:loss.checked?0.3:0})});};
+sapply.onclick=()=>{fetch('/sched',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:smode.value,rate:50,bulk:parseFloat(sbulk.value||'0')})});};
+const es=new EventSource('/events');
+es.onmessage=e=>{const d=JSON.parse(e.data);
+  if(d.phase==='reset'){ $('log').innerHTML=''; st.textContent='新一轮（模型已重置）'; }
+  else if(d.phase==='start'){
+    const card=document.createElement('div');card.className='q';card.dataset.t=d.t;card.dataset.idx=d.idx;
+    card.innerHTML=`<div class="meta"><span class="tag">#${d.qid}</span><span class="tag">t=${d.t}s</span>
+      <span class="tag">frame ${d.idx}</span>${d.miss?'<span class="tag" style="color:#e05c5c">frame miss</span>':''}</div>
+      <div class="qq">${d.question}</div><div class="a streaming" id="a${d.qid}"></div>
+      <div class="sparkwrap"><div class="sparklab">等待首块…</div><canvas class="spark" id="s${d.qid}" width="720" height="34"></canvas></div>`;
+    $('log').appendChild(card);gaps[d.qid]=[];$('log').scrollTop=$('log').scrollHeight;
+  }
+  else if(d.phase==='first'){const el=$('a'+d.qid);if(el)el.textContent=d.text;
+    const c=$('a'+d.qid);if(c){const l=c.parentElement.querySelector('.sparklab');if(l)l.textContent='生成中…';}}
+  else if(d.phase==='delta'){const el=$('a'+d.qid);if(el)el.textContent=(el.textContent||'')+d.text;}
+  else if(d.phase==='final'){const el=$('a'+d.qid);
+    if(el){el.textContent=d.empty?'[EMPTY/截断] '+(d.answer||''):d.answer;el.classList.remove('streaming');}
+    const card=$('a'+d.qid)&&$('a'+d.qid).parentElement;
+    if(card){const m=card.querySelector('.meta');const ds=card.dataset;
+      m.innerHTML=`<span class="tag">#${d.qid}</span><span class="tag">t=${ds.t}s</span><span class="tag">frame ${ds.idx}</span>`+
+        `<span class="tag">TTFT <b>${fmt(d.ttft_ms)}</b>ms</span><span class="tag">model ${fmt(d.model_ms)}ms</span>`+
+        `<span class="tag">prompt ${fmt(d.prompt_eval_ms)}ms/${fmt(d.prompt_eval_count)}tok</span>`+
+        `<span class="tag">gen ${fmt(d.eval_ms)}ms/${fmt(d.eval_count)}tok</span>`;}
+    const cv=$('s'+d.qid);if(cv)drawSpark(cv,d.gaps_ms||[]);}
+  else if(d.phase==='stats'){
+    fpsnow.textContent=(d.fps||0)+' fps';
+    ttftnow.textContent=(d.ttft_p50!==null&&d.ttft_p50!==undefined)?d.ttft_p50+' ms':'–';
+    vbadge.textContent=`帧 ${d.frames} · 丢 ${d.lost} · fps ${d.fps||0}`;
+    met.textContent=`发 ${d.ans_sent||0} · 丢 ${d.ans_dropped||0} · 重传 ${d.ans_retx||0} · 确认 ${d.ans_acked||0} · 过期 ${d.ans_failed||0} · 补救 ${d.recovery||0}%`;
+    met2.innerHTML=[['发送',d.ans_sent],['丢失',d.ans_dropped],['重传',d.ans_retx],['确认',d.ans_acked],
+      ['过期',d.ans_failed],['补救',(d.recovery||0)+'%'],['调度',d.sched_mode||'off'],['深度',d.sched_depth||0],
+      ['越队',d.ai_jump||0],['驱逐',d.evicted||0],['ai/bulk',(d.sent_ai||0)+'/'+(d.sent_bulk||0)]]
+      .map(([k,v])=>`<span class="m">${k} <b>${v}</b></span>`).join('');
+    drawLine(cvF,cxF,d.fps_hist||[],'#38a169','rgba(56,161,105,.12)');
+    drawLine(cvT,cxT,d.ttft_hist||[],'#e8a04c','rgba(232,160,76,.12)');
+    if(d.running){st.textContent=`运行中 ${d.elapsed_s||0}s`;btn.textContent='停止测试';btn.classList.add('stop');btn.disabled=false;}
+    else{st.textContent=d.last_msg||'空闲';btn.textContent='开始测试';btn.classList.remove('stop');btn.disabled=false;}
+  }
+};
 </script></body></html>"""
 
 
@@ -493,6 +591,7 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
                "options": {"num_predict": a.num_predict, "temperature": 0},
                "keep_alive": "10m"}
     t2 = None
+    arrivals = []
     seq = 0
     buf = ""
     last_flush = time.monotonic()
@@ -512,6 +611,7 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
                 now = time.monotonic_ns()
                 if delta and t2 is None:
                     t2 = now
+                    arrivals.append(0.0)
                     full += delta
                     st.send_answer(qid, seq, 1, t2, delta)
                     seq += 1
@@ -519,6 +619,7 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
                              "ttft_ms": round((t2 - t1_ns) / 1e6, 1)})
                 elif delta:
                     full += delta
+                    arrivals.append(round((now - t2) / 1e6, 1))
                     buf += delta
                     if time.monotonic() - last_flush > 0.03:
                         st.send_answer(qid, seq, 0, t2, buf)
@@ -546,7 +647,9 @@ def ollama_stream(st, p, idx_used, fr, miss, b64):
     model_ms = round((time.monotonic_ns() - t1_ns) / 1e6, 1)
     if empty:
         st.stats["empty"] += 1
+    gaps = [round(arrivals[i] - arrivals[i - 1], 1) for i in range(1, len(arrivals))][:200]
     st.push({"phase": "final", "qid": qid, "answer": full, "empty": empty,
+             "gaps_ms": gaps,
              "model_ms": model_ms,
              "thinking_chars": len(think_txt),
              "prompt_eval_ms": mj.get("prompt_eval_duration"),
@@ -738,6 +841,7 @@ def make_handler(st):
                                  "evicted": st.sched_stats["evicted"],
                                  "sent_ai": st.sched_stats["sent_ai"],
                                  "sent_bulk": st.sched_stats["sent_bulk"],
+                                 "ttft_hist": st.ttfts[-20:],
                                  "ttft_p50": (sorted(st.ttfts)[len(st.ttfts)//2] if st.ttfts else None),
                                  "recovery": (round(100.0 * st.rbuf.stats["acked"] /
                                                max(1, st.rbuf.stats["acked"] + st.rbuf.stats["expired"]), 1)),
